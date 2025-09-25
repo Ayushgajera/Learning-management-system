@@ -1,0 +1,291 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.129 0.042 264.695);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.129 0.042 264.695);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.984 0.003 247.858);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.279 0.041 260.031);
+  --input: oklch(0.279 0.041 260.031);
+  --ring: oklch(0.446 0.043 257.281);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(0.279 0.041 260.031);
+  --sidebar-ring: oklch(0.446 0.043 257.281);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Add to your global.css or index.css */
+.mobile-nav-link {
+  @apply flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm text-gray-700
+    hover:bg-gray-50 hover:text-green-600 transition-all duration-200;
+}
+
+@media (max-width: 768px) {
+  .mobile-nav-link {
+    @apply w-full;
+  }
+}
+
+/* Add these styles for the rich text editor */
+.ProseMirror {
+  > * + * {
+    margin-top: 0.75em;
+  }
+
+  ul,
+  ol {
+    padding: 0 1rem;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  h1 {
+    font-size: 2em;
+    font-weight: bold;
+  }
+
+  h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+
+  h3 {
+    font-size: 1.25em;
+    font-weight: bold;
+  }
+
+  blockquote {
+    padding-left: 1rem;
+    border-left: 2px solid #e5e7eb;
+  }
+
+  code {
+    background-color: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+  }
+
+  min-height: 200px;
+  cursor: text;
+  padding: 1rem;
+}
+
+/* TipTap Font Size Styles */
+.ProseMirror {
+  & [style*="font-size"] {
+    display: inline;
+  }
+}
+
+.ProseMirror p {
+  margin: 0;
+}
+
+/* Font size utility classes */
+[style*="font-size: 14px"] {
+  font-size: 14px !important;
+}
+
+[style*="font-size: 16px"] {
+  font-size: 16px !important;
+}
+
+[style*="font-size: 20px"] {
+  font-size: 20px !important;
+}
+
+[style*="font-size: 24px"] {
+  font-size: 24px !important;
+}
+
+/* React Quill Styles */
+.ql-container {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  height: 250px !important;
+}
+
+.ql-toolbar.ql-snow {
+  @apply bg-gray-50 border-0 border-b border-gray-200;
+  padding: 8px !important;
+}
+
+.ql-container.ql-snow {
+  @apply border-0;
+}
+
+.ql-editor {
+  @apply min-h-[250px] px-4 py-3 text-gray-700;
+}
+
+.ql-snow .ql-toolbar button {
+  @apply p-2 hover:bg-gray-100 rounded-lg transition-colors;
+}
+
+.ql-snow .ql-toolbar button.ql-active {
+  @apply bg-emerald-50 text-emerald-600;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke {
+  @apply stroke-emerald-600;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill {
+  @apply fill-emerald-600;
+}
+
+/* Add this to App.css or index.css */
+.course-description h1,
+.course-description h2,
+.course-description h3,
+.course-description h4,
+.course-description h5,
+.course-description h6 {
+  font-weight: bold;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+   
+}
+
+.course-description b,
+.course-description strong {
+  font-weight: bold;
+}
+
+.course-description i,
+.course-description em {
+  font-style: italic;
+}
+
+.course-description u {
+  text-decoration: underline;
+}
+
+.course-description ul,
+.course-description ol {
+  margin-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.course-description li {
+  margin-bottom: 0.3em;
+}
+
+.course-description p {
+  margin-bottom: 1em;
+}
