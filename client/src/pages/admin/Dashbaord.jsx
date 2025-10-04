@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FiUsers, FiBookOpen, FiDollarSign, FiTrendingUp, FiTrendingDown, FiEye, FiStar, FiClock, FiSettings, FiPlus, FiActivity, FiTarget, FiBarChart2 } from 'react-icons/fi';
+import { FiUsers, FiBookOpen, FiDollarSign, FiStar, FiPlus, FiActivity, FiTarget, FiBarChart2 } from 'react-icons/fi';
 import { useGetAllCoursesQuery } from '@/features/api/courseApi';
 import { useLoaduserQuery } from '@/features/api/authApi';
 
 function Dashboard() {
+  // -- Data state --
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalStudents: 0,
@@ -21,135 +22,71 @@ function Dashboard() {
   const { data: userData } = useLoaduserQuery();
 
   useEffect(() => {
-    const calculateStats = () => {
+    try {
       if (!coursesData?.courses) return;
 
-      const courses = coursesData?.courses;
+      const courses = coursesData.courses;
       const totalCourses = courses.length;
       const activeCourses = courses.filter(course => course.ispublished).length;
-      
+
       const allStudentIds = new Set();
-      
-      // Calculate total enrollments and total revenue accurately
       const totalEnrollments = courses.reduce((sum, course) => {
-        const enrollmentCount = course.enrolledStudents?.length || 0;
-        
-        // Collect all student IDs to find unique students
-        if (course.enrolledStudents) {
-          course.enrolledStudents.forEach(studentId => allStudentIds.add(studentId));
-        }
-
-        return sum + enrollmentCount;
+        const enrolled = course.enrolledStudents?.length || 0;
+        if (course.enrolledStudents) course.enrolledStudents.forEach(id => allStudentIds.add(id));
+        return sum + enrolled;
       }, 0);
-      
+
       const totalRevenue = courses.reduce((sum, course) => {
-        const enrollmentCount = course.enrolledStudents?.length || 0;
-        return sum + ((course.coursePrice || 0) * enrollmentCount);
+        const enrolled = course.enrolledStudents?.length || 0;
+        return sum + ((course.coursePrice || 0) * enrolled);
       }, 0);
 
-      // Total unique students is the size of the set
       const totalStudents = allStudentIds.size;
-
-      // Calculate average rating
-      const totalRating = courses.reduce((sum, course) => {
-        return sum + (course.rating || 0);
-      }, 0);
+      const totalRating = courses.reduce((s, c) => s + (c.rating || 0), 0);
       const averageRating = totalCourses > 0 ? (totalRating / totalCourses).toFixed(1) : 0;
 
-      setStats({
-        totalCourses,
-        totalStudents,
-        totalRevenue,
-        totalEnrollments,
-        averageRating,
-        activeCourses
-      });
+      setStats({ totalCourses, totalStudents, totalRevenue, totalEnrollments, averageRating, activeCourses });
       setIsLoading(false);
-    };
-
-    if (!coursesLoading) {
-      calculateStats();
+    } catch (err) {
+      setError(err);
+      setIsLoading(false);
     }
   }, [coursesData, coursesLoading]);
 
-  // ... (rest of your component remains the same)
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
+  // -- Helpers --
+  const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(amount || 0);
+  const formatNumber = (n) => new Intl.NumberFormat('en-US').format(n || 0);
+
+  // -- Motion variants --
+  const page = {
+    hidden: { opacity: 0, y: 8 },
+    enter: { opacity: 1, y: 0, transition: { duration: 0.6, when: 'beforeChildren', staggerChildren: 0.06 } },
+    exit: { opacity: 0, y: -8, transition: { duration: 0.35 } }
   };
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('en-US').format(num);
+  const card = {
+    hidden: { opacity: 0, y: 12 },
+    enter: { opacity: 1, y: 0, transition: { duration: 0.45 } }
   };
 
+  // -- Dashboard data for cards --
   const dashboardCards = [
-    {
-      label: 'Total Courses',
-      value: formatNumber(stats.totalCourses),
-      icon: <FiBookOpen className="w-6 h-6" />,
-      change: `${stats.activeCourses} published`,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'from-blue-50 to-blue-100',
-      textColor: 'text-blue-600',
-      gradient: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      changeColor: 'text-blue-600'
-    },
-    {
-      label: 'Total Students',
-      value: formatNumber(stats.totalStudents),
-      icon: <FiUsers className="w-6 h-6" />,
-      change: `${formatNumber(stats.totalEnrollments)} enrollments`,
-      color: 'from-emerald-500 to-emerald-600',
-      bgColor: 'from-emerald-50 to-emerald-100',
-      textColor: 'text-emerald-600',
-      gradient: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-      changeColor: 'text-emerald-600'
-    },
-    {
-      label: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
-      icon: <FiDollarSign className="w-6 h-6" />,
-      change: 'This month',
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'from-purple-50 to-purple-100',
-      textColor: 'text-purple-600',
-      gradient: 'bg-gradient-to-br from-purple-500 to-purple-600',
-      changeColor: 'text-purple-600'
-    },
-    {
-      label: 'Average Rating',
-      value: stats.averageRating,
-      icon: <FiStar className="w-6 h-6" />,
-      change: 'out of 5.0',
-      color: 'from-amber-500 to-amber-600',
-      bgColor: 'from-amber-50 to-amber-100',
-      textColor: 'text-amber-600',
-      gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',
-      changeColor: 'text-amber-600'
-    }
+    { key: 'courses', label: 'Total Courses', value: formatNumber(stats.totalCourses), icon: <FiBookOpen className="w-6 h-6" />, hint: `${stats.activeCourses} published`, color: 'from-blue-500 to-blue-600' },
+    { key: 'students', label: 'Total Students', value: formatNumber(stats.totalStudents), icon: <FiUsers className="w-6 h-6" />, hint: `${formatNumber(stats.totalEnrollments)} enrollments`, color: 'from-emerald-400 to-emerald-600' },
+    { key: 'revenue', label: 'Total Revenue', value: formatCurrency(stats.totalRevenue), icon: <FiDollarSign className="w-6 h-6" />, hint: 'This month', color: 'from-purple-500 to-purple-600' },
+    { key: 'rating', label: 'Average Rating', value: stats.averageRating, icon: <FiStar className="w-6 h-6" />, hint: 'out of 5.0', color: 'from-amber-500 to-amber-600' }
   ];
 
   const recentCourses = coursesData?.courses?.slice(0, 5) || [];
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl w-1/3 mb-8"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white/80 dark:bg-gray-800/60 rounded-2xl p-6 space-y-4 border border-gray-100 dark:border-gray-700">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/2"></div>
-                  <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/3"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-lg w-1/4"></div>
-                </div>
-              ))}
-            </div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-blue-50/40 to-purple-50/30 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/30 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="animate-pulse grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-36 rounded-2xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-lg border border-gray-200/30 dark:border-gray-700/30" />
+            ))}
           </div>
         </div>
       </div>
@@ -158,259 +95,138 @@ function Dashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-red-50 to-pink-50 flex items-center justify-center p-4">
-        <motion.div 
-          className="text-center bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-xl"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Failed to load dashboard</h2>
-          <p className="text-gray-600 mb-6">Please try refreshing the page</p>
-          <motion.button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Refresh Page
-          </motion.button>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-2xl p-8 shadow-xl border border-gray-200/30 dark:border-gray-700/30 text-center">
+          <h3 className="text-lg font-semibold mb-2">Unable to load dashboard</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">There was an error while loading metrics. Refresh to try again.</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">Refresh</button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+    <motion.main initial="hidden" animate="enter" exit="exit" variants={page} className="min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-50 via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-900/10 dark:to-purple-900/20 p-6">
+      {/* Floating gradient accents */}
+      <motion.div aria-hidden className="pointer-events-none absolute -top-10 -left-20 w-72 h-72 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 opacity-20 blur-3xl mix-blend-overlay" animate={{ x: [0, 40, 0], y: [0, -20, 0] }} transition={{ duration: 10, repeat: Infinity }} />
+      <motion.div aria-hidden className="pointer-events-none absolute -bottom-24 right-0 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-300 to-blue-300 opacity-12 blur-3xl mix-blend-overlay" animate={{ x: [0, -30, 0] }} transition={{ duration: 12, repeat: Infinity }} />
+
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <motion.div 
-          className="mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        <header className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent mb-2">
-                Admin Dashboard
-              </h1>
-              <p className="text-gray-600 dark:text-gray-300 text-lg">
-                Welcome back, <span className="font-semibold text-gray-800 dark:text-gray-100">{userData?.user?.name || 'Admin'}</span>! Here's what's happening with your platform.
-              </p>
+              <motion.h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-blue-600 dark:from-gray-100 dark:to-blue-400" initial={{ y: -6, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>Admin Dashboard</motion.h1>
+              <motion.p className="mt-2 text-gray-600 dark:text-gray-300" initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.08 } }}>Welcome back, <span className="font-semibold text-gray-900 dark:text-gray-100">{userData?.user?.name || 'Admin'}</span>. Overview of platform performance and quick actions.</motion.p>
             </div>
-            <motion.div 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-white/20">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Live Updates</span>
-              </div>
-            </motion.div>
+
+            <div className="flex items-center gap-3">
+              <motion.button whileHover={{ y: -3 }} whileTap={{ scale: 0.98 }} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/30 dark:border-gray-700/30 shadow-sm text-sm">
+                <FiActivity className="w-4 h-4 text-gray-700 dark:text-gray-200" /> Live
+              </motion.button>
+              <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg text-sm">Create Course</motion.button>
+            </div>
           </div>
-        </motion.div>
+        </header>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          {dashboardCards.map((card, index) => (
-            <motion.div
-              key={card.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative bg-white dark:bg-gray-800/60 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
-            >
-              {/* Gradient overlay on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
-              
-              <div className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${card.bgColor} shadow-sm group-hover:shadow-md transition-all duration-300`}>
-                    <div className={card.textColor}>{card.icon}</div>
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {dashboardCards.map((c, i) => (
+            <motion.article key={c.key} variants={card} className="relative rounded-2xl p-5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-gray-200/30 dark:border-gray-700/30 shadow-md hover:shadow-2xl transition-transform hover:-translate-y-1">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-lg bg-gradient-to-br ${c.color} text-white shadow-sm`}>{c.icon}</div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-300">{c.label}</p>
+                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{c.value}</p>
                   </div>
-                  <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${card.color} shadow-sm`}></div>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">{card.label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{card.value}</p>
-                  <p className={`text-xs font-medium ${card.changeColor} bg-opacity-10 px-2 py-1 rounded-full inline-block`}>
-                    {card.change}
-                  </p>
-                </div>
+                <div className="text-sm text-gray-500 dark:text-gray-300">{c.hint}</div>
               </div>
-            </motion.div>
+              <div className="mt-4 h-0.5 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-30" />
+            </motion.article>
           ))}
-        </div>
+        </section>
 
-        {/* Charts and Recent Activity */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8 mb-8">
-          {/* Recent Courses */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg dark:bg-gray-800/60 dark:border-gray-700 text-gray-900 dark:text-white    "
-          >
-            <div className="flex items-center justify-between mb-6">
+        {/* Main area: Recent + Quick Actions */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+          <motion.section variants={card} className="rounded-2xl p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-gray-200/30 dark:border-gray-700/30 shadow-md">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
-                  <FiBookOpen className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Recent Courses</h2>
+                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white"><FiBookOpen className="w-5 h-5" /></div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Courses</h3>
               </div>
-              <motion.button 
-                className="text-sm text-blue-600 hover:text-blue-700 font-semibold px-3 py-1 rounded-lg hover:bg-blue-50 transition-all duration-200"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                View All
-              </motion.button>
+              <button className="text-sm text-blue-600 dark:text-blue-400 font-semibold">View All</button>
             </div>
+
             <div className="space-y-4">
-              {recentCourses.map((course, index) => (
-                <motion.div 
-                  key={course._id} 
-                  className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50/50 transition-all duration-200 border border-transparent hover:border-gray-200/50"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                >
-                  <img
-                    src={course.courseThumbnail || 'https://via.placeholder.com/50'}
-                    alt={course.courseTitle}
-                    className="w-12 h-12 rounded-xl object-cover shadow-sm"
-                  />
+              {recentCourses.length > 0 ? recentCourses.map((course, idx) => (
+                <motion.div key={course._id || idx} whileHover={{ scale: 1.01 }} transition={{ duration: 0.15 }} className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/40 dark:hover:bg-gray-900/40 border border-transparent hover:border-gray-200/20">
+                  <img src={course.courseThumbnail || 'https://via.placeholder.com/50'} alt={course.courseTitle} className="w-12 h-12 rounded-lg object-cover shadow-sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {course.courseTitle}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      by {course.creator?.name || 'Unknown Instructor'}
-                    </p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{course.courseTitle}</p>
+                    <p className="text-xs text-gray-500">by {course.creator?.name || 'Unknown'}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-gray-900">
-                      ${course.coursePrice || 0}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {course.enrolledStudents?.length || 0} students
-                    </p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(course.coursePrice)}</p>
+                    <p className="text-xs text-gray-500">{(course.enrolledStudents?.length) || 0} students</p>
                   </div>
                 </motion.div>
-              ))}
-              {recentCourses.length === 0 && (
-                <motion.div 
-                  className="text-center py-12 text-gray-500"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <FiBookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">No courses yet</p>
-                  <p className="text-sm">Start by creating your first course</p>
-                </motion.div>
+              )) : (
+                <div className="text-center py-12 text-gray-500 dark:text-gray-300">No recent courses — create one to get started.</div>
               )}
             </div>
-          </motion.div>
+          </motion.section>
 
-          {/* Quick Actions */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl">
-                <FiActivity className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+          <motion.aside variants={card} className="rounded-2xl p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-gray-200/30 dark:border-gray-700/30 shadow-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white"><FiActivity className="w-5 h-5" /></div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick Actions</h3>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: <FiPlus className="w-6 h-6" />, label: "Add Course", color: "from-blue-500 to-blue-600", hover: "hover:from-blue-600 hover:to-blue-700" },
-                { icon: <FiUsers className="w-6 h-6" />, label: "Manage Users", color: "from-emerald-500 to-emerald-600", hover: "hover:from-emerald-600 hover:to-emerald-700" },
-                { icon: <FiBarChart2 className="w-6 h-6" />, label: "View Reports", color: "from-purple-500 to-purple-600", hover: "hover:from-purple-600 hover:to-purple-700" },
-                { icon: <FiSettings className="w-6 h-6" />, label: "Settings", color: "from-amber-500 to-amber-600", hover: "hover:from-amber-600 hover:to-amber-700" }
-              ].map((action, index) => (
-                <motion.button 
-                  key={action.label}
-                  className={`p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-transparent transition-all duration-300 text-center group ${action.hover}`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
-                >
-                  <div className={`w-12 h-12 bg-gradient-to-br ${action.color} rounded-xl mx-auto mb-3 flex items-center justify-center text-white shadow-lg group-hover:shadow-xl transition-all duration-300`}>
-                    {action.icon}
+                { label: 'Add Course', icon: <FiPlus className="w-5 h-5" /> },
+                { label: 'Manage Users', icon: <FiUsers className="w-5 h-5" /> },
+                { label: 'View Reports', icon: <FiBarChart2 className="w-5 h-5" /> },
+                { label: 'Settings', icon: <FiTarget className="w-5 h-5" /> }
+              ].map((a, i) => (
+                <motion.button key={i} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }} className="flex items-center gap-3 p-3 rounded-lg bg-white/30 dark:bg-gray-900/30 border border-transparent hover:border-gray-200/20">
+                  <div className="w-10 h-10 rounded-md bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center">{a.icon}</div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{a.label}</p>
+                    <p className="text-xs text-gray-500">Quick action</p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-700 group-hover:text-white transition-colors duration-300">{action.label}</p>
                 </motion.button>
               ))}
             </div>
-          </motion.div>
+          </motion.aside>
         </div>
 
-        {/* Platform Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg"
-        >
+        {/* Platform overview */}
+        <motion.section variants={card} className="rounded-2xl p-6 bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg border border-gray-200/30 dark:border-gray-700/30 shadow-md">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
-              <FiTarget className="w-5 h-5 text-white" />
+            <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white"><FiTarget className="w-5 h-5" /></div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Platform Overview</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg bg-white/30 dark:bg-gray-900/30">
+              <p className="text-sm text-gray-500">Course Publication Rate</p>
+              <p className="mt-2 text-2xl font-bold">{stats.totalCourses > 0 ? ((stats.activeCourses / stats.totalCourses) * 100).toFixed(1) : 0}%</p>
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Platform Overview</h2>
+            <div className="p-4 rounded-lg bg-white/30 dark:bg-gray-900/30">
+              <p className="text-sm text-gray-500">Average Revenue per Enrollment</p>
+              <p className="mt-2 text-2xl font-bold">{stats.totalEnrollments > 0 ? formatCurrency(Math.round(stats.totalRevenue / stats.totalEnrollments)) : formatCurrency(0)}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-white/30 dark:bg-gray-900/30">
+              <p className="text-sm text-gray-500">Courses per Student</p>
+              <p className="mt-2 text-2xl font-bold">{stats.totalStudents > 0 ? (stats.totalEnrollments / stats.totalStudents).toFixed(1) : 0}</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              {
-                value: `${stats.totalCourses > 0 ? ((stats.activeCourses / stats.totalCourses) * 100).toFixed(1) : 0}%`,
-                label: "Course Publication Rate",
-                color: "from-blue-500 to-blue-600",
-                icon: <FiTrendingUp className="w-5 h-5" />
-              },
-              {
-                value: `$${stats.totalEnrollments > 0 ? (stats.totalRevenue / stats.totalEnrollments).toFixed(0) : 0}`,
-                label: "Average Revenue per Enrollment",
-                color: "from-emerald-500 to-emerald-600",
-                icon: <FiDollarSign className="w-5 h-5" />
-              },
-              {
-                value: `${stats.totalStudents > 0 ? (stats.totalEnrollments / stats.totalStudents).toFixed(1) : 0}`,
-                label: "Courses per Student",
-                color: "from-purple-500 to-purple-600",
-                icon: <FiBookOpen className="w-5 h-5" />
-              }
-            ].map((stat, index) => (
-              <motion.div 
-                key={stat.label}
-                className="text-center p-4 rounded-xl hover:bg-gray-50/50 transition-all duration-200"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 + index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl mx-auto mb-3 flex items-center justify-center text-white shadow-lg`}>
-                  {stat.icon}
-                </div>
-                <div className={`text-2xl sm:text-3xl font-bold bg-gradient-to-br ${stat.color} bg-clip-text text-transparent mb-2`}>
-                  {stat.value}
-                </div>
-                <p className="text-sm text-gray-600 font-medium">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        </motion.section>
       </div>
-    </div>
+    </motion.main>
   );
 }
 
