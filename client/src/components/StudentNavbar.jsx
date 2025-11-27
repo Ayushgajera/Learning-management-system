@@ -22,29 +22,29 @@ function throttle(func, limit) {
 const menuItems = [
   {
     to: "/dashboard",
-    icon: <FiGrid className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />,
+    icon: <FiGrid className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Dashboard",
   },
   {
     to: "/my-courses",
-    icon: <FiBook className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />,
+    icon: <FiBook className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "My Courses",
-    badge: { content: "3", className: "px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-700 font-semibold rounded-full" }
+    badge: { content: "3", className: "px-2 py-0.5 text-xs bg-indigo-500/15 text-indigo-700 font-semibold rounded-full" }
   },
   {
     to: "/messages",
-    icon: <FiMessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />,
+    icon: <FiMessageSquare className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Messages",
-    badge: { content: "", className: "h-2 w-2 bg-red-500 rounded-full" }
+    badge: { content: "", className: "h-2 w-2 bg-rose-500 rounded-full" }
   },
   {
     to: "/certificates",
-    icon: <FiAward className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />,
+    icon: <FiAward className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Certificates",
   },
   {
     to: "/favorites",
-    icon: <FiHeart className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />,
+    icon: <FiHeart className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Saved Courses",
   },
 ];
@@ -125,7 +125,7 @@ function StudentNavbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-12 right-0 mt-2 w-72 md:w-80 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl py-4 border border-gray-100 dark:border-gray-700"
+                  className="absolute top-12 right-0 mt-2 w-72 md:w-80 glass-panel rounded-3xl py-5 border border-white/50 dark:border-slate-800/70 shadow-[0_35px_120px_-45px_rgba(15,23,42,0.9)]"
                 >
                   <div className="px-6 flex items-center space-x-4 mb-4">
                     <img
@@ -143,7 +143,7 @@ function StudentNavbar() {
                       <Link
                         key={item.to}
                         to={item.to}
-                        className="group flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 hover:text-emerald-700 transition-all duration-200"
+                        className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200"
                         onClick={() => setIsProfileDropdownOpen(false)}
                       >
                         {item.icon}
@@ -158,17 +158,17 @@ function StudentNavbar() {
                   <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
                     <Link
                       to="/settings"
-                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 hover:text-emerald-700 transition-all duration-200"
+                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200"
                       onClick={() => setIsProfileDropdownOpen(false)}
                     >
-                      <FiSettings className="w-4 h-4 text-gray-600 dark:text-gray-300 group-hover:text-emerald-500" />
+                      <FiSettings className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />
                       <span className="font-medium">Settings</span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-red-600 w-full text-left hover:bg-red-50 transition-all duration-200"
+                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-rose-600 w-full text-left hover:bg-rose-50/80 dark:hover:bg-rose-500/10 transition-all duration-200"
                     >
-                      <FiLogOut className="w-4 h-4 text-red-600" />
+                      <FiLogOut className="w-4 h-4 text-rose-600" />
                       <span className="font-medium">Sign out</span>
                     </button>
                   </div>
@@ -183,13 +183,13 @@ function StudentNavbar() {
       <div className="hidden md:flex items-center space-x-3">
         <Link
           to="/login"
-          className="px-6 py-2 border border-emerald-500 text-emerald-600 rounded-full font-semibold hover:bg-emerald-50 transition-colors duration-200"
+          className="px-6 py-2 rounded-full font-semibold border border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white/70 transition-all duration-200"
         >
           Login
         </Link>
         <Link
           to="/register"
-          className="px-6 py-2 bg-emerald-500 text-white rounded-full font-semibold hover:bg-emerald-600 transition-colors duration-200 shadow"
+          className="px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-200"
         >
           Sign Up
         </Link>
@@ -198,33 +198,37 @@ function StudentNavbar() {
   };
 
   return (
-    <nav className={`fixed w-full top-0 z-50 transition-all duration-300 
-      ${isScrolled || isMenuOpen ? 'bg-white/95 dark:bg-gray-900/80 backdrop-blur-md shadow-lg' : 'bg-transparent'} text-gray-800 dark:text-gray-100`}
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500
+      ${isScrolled || isMenuOpen
+          ? 'backdrop-blur-2xl bg-white/80 dark:bg-slate-950/70 border-b border-white/30 dark:border-white/10 shadow-[0_25px_65px_-40px_rgba(15,23,42,0.85)]'
+          : 'bg-transparent'} text-slate-900 dark:text-slate-100`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo and Main Nav */}
-        <div className="flex items-center">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="mx-auto flex h-16 w-full max-w-[1380px] items-center justify-between gap-4">
+          {/* Logo and Main Nav */}
+          <div className="flex items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <FiBook className="w-7 h-7 text-emerald-600" />
+            <FiBook className="w-7 h-7 text-indigo-500" />
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent"
+              className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent"
             >
               EduLearn
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center ml-8 space-x-6 text-gray-800 dark:text-gray-100">
+          <div className="hidden md:flex items-center ml-8 space-x-6 text-slate-700 dark:text-slate-200">
             {/* Courses */}
             <RouterNavLink
               to="/courses"
               className={({ isActive }) => `
-                flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-medium
-                ${isActive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}
-                hover:bg-emerald-50 hover:text-emerald-600
-                dark:hover:bg-emerald-900/40 dark:hover:text-emerald-400 transition-colors duration-200
+                flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
+                ${isActive
+                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
               `}
             >
               <FiBookOpen className="h-5 w-5" />
@@ -236,10 +240,10 @@ function StudentNavbar() {
               <RouterNavLink
                 to="/categories"
                 className={({ isActive }) => `
-                  flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-medium
-                  ${isActive ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}
-                  hover:bg-emerald-50 hover:text-emerald-600
-                  dark:hover:bg-emerald-900/40 dark:hover:text-emerald-400 transition-colors duration-200
+                  flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
+                  ${isActive
+                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
                 `}
               >
                 <FiGrid className="h-5 w-5" />
@@ -267,14 +271,14 @@ function StudentNavbar() {
           </div>
         </div>
 
-        {/* Right Side Menu */}
-        <div className="flex items-center space-x-4">
+          {/* Right Side Menu */}
+          <div className="flex items-center space-x-4">
           {renderAuthButtons()}
           {/* Desktop theme toggle (always visible on desktop) */}
           <div className="hidden md:flex items-center mr-2">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full text-gray-600 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/80 transition-colors"
               title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
             >
               {theme === 'light' ? <FiMoon className="h-6 w-6 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-6 w-6 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
@@ -291,6 +295,7 @@ function StudentNavbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
               </svg>
             </button>
+          </div>
           </div>
         </div>
       </div>
@@ -324,7 +329,7 @@ function StudentNavbar() {
                 {/* Mobile dark mode toggle */}
                 <button
                   onClick={toggleTheme}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 transition-all duration-300"
                   title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                 >
                   {theme === 'light' ? <FiMoon className="h-5 w-5 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-5 w-5 text-yellow-400 transition-transform duration-300 transform rotate-180" />}

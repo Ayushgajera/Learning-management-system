@@ -1,17 +1,16 @@
-import React from 'react'
-import Navbar from '../components/navbar'
-import { Outlet } from 'react-router-dom'
+import React from 'react';
+import Navbar from '../components/navbar';
+import { Outlet } from 'react-router-dom';
 
 function MainLayout() {
   return (
-    <div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <Navbar />
-      <div>
-        
+      <main className="">
         <Outlet />
-      </div>
+      </main>
     </div>
-  )
+  );
 }
 
-export default MainLayout
+export default MainLayout;
