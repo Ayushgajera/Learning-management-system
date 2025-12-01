@@ -44,7 +44,7 @@ const appRouter = createBrowserRouter([
       },
       {
         path: "/become-instructor",
-        element: <RoleRoute allowedRole="student"><BecomeInstructor /></RoleRoute>
+        element: <RoleRoute allowedRole="student" redirectTo="/"><BecomeInstructor /></RoleRoute>
       },
       {
         path: "profile",
@@ -57,10 +57,6 @@ const appRouter = createBrowserRouter([
       {
         path: "course/:courseId",
         element: <CourseContent />
-      },
-      {
-        path: "/course-progress/:courseId",
-        element: <RoleRoute allowedRole="student"><EnrolledCourseLectures /></RoleRoute>
       },
       // {
       //   path: "/chat/:courseId",
@@ -124,6 +120,10 @@ const appRouter = createBrowserRouter([
 
   },
   {
+    path: "/course-progress/:courseId",
+    element: <RoleRoute allowedRole="student"><EnrolledCourseLectures /></RoleRoute>
+  },
+  {
         path: "/chat/:courseId",
         element: <RoleRoute allowedRole="student"><CourseChat /></RoleRoute>
       },
@@ -134,10 +134,6 @@ const appRouter = createBrowserRouter([
   {
     path: "register",
     element: <Login />
-  },
-  {
-    path: "/enrolled/lectures",
-    element: <EnrolledCourseLectures />
   },
   {
     path:"/certificate",

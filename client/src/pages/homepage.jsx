@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import HeroSection from './student/herosection';
 import Course from './student/Course';
+import Footer from '../components/Footer';
 import { useGetPublishCourseQuery } from '@/features/api/courseApi';
-import { useLoaduserQuery } from '@/features/api/authApi';
 import { motion } from 'framer-motion';
 import {
   FiAward,
@@ -16,471 +16,379 @@ import {
   FiCompass,
   FiStar,
   FiArrowRight,
+  FiCheckCircle,
+  FiZap,
+  FiLinkedin,
+  FiTwitter,
+  FiCode,
+  FiPenTool,
+  FiDatabase,
+  FiCpu,
+  FiLayout,
+  FiDollarSign,
+  FiMail
 } from 'react-icons/fi';
 
 const features = [
   {
-    icon: <FiAward className="w-6 h-6" />,
-    title: 'Accredited outcomes',
-    desc: 'Stackable credentials that unlock roles at top product companies.'
+    icon: FiAward,
+    title: 'Accredited Outcomes',
+    desc: 'Earn industry-recognized certificates that unlock roles at top tech companies.'
   },
   {
-    icon: <FiMessageCircle className="w-6 h-6" />,
-    title: 'Mentor office hours',
-    desc: 'Live weekly breakdowns, async feedback loops, and design crits.'
+    icon: FiMessageCircle,
+    title: 'Expert Mentorship',
+    desc: 'Get direct feedback from senior engineers and designers through live sessions.'
   },
   {
-    icon: <FiPlayCircle className="w-6 h-6" />,
-    title: 'Ritualized shipping',
-    desc: 'Weekly demo tapes and progress rituals keep momentum high.'
+    icon: FiPlayCircle,
+    title: 'Project-Based Learning',
+    desc: 'Build real-world applications and ship them to production every week.'
   },
   {
-    icon: <FiGlobe className="w-6 h-6" />,
-    title: 'Global community',
-    desc: 'Collaborate with builders in 42 countries with moderated pods.'
+    icon: FiGlobe,
+    title: 'Global Community',
+    desc: 'Connect with 50,000+ learners and alumni from 40+ countries.'
   },
 ];
 
 const instructors = [
-  { name: 'Jane Doe', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', title: 'Principal Product Engineer · Linear' },
-  { name: 'John Smith', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', title: 'Data Science Lead · Spotify' },
-  { name: 'Emily Clark', avatar: 'https://randomuser.me/api/portraits/women/68.jpg', title: 'Design Director · Figma' },
+  { 
+    name: 'Sarah Chen', 
+    role: 'Senior Engineer @ Google', 
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+    bio: 'Ex-Google, 10+ years in distributed systems. Led the team that built Google Cloud Spanner.',
+  },
+  { 
+    name: 'Alex Rivera', 
+    role: 'Product Designer @ Airbnb', 
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+    bio: 'Design system architect at Airbnb. Previously at Apple and IDEO.',
+  },
+  { 
+    name: 'Michael Chang', 
+    role: 'Data Scientist @ Netflix', 
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
+    bio: 'Building recommendation engines at Netflix. PhD in Machine Learning from Stanford.',
+  },
+  { 
+    name: 'Emma Wilson', 
+    role: 'DevOps Lead @ Amazon', 
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
+    bio: 'AWS Community Hero. Expert in Kubernetes, Terraform, and Cloud Native architectures.',
+  },
 ];
 
 const faqs = [
-  { q: 'How do I enroll in a course?', a: 'Browse a curriculum, hit enroll, and you will be onboarded into the next live sprint instantly.' },
-  { q: 'Do I get a certificate after completion?', a: 'Yes. Each programme ships with verified certificates plus portfolio assets.' },
-  { q: 'Can I access courses on mobile?', a: 'Absolutely—the entire experience is optimized for desktop, tablet, and mobile.' },
-  { q: 'Are there any free courses?', a: 'We host multiple free micro-sprints every month so you can sample the experience before committing.' },
+  { q: 'How do I get started?', a: 'Simply create an account, browse our catalog, and enroll in any course. You get instant access to all materials.' },
+  { q: 'Are the certificates valid?', a: 'Yes, our certificates are recognized by top tech companies and can be added to your LinkedIn profile.' },
+  { q: 'Can I learn at my own pace?', a: 'Absolutely. All our courses are self-paced with lifetime access to the content.' },
+  { q: 'Is there a refund policy?', a: 'We offer a 30-day money-back guarantee if you are not satisfied with the course content.' },
 ];
 
-const formatINR = (value) => {
-  if (!value || Number.isNaN(Number(value))) return '₹ —';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-};
-
-const statPills = [
-  { label: 'Average completion rate', value: '94%', detail: '+6% QoQ' },
-  { label: 'Community messages / week', value: '18K', detail: 'real-time collabs' },
-  { label: 'Hiring partners', value: '210+', detail: 'global product teams' },
-  { label: 'Scholarships funded', value: '$3.2M', detail: 'creator-first capital' },
-];
-
-const journeySteps = [
-  {
-    title: '01 · Discover',
-    caption: 'Baseline your skills with async primers, product briefs, and curated warmups.',
-    meta: 'Week 0',
-    icon: FiLayers,
-  },
-  {
-    title: '02 · Sprint',
-    caption: 'Join live mentor rooms, pair-build micro products, and ship progress reports.',
-    meta: 'Weeks 1-4',
-    icon: FiPlayCircle,
-  },
-  {
-    title: '03 · Showcase',
-    caption: 'Package your builds into case studies, shadow hiring managers, and rehearse interviews.',
-    meta: 'Week 5',
-    icon: FiTrendingUp,
-  },
-  {
-    title: '04 · Placement',
-    caption: 'Tap into referral pods, async mock loops, and matched hiring partners.',
-    meta: 'Week 6+',
-    icon: FiCompass,
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      'I rebuilt my entire workflow through the async + live cadence. The mentor feedback loops mirrored top-tier product orgs.',
-    name: 'Riya Mehta',
-    title: 'Product Designer · Framer',
-    avatar: 'https://randomuser.me/api/portraits/women/12.jpg',
-  },
-  {
-    quote:
-      'The weekly demo tapes forced us to ship. I converted two offers within three weeks of showcasing my sprint artifacts.',
-    name: 'Marcus Hill',
-    title: 'Full-stack Engineer · Vercel',
-    avatar: 'https://randomuser.me/api/portraits/men/41.jpg',
-  },
-  {
-    quote:
-      'EduLearn feels like a modern studio more than a traditional LMS. Everything is high fidelity—from briefs to critique.',
-    name: 'Ananya Rao',
-    title: 'AI Researcher · ElevenLabs',
-    avatar: 'https://randomuser.me/api/portraits/women/81.jpg',
-  },
-];
-
-function Homepage() {
+const Homepage = () => {
+  const { data, isLoading } = useGetPublishCourseQuery();
   const [search, setSearch] = useState('');
-  const { data, isLoading, isError } = useGetPublishCourseQuery();
-  const allCourses = Array.isArray(data?.courses) ? data.courses : [];
-  const [openFaq, setOpenFaq] = useState(null);
-  const { data: userData } = useLoaduserQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
-  const enrolledCourseIds = userData?.user?.enrolledCourses ?? [];
-
-  const isCoursePurchased = (courseId) => enrolledCourseIds.includes(courseId);
-
-  const filteredCourses = useMemo(() => {
-    if (!search.trim()) return allCourses;
-    const term = search.trim().toLowerCase();
-    return allCourses.filter(
-      (course) =>
-        (course.courseTitle || '').toLowerCase().includes(term) ||
-        (course.category || '').toLowerCase().includes(term)
-    );
-  }, [search, allCourses]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <div className="animate-spin rounded-full h-14 w-14 border-2 border-indigo-200 border-t-indigo-500" />
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-rose-500 bg-background">
-        Failed to load courses. Please try again later.
-      </div>
-    );
-  }
-
-  const featuredCourses = filteredCourses.slice(0, 4);
+  const courses = data?.courses || [];
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100">
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute -top-48 left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-gradient-to-br from-indigo-500/30 via-sky-400/20 to-emerald-400/20 blur-[160px]"
-        animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.9, 0.5] }}
-        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute bottom-[-120px] right-[-80px] h-[360px] w-[360px] rounded-full bg-gradient-to-br from-violet-500/30 via-indigo-500/15 to-transparent blur-[180px]"
-        animate={{ scale: [1, 0.9, 1], rotate: [0, 12, -8, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-      />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-indigo-500/30">
+      
+      {/* Hero Section */}
+      <HeroSection search={search} setSearch={setSearch} courses={courses} />
 
-      <HeroSection search={search} setSearch={setSearch} filteredCourses={filteredCourses} />
-
-      <section className="relative z-10 w-full overflow-hidden border-y border-white/70 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/60">
-        <motion.div
-          className="flex min-w-full gap-6 py-5"
-          animate={{ x: ['0%', '-50%'] }}
-          transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-        >
-          {[...statPills, ...statPills].map((pill, idx) => (
-            <div
-              key={`${pill.label}-${idx}`}
-              className="flex w-64 shrink-0 flex-col rounded-2xl border border-white/70 bg-white/70 px-6 py-4 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-white/10 dark:bg-slate-900/80"
-            >
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{pill.label}</p>
-              <p className="text-2xl font-semibold text-slate-900 dark:text-white">{pill.value}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-300">{pill.detail}</p>
-            </div>
-          ))}
-        </motion.div>
+      {/* Trusted By Section */}
+      <section className="py-12 border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">Trusted by engineering teams at</p>
+          <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+             {['Netflix', 'Google', 'Amazon', 'Microsoft', 'Spotify'].map(brand => (
+               <span key={brand} className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                 <FiZap className="w-6 h-6" /> {brand}
+               </span>
+             ))}
+          </div>
+        </div>
       </section>
 
-      <main className="relative z-10 w-full space-y-20 px-4 pb-24 pt-16 sm:px-8 lg:px-16">
-        <section className="relative w-full overflow-hidden rounded-[36px] border border-white/70 bg-white/95 px-4 py-12 shadow-2xl shadow-indigo-500/5 sm:px-8 lg:px-16 dark:border-white/5 dark:bg-slate-900/70">
-          <div className="absolute inset-0 bg-[radial-gradient(circle,_rgba(79,70,229,0.08)_0%,_transparent_60%)]" aria-hidden />
-          <div className="absolute inset-0 opacity-40 blur-3xl" aria-hidden style={{ backgroundImage: 'linear-gradient(120deg, rgba(129,140,248,0.25), transparent)' }} />
-          <div className="relative flex flex-col items-center gap-3 text-center">
-            <p className="tag-pill">Why creators trust EduLearn</p>
-            <h2 className="text-3xl md:text-4xl font-semibold text-slate-900 dark:text-white">A studio-grade learning OS</h2>
-            <p className="max-w-2xl text-base text-slate-500 dark:text-slate-300">
-              Async tapes, live critique rooms, and guided rituals engineered to keep you shipping. Every touchpoint feels like a modern
-              product studio—not a dusty LMS.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-300">
-              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 px-4 py-1.5 dark:border-slate-700">
-                <FiUsers className="h-4 w-4 text-indigo-500" />
-                28K active learners
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 px-4 py-1.5 dark:border-slate-700">
-                <FiClock className="h-4 w-4 text-emerald-500" />
-                7m mentor response time
-              </span>
+      {/* Categories Section */}
+      <section className="py-24 bg-slate-50 dark:bg-slate-950">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white font-display">Top Categories</h2>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">Explore our most popular learning paths</p>
             </div>
+            <button className="text-indigo-600 font-semibold hover:text-indigo-700 flex items-center gap-2">
+              View All <FiArrowRight />
+            </button>
           </div>
-          <div className="relative mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {[
+              {
+                icon: FiCode,
+                label: 'Development',
+                color: 'text-blue-500',
+                bg: 'bg-blue-500/10'
+              },
+              {
+                icon: FiPenTool,
+                label: 'Design',
+                color: 'text-pink-500',
+                bg: 'bg-pink-500/10'
+              },
+              {
+                icon: FiDatabase,
+                label: 'Data Science',
+                color: 'text-emerald-500',
+                bg: 'bg-emerald-500/10'
+              },
+              {
+                icon: FiCpu,
+                label: 'AI & ML',
+                color: 'text-purple-500',
+                bg: 'bg-purple-500/10'
+              },
+              {
+                icon: FiLayout,
+                label: 'Marketing',
+                color: 'text-orange-500',
+                bg: 'bg-orange-500/10'
+              },
+              {
+                icon: FiDollarSign,
+                label: 'Business',
+                color: 'text-cyan-500',
+                bg: 'bg-cyan-500/10'
+              },
+            ].map((cat, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ y: -5 }}
+                className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-indigo-500/50 transition-colors group"
+              >
+                <div className={`w-12 h-12 rounded-xl ${cat.bg} ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <cat.icon className="w-6 h-6" />
+                </div>
+                <span className="font-semibold text-slate-900 dark:text-white">{cat.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-24 bg-white dark:bg-slate-900">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 font-display">
+              Why Top Learners Choose EduLearn
+            </h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400">
+              We provide a comprehensive learning ecosystem designed to take you from beginner to pro.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, idx) => (
               <motion.div
-                key={feature.title}
+                key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: idx * 0.08 }}
                 viewport={{ once: true }}
-                className="flex flex-col gap-3 rounded-3xl border border-white/70 bg-white/80 p-6 shadow-xl shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950/40"
+                transition={{ delay: idx * 0.1 }}
+                className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 hover:border-indigo-500/30 transition-colors group"
               >
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600">
-                  {feature.icon}
-                </span>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{feature.title}</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-300">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section id="courses-section" className="relative w-full overflow-visible rounded-[32px] border border-white/70 bg-gradient-to-br from-white via-white to-slate-50 px-4 py-10 shadow-2xl shadow-indigo-500/10 sm:px-8 lg:px-16 dark:border-white/10 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-          
-          <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-indigo-500">
-                <FiTrendingUp className="h-4 w-4" /> Curated tracks
-              </span>
-              <h2 className="mt-2 text-2xl md:text-3xl font-semibold text-slate-900 dark:text-white">Trending & exclusive launches</h2>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
-                Pick a cohort, reserve your seat, and get instant access to the async primer so week one starts fast.
-              </p>
-            </div>
-            <a href="/courses" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-400">
-              View all courses
-              <FiArrowRight className="h-4 w-4" />
-            </a>
-          </div>
-          <div className="relative mt-8 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {featuredCourses.length ? (
-              featuredCourses.map((course) => {
-                const normalizedCourse = {
-                  ...course,
-                  courseLevel: course.courseLevel || 'All levels',
-                  subTitle:
-                    course.subTitle || 'Build real products with mentor critiques and async rituals.',
-                };
-                return (
-                  <Course
-                    key={course._id}
-                    course={normalizedCourse}
-                    isPurchased={isCoursePurchased(course._id)}
-                  />
-                );
-              })
-            ) : (
-              <div className="col-span-full rounded-3xl border border-dashed border-slate-200/80 p-12 text-center text-slate-500 dark:border-slate-800">
-                No courses found matching your search.
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="relative w-full overflow-hidden rounded-[40px] border border-white/60 bg-white/90 px-4 py-12 shadow-xl shadow-slate-900/5 sm:px-8 lg:px-16 dark:border-white/10 dark:bg-slate-900/70">
-          <div className="absolute inset-x-8 top-16 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-500/40" aria-hidden />
-          <div className="relative text-center">
-            <p className="tag-pill mx-auto">Learning journey</p>
-            <h2 className="text-3xl font-semibold">From onboarding to offers</h2>
-            <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-500 dark:text-slate-300">
-              Each sprint stacks into the next: prep, live execution, showcase, and hiring pods. Nothing is left to chance.
-            </p>
-          </div>
-          <div className="relative mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {journeySteps.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <motion.div
-                  key={step.title}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  viewport={{ once: true }}
-                  className="flex flex-col gap-3 rounded-3xl border border-white/70 bg-white/80 p-6 dark:border-white/10 dark:bg-slate-950/30"
-                >
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-500">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-                    <FiClock className="h-4 w-4" /> {step.meta}
-                  </div>
-                  <h4 className="text-lg font-semibold">{step.title}</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-300">{step.caption}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="relative w-full overflow-hidden rounded-[36px] border border-white/70 bg-white/80 px-4 py-12 shadow-xl shadow-slate-900/10 sm:px-8 lg:px-16 dark:border-white/10 dark:bg-slate-950/40">
-          <div className="relative text-center">
-            <p className="tag-pill mx-auto">Mentor network</p>
-            <h2 className="text-3xl font-semibold">Mentored by elite builders</h2>
-            <div className="mt-2 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-300">
-              <FiUsers className="h-4 w-4 text-indigo-500" /> 190+ mentors online weekly
-            </div>
-          </div>
-          <div className="relative mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {instructors.map((inst, idx) => (
-              <motion.div
-                key={inst.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: idx * 0.08 }}
-                viewport={{ once: true }}
-                className="flex flex-col items-center rounded-3xl border border-white/70 bg-white/70 p-6 text-center shadow-md dark:border-white/10 dark:bg-slate-950/50"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-indigo-500/40 to-transparent blur-2xl" aria-hidden />
-                  <img
-                    src={inst.avatar}
-                    alt={inst.name}
-                    className="relative mx-auto mb-4 h-24 w-24 rounded-full border-2 border-white/80 object-cover shadow-2xl"
-                  />
+                <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-6 h-6" />
                 </div>
-                <h4 className="font-semibold text-lg">{inst.name}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-300">{inst.title}</p>
-                <button className="mt-5 inline-flex items-center justify-center rounded-full border border-slate-200/60 px-5 py-2 text-sm font-medium text-slate-700 hover:border-indigo-400 hover:text-indigo-500 dark:border-slate-700 dark:text-slate-100">
-                  View profile
-                </button>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
-          </div>
-        </section>
-
-        <section className="relative w-full overflow-hidden rounded-[40px] border border-white/10 bg-gradient-to-br from-slate-900 via-indigo-900 to-black px-4 py-12 text-white shadow-2xl shadow-indigo-500/40 sm:px-8 lg:px-16">
-          <div className="absolute inset-0 opacity-20" aria-hidden style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.5), transparent 45%)' }} />
-          <div className="relative mb-8 text-center">
-            <p className="tag-pill mx-auto bg-white/10 text-white">Proof of momentum</p>
-            <h2 className="text-3xl font-semibold">People shipping real work</h2>
-          </div>
-          <div className="relative grid gap-6 md:grid-cols-3">
-            {testimonials.map((testimonial, idx) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: idx * 0.12 }}
-                viewport={{ once: true }}
-                className="flex flex-col gap-4 rounded-3xl border border-white/20 bg-white/5 p-6 backdrop-blur"
-              >
-                <div className="flex items-center gap-1 text-amber-300">
-                  {Array.from({ length: 5 }).map((_, starIdx) => (
-                    <FiStar key={starIdx} className="h-4 w-4" />
-                  ))}
-                </div>
-                <p className="text-lg font-medium text-white/95">“{testimonial.quote}”</p>
-                <div className="flex items-center gap-3">
-                  <img src={testimonial.avatar} alt={testimonial.name} className="h-12 w-12 rounded-full object-cover" />
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-white/70">{testimonial.title}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="relative w-full overflow-hidden rounded-[32px] border border-white/70 bg-white/90 px-4 py-12 shadow-xl shadow-slate-900/10 sm:px-8 lg:px-16 dark:border-white/10 dark:bg-slate-950/40">
-          <div className="relative mb-8 text-center">
-            <p className="tag-pill mx-auto">Frequently asked questions</p>
-            <h2 className="text-3xl font-semibold">Everything you need to know</h2>
-          </div>
-          <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <motion.div key={faq.q} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <button
-                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200/60 bg-white/80 px-6 py-4 text-left dark:border-slate-800 dark:bg-slate-900/60"
-                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  aria-expanded={openFaq === idx}
-                  aria-controls={`faq-${idx}`}
-                >
-                  <span className="font-medium text-slate-900 dark:text-slate-100">{faq.q}</span>
-                  <svg
-                    className={`h-5 w-5 text-indigo-500 transition-transform ${openFaq === idx ? 'rotate-45' : ''}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-                {openFaq === idx && (
-                  <div
-                    id={`faq-${idx}`}
-                    className="mt-2 rounded-2xl border border-slate-200/60 bg-white/90 px-6 py-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300"
-                  >
-                    {faq.a}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      <section className="relative z-10 mb-16 w-full overflow-hidden rounded-[40px] border border-white/10 bg-slate-900 px-4 py-12 text-white shadow-2xl shadow-indigo-500/30 sm:px-8 lg:px-16">
-        <div className="absolute inset-0 opacity-20" aria-hidden style={{ backgroundImage: 'linear-gradient(120deg, rgba(59,130,246,0.3), transparent)' }} />
-        <div className="relative flex flex-col items-start gap-6 text-left">
-          <p className="text-sm uppercase tracking-[0.4em] text-white/60">Join the community</p>
-          <h3 className="text-3xl md:text-4xl font-semibold leading-tight">Build with engineers, designers, and PMs shipping weekly</h3>
-          <p className="max-w-3xl text-base text-white/70">
-            Access premium cohorts, async templates, curated hiring partners, and studio-grade critique rooms. Everything you need to push your craft forward.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <a
-              href="/courses"
-              className="inline-flex items-center gap-2 rounded-full bg-white/95 px-8 py-3 text-base font-semibold text-slate-900"
-            >
-              Join the next sprint
-              <FiArrowRight className="h-4 w-4" />
-            </a>
-            <a
-              href="/become-instructor"
-              className="inline-flex items-center justify-center rounded-full border border-white/60 px-8 py-3 text-base font-semibold text-white"
-            >
-              Launch your cohort
-            </a>
           </div>
         </div>
       </section>
 
-      <footer className="relative z-10 border-t border-white/50 bg-white/70 py-12 text-sm text-slate-500 backdrop-blur dark:border-white/10 dark:bg-slate-950/60 dark:text-slate-400">
-        <div className="grid w-full grid-cols-1 gap-8 px-4 sm:px-8 lg:px-16 lg:grid-cols-4">
-          <div>
-            <div className="text-2xl font-semibold text-slate-900 dark:text-white">EduLearn</div>
-            <p className="mt-2">A modern learning platform focused on shipping real products with a global community.</p>
+      {/* Featured Courses */}
+      <section id="courses-section" className="py-24 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div>
+              <span className="text-indigo-600 dark:text-indigo-400 font-semibold tracking-wider uppercase text-sm">Explore Catalog</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mt-2 font-display">
+                Featured Courses
+              </h2>
+            </div>
+            <button className="px-6 py-3 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2">
+              View All Courses <FiArrowRight />
+            </button>
           </div>
-          <div>
-            <h4 className="mb-3 font-semibold text-slate-900 dark:text-white">Company</h4>
-            <a href="#" className="block hover:text-indigo-500">About</a>
-            <a href="#" className="block hover:text-indigo-500">Careers</a>
-          </div>
-          <div>
-            <h4 className="mb-3 font-semibold text-slate-900 dark:text-white">Support</h4>
-            <a href="#" className="block hover:text-indigo-500">Help center</a>
-            <a href="#" className="block hover:text-indigo-500">Privacy</a>
-          </div>
-          <div>
-            <h4 className="mb-3 font-semibold text-slate-900 dark:text-white">Newsletter</h4>
-            <form className="flex gap-2">
-              <input
-                placeholder="Work email"
-                className="flex-1 rounded-xl border border-slate-200/60 bg-white/80 px-4 py-2 focus:border-indigo-400 focus:outline-none dark:border-slate-700 dark:bg-slate-900/60"
-              />
-              <button className="rounded-xl bg-indigo-600 px-4 py-2 text-white">Join</button>
-            </form>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                <div key={n} className="h-[320px] rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              ))}
+            </div>
+          ) : courses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {courses.slice(0, 8).map((course) => (
+                <Course key={course._id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">No courses found</h3>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">Try adjusting your search terms</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Instructors Section - Redesigned */}
+      <section className="py-32 bg-slate-900 relative overflow-hidden">
+         {/* Dark theme section for contrast */}
+         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/20 rounded-full blur-[120px]" />
+         
+         <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+              <div className="max-w-2xl">
+                <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">World-Class Mentors</span>
+                <h2 className="text-4xl md:text-5xl font-bold text-white mt-3 font-display">
+                  Learn from the people <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">who built the industry.</span>
+                </h2>
+              </div>
+              <button className="px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
+                Meet All Instructors
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {instructors.map((instructor, idx) => (
+                <motion.div 
+                  key={idx}
+                  whileHover={{ y: -10 }}
+                  className="group relative bg-slate-800/50 border border-slate-700 rounded-3xl overflow-hidden backdrop-blur-sm"
+                >
+                  <div className="aspect-[4/5] relative overflow-hidden">
+                    <img 
+                      src={instructor.image} 
+                      alt={instructor.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
+                    
+                    {/* Social Links Overlay */}
+                    <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-10 group-hover:translate-x-0 transition-transform duration-300">
+                      <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-indigo-500 transition-colors"><FiLinkedin /></a>
+                      <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-sky-500 transition-colors"><FiTwitter /></a>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h3 className="text-xl font-bold text-white mb-1">{instructor.name}</h3>
+                    <p className="text-indigo-400 text-sm font-medium mb-2">{instructor.role}</p>
+                    <p className="text-slate-400 text-sm line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                      {instructor.bio}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+         </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-indigo-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600 to-violet-600" />
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-display">
+            Ready to Start Your Journey?
+          </h2>
+          <p className="text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
+            Join thousands of learners who are already building their future with EduLearn.
+            Get unlimited access to all courses today.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button className="px-8 py-4 rounded-full bg-white text-indigo-600 font-bold text-lg hover:bg-indigo-50 transition-colors shadow-xl">
+              Get Started for Free
+            </button>
+            <button className="px-8 py-4 rounded-full bg-indigo-700 text-white font-bold text-lg border border-indigo-500 hover:bg-indigo-800 transition-colors">
+              View Pricing
+            </button>
           </div>
         </div>
-        <p className="mt-8 text-center text-xs text-slate-400">&copy; {new Date().getFullYear()} EduLearn. All rights reserved.</p>
-      </footer>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-24 bg-slate-50 dark:bg-slate-950">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-12 text-center font-display">
+            Frequently Asked Questions
+          </h2>
+          
+          <div className="space-y-4">
+            {faqs.map((faq, idx) => (
+              <div key={idx} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
+                  <FiMessageCircle className="text-indigo-500" />
+                  {faq.q}
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 ml-8">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="py-24 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-indigo-600 rounded-3xl p-8 md:p-16 relative overflow-hidden text-center">
+            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+            <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+            
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-display">
+                Join our newsletter
+              </h2>
+              <p className="text-indigo-100 mb-8 text-lg">
+                Get weekly insights on learning, career growth, and the latest tech trends delivered straight to your inbox.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <input 
+                  type="email" 
+                  placeholder="Enter your email" 
+                  className="flex-1 px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-indigo-200 focus:outline-none focus:bg-white/20 transition-colors"
+                />
+                <button className="px-8 py-4 rounded-full bg-white text-indigo-600 font-bold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+                  Subscribe <FiMail />
+                </button>
+              </div>
+              <p className="text-indigo-200 text-sm mt-4">
+                No spam, unsubscribe at any time.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <Footer />
+
     </div>
   );
-}
+};
 
 export default Homepage;

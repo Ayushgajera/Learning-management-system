@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent } from '../controllers/user.controller.js';
+import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent, getWishlistCourses, addToWishlist, removeFromWishlist } from '../controllers/user.controller.js';
 import isAuthenticated from '../middleware/isAuthenticated.js';
  import upload from '../utils/multer.js';
 import {authorizeRoles} from '../middleware/authorizeRoles.js'
@@ -33,6 +33,11 @@ router.get("/me", isAuthenticated, async (req, res) => {
 // Notification preferences
 router.get('/notifications', isAuthenticated, getNotificationPreferences);
 router.put('/notifications', isAuthenticated, updateNotificationPreferences);
+
+// Wishlist endpoints
+router.get('/wishlist', isAuthenticated, getWishlistCourses);
+router.post('/wishlist/:courseId', isAuthenticated, addToWishlist);
+router.delete('/wishlist/:courseId', isAuthenticated, removeFromWishlist);
 
 
 

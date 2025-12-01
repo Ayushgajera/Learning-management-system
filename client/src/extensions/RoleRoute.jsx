@@ -2,15 +2,16 @@ import Loader from "../components/Loader";
 import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
-export default function RoleRoute({ children, allowedRole }) {
-    const { isAuthenticated, role, loading } = useSelector((state) => state.auth);
+export default function RoleRoute({ children, allowedRole, redirectTo = "/unauthorized" }) {
+    const { isAuthenticated, role, loading, user } = useSelector((state) => state.auth);
+    const effectiveRole = role ?? user?.role ?? null;
 
     // 🔹 Wait until role is loaded to avoid flicker
-    if (loading || role === null) return <Loader />;
+    if (loading || effectiveRole === null) return <Loader />;
 
     if (!isAuthenticated) return <Navigate to="/login" />;
 
-    if (role !== allowedRole) return <Navigate to="/unauthorized" />;
+    if (allowedRole && effectiveRole !== allowedRole) return <Navigate to={redirectTo} />;
 
     return children;
 }

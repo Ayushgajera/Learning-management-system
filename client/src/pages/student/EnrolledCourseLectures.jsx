@@ -15,6 +15,10 @@ import {
   FiEdit2,
   FiDownload,
   FiMessageSquare,
+  FiSettings,
+  FiMoreVertical,
+  FiVideo,
+  FiCalendar
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -39,100 +43,178 @@ import {
   View,
   Document,
   StyleSheet,
-  // You can also import Image, Svg, Path if needed
 } from "@react-pdf/renderer";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import CourseChat from './../chat/CourseChat';
 
 // PDF styles for certificate
 const styles = StyleSheet.create({
   page: {
-    backgroundColor: "#fafafa",
+    flexDirection: 'column',
+    backgroundColor: '#FFFFFF',
+    padding: 0,
+  },
+  container: {
+    flex: 1,
+    margin: 20,
+    border: '3 solid #1e293b', // Slate 900
+    padding: 5,
+    position: 'relative',
+  },
+  innerContainer: {
+    flex: 1,
+    border: '1 solid #d97706', // Amber 600
     padding: 40,
-    fontFamily: "Helvetica",
-    display: "flex",
-    flexDirection: "column",
-    border: "8 solid #1e3a8a",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc', // Slate 50
   },
-  borderInner: {
-    border: "4 solid #facc15",
-    padding: 30,
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
+  cornerTopLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 120,
+    height: 120,
+    borderTop: '25 solid #1e293b',
+    borderLeft: '25 solid #1e293b',
   },
-  platformName: {
-    position: "absolute",
-    top: 20,
-    fontSize: 18,
-    color: "#1e3a8a",
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 120,
+    height: 120,
+    borderBottom: '25 solid #1e293b',
+    borderRight: '25 solid #1e293b',
   },
-  heading: {
+  logo: {
+    fontSize: 20,
+    color: '#64748b',
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textTransform: 'uppercase',
+    letterSpacing: 6,
+  },
+  title: {
     fontSize: 42,
-    textTransform: "uppercase",
-    marginBottom: 12,
-    textAlign: "center",
-    fontWeight: "bold",
-    color: "#1e3a8a",
-    letterSpacing: 2,
+    fontFamily: 'Times-Roman',
+    color: '#1e293b',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  decorativeLine: {
-    width: "50%",
-    borderBottom: "2 solid #facc15",
-    marginVertical: 10,
+  subtitle: {
+    fontSize: 12,
+    color: '#d97706', // Amber 600
+    marginBottom: 40,
+    textTransform: 'uppercase',
+    letterSpacing: 3,
+    fontWeight: 'bold',
   },
-  subHeading: {
-    fontSize: 16,
-    marginBottom: 24,
-    textAlign: "center",
-    color: "#6b7280",
+  presentedTo: {
+    fontSize: 14,
+    color: '#64748b', // Slate 500
+    marginBottom: 15,
+    fontFamily: 'Times-Italic',
   },
-  name: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-    marginVertical: 10,
-    textAlign: "center",
+  studentName: {
+    fontSize: 32,
+    fontFamily: 'Times-Bold',
+    color: '#0f172a', // Slate 900
+    marginBottom: 15,
+    borderBottom: '1 solid #cbd5e1',
+    paddingBottom: 5,
+    minWidth: 350,
+    textAlign: 'center',
   },
-  course: {
-    fontSize: 22,
-    fontWeight: "semibold",
-    color: "#1e3a8a",
-    marginVertical: 10,
-    textAlign: "center",
+  completionText: {
+    fontSize: 14,
+    color: '#64748b',
+    marginTop: 15,
+    marginBottom: 15,
+    fontFamily: 'Times-Italic',
+  },
+  courseTitle: {
+    fontSize: 24,
+    fontFamily: 'Times-Bold',
+    color: '#1e293b',
+    marginBottom: 50,
+    textAlign: 'center',
+    maxWidth: '80%',
   },
   footer: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
     marginTop: 20,
+    paddingHorizontal: 40,
+  },
+  signatureBlock: {
+    alignItems: 'center',
+    width: '35%',
+  },
+  signature: {
+    fontFamily: 'Courier-Oblique',
+    fontSize: 16,
+    color: '#1e293b',
+    marginBottom: 5,
+  },
+  signatureLabel: {
+    fontSize: 9,
+    color: '#94a3b8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    borderTop: '1 solid #94a3b8',
+    paddingTop: 8,
+    width: '100%',
+    textAlign: 'center',
+  },
+  dateBlock: {
+    alignItems: 'center',
+    width: '25%',
+  },
+  date: {
     fontSize: 14,
-    textAlign: "center",
-    color: "#6b7280",
+    color: '#1e293b',
+    marginBottom: 5,
+    fontWeight: 'bold',
   },
-  signatureArea: {
-    marginTop: 50,
-    width: "60%",
-    alignItems: "center",
+  sealContainer: {
+    position: 'absolute',
+    bottom: 60,
+    alignSelf: 'center',
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  signatureBox: {
-    borderBottom: "2 solid #111",
-    fontFamily: "Courier-Oblique",
-    width: "100%",
-    textAlign: "center",
-    paddingTop: 5,
-    paddingBottom: 3,
-    fontSize: 20,
-    fontWeight: "bold",
+  sealCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#d97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '3 solid #fff',
   },
-  stampBox: {
-    padding: 8,
-    marginTop: 5,
-    fontSize: 10,
-    color: "#1e3a8a",
-    textTransform: "uppercase",
+  sealText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    textTransform: 'uppercase',
   },
+  idText: {
+    position: 'absolute',
+    bottom: 10,
+    right: 20,
+    fontSize: 8,
+    color: '#cbd5e1',
+  }
 });
 
 const MyCertificate = ({
@@ -142,25 +224,43 @@ const MyCertificate = ({
   date = new Date().toLocaleDateString(),
 }) => (
   <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.borderInner}>
+    <Page size="A4" orientation="landscape" style={styles.page}>
+      <View style={styles.container}>
+        <View style={styles.cornerTopLeft} />
+        <View style={styles.cornerBottomRight} />
         
-        {/* Platform Branding */}
-        <Text style={styles.platformName}>EduLearn</Text>
+        <View style={styles.innerContainer}>
+          <Text style={styles.logo}>EduLearn</Text>
+          
+          <Text style={styles.title}>Certificate of Completion</Text>
+          <Text style={styles.subtitle}>Excellence in Education</Text>
+          
+          <Text style={styles.presentedTo}>This certificate is proudly presented to</Text>
+          <Text style={styles.studentName}>{name}</Text>
+          
+          <Text style={styles.completionText}>for successfully completing the course</Text>
+          <Text style={styles.courseTitle}>{course}</Text>
+          
+          <View style={styles.sealContainer}>
+             <View style={styles.sealCircle}>
+                <Text style={styles.sealText}>Verified</Text>
+                <Text style={styles.sealText}>EduLearn</Text>
+             </View>
+          </View>
 
-        <Text style={styles.heading}>Certificate of Completion</Text>
-        <View style={styles.decorativeLine}></View>
-        
-        <Text style={styles.subHeading}>This is proudly presented to</Text>
-        <Text style={styles.name}>{name}</Text>
-        <Text style={styles.subHeading}>for successfully completing</Text>
-        <Text style={styles.course}>{course}</Text>
-        <Text style={styles.footer}>Issued on: {date}</Text>
+          <View style={styles.footer}>
+            <View style={styles.dateBlock}>
+              <Text style={styles.date}>{date}</Text>
+              <Text style={styles.signatureLabel}>Date Issued</Text>
+            </View>
 
-        {/* Instructor Signature */}
-        <View style={styles.signatureArea}>
-          <Text style={styles.signatureBox}>{instructorName}</Text>
-          <Text style={styles.stampBox}>Official Instructor</Text>
+            <View style={styles.signatureBlock}>
+              <Text style={styles.signature}>{instructorName}</Text>
+              <Text style={styles.signatureLabel}>Instructor Signature</Text>
+            </View>
+          </View>
+          
+          <Text style={styles.idText}>Certificate ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</Text>
         </View>
       </View>
     </Page>
@@ -189,104 +289,154 @@ const MemoizedSidebarContent = React.memo(
       (lectureId) => bookmarkedLectures.includes(lectureId),
       [bookmarkedLectures]
     );
-    console.log(creatorName);
+    
+    const progressPercentage = Math.round((watchedLectureIds.length / courseLectures.length) * 100) || 0;
+
     return (
-      <div className="bg-white rounded-xl shadow p-6 w-full">
-        <h2 className="text-lg font-semibold mb-4 text-emerald-700">Lectures</h2>
-        <ul className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-          {courseLectures.map((lecture) => (
-            <li key={lecture._id}>
-              <button
-                className={`flex items-center w-full gap-2 px-3 py-2 rounded-lg transition group ${
-                  selectedLecture && selectedLecture._id === lecture._id
-                    ? "bg-emerald-100 text-emerald-700 font-semibold"
-                    : "hover:bg-gray-100 text-gray-700"
-                }`}
+      <div className="bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800">
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 font-display">Course Content</h2>
+          
+          {/* Progress Bar */}
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+            <span>{progressPercentage}% Completed</span>
+            <span>{watchedLectureIds.length}/{courseLectures.length} Lectures</span>
+          </div>
+          <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPercentage}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="bg-emerald-500 h-full rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+          {courseLectures.map((lecture, idx) => {
+            const isActive = selectedLecture && selectedLecture._id === lecture._id;
+            const isWatched = watchedLectureIds.includes(lecture._id);
+            const bookmarked = isBookmarked(lecture._id);
+
+            return (
+              <motion.button
+                key={lecture._id}
+                initial={false}
+                animate={{ backgroundColor: isActive ? "rgba(79, 70, 229, 0.05)" : "transparent" }}
                 onClick={() => {
                   setSelectedLecture(lecture);
                   setSidebarOpen(false);
                 }}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group border ${
+                  isActive 
+                    ? "border-indigo-200 dark:border-indigo-500/30" 
+                    : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                }`}
               >
-                <FiPlayCircle className="text-emerald-500" />
-                <span className="truncate flex-1 text-left">
-                  {lecture?.lectureTitle}
-                </span>
-                {watchedLectureIds.includes(lecture._id) && (
-                  <FiCheckCircle className="text-emerald-500 ml-2" title="Watched" />
-                )}
+                <div className="flex-shrink-0 mt-0.5 relative">
+                   {isActive ? (
+                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                       <FiPlayCircle className="text-white w-4 h-4 fill-current" />
+                     </div>
+                   ) : isWatched ? (
+                     <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                       <FiCheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                     </div>
+                   ) : (
+                     <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+                       {idx + 1}
+                     </div>
+                   )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold truncate transition-colors ${
+                    isActive ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
+                  }`}>
+                    {lecture?.lectureTitle}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
+                      <FiVideo className="w-3 h-3" /> {lecture.duration || "10m"}
+                    </span>
+                    {bookmarked && (
+                      <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                        <FiBookmark className="w-3 h-3 fill-current" /> Saved
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 <button
                   type="button"
-                  className={`ml-2 p-1 rounded-full ${
-                    isBookmarked(lecture._id) ? "bg-yellow-200" : "bg-gray-100"
-                  } hover:bg-yellow-300`}
-                  title={isBookmarked(lecture._id) ? "Remove Bookmark" : "Bookmark"}
+                  className={`p-2 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${
+                    bookmarked ? "text-amber-500 opacity-100" : "text-slate-400 hover:text-indigo-500"
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleToggleBookmark(lecture._id);
                   }}
-                  aria-label="Bookmark"
+                  title={bookmarked ? "Remove Bookmark" : "Bookmark"}
                 >
-                  <FiBookmark
-                    className={isBookmarked(lecture._id) ? "text-yellow-600" : "text-gray-400"}
-                  />
+                  <FiBookmark className={bookmarked ? "fill-current" : ""} />
                 </button>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 text-xs text-gray-400 text-center">
-          Progress: {watchedLectureIds.length}/{courseLectures.length} watched
+              </motion.button>
+            );
+          })}
         </div>
-        <div className="mt-4 flex flex-col gap-2 items-center">
-          {completed ? (
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full font-semibold text-sm">
-              <FiAward /> Course Completed!
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-500 rounded-full font-semibold text-sm">
-              <FiPlayCircle /> In Progress
-            </span>
-          )}
-          <button
-            onClick={completed ? handleMarkInCompleted : handleMarkCompleted}
-            className={`mt-2 px-3 py-1 rounded text-xs font-semibold flex items-center gap-2 ${
-              completed
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-emerald-600 text-white hover:bg-emerald-700"
-            }`}
-            disabled={markingCompleted || markingInCompleted}
-          >
-            {completed ? <FiRefreshCw /> : <FiCheckCircle />}
-            {completed ? "Mark as Incomplete" : "Mark as Completed"}
-          </button>
-          {completed && (
-            <div className="my-8 flex flex-col items-center">
-              <PDFDownloadLink
-                document={
-                  <MyCertificate
-                    name={username}
-                    course={courseTitle}
-                    instructorName={creatorName}
-                    date={new Date().toLocaleDateString()}
-                  />
-                }
-                fileName={`certificate_${username.replace(/\s/g, "_")}_${courseTitle.replace(/\s/g, "_")}.pdf`}
-                className="mb-4 px-6 py-3 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-800 transition flex items-center gap-2"
+
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+          <div className="flex flex-col gap-3 items-center">
+            {completed ? (
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center"
               >
-                {({ loading }) => (
-                  <>
-                    {loading ? (
-                      "Generating PDF..."
-                    ) : (
-                      <>
-                        <FiDownload className="w-5 h-5" /> Download Certificate
-                      </>
-                    )}
-                  </>
-                )}
-              </PDFDownloadLink>
-            </div>
-          )}
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-2 text-emerald-600 dark:text-emerald-400">
+                  <FiAward className="w-6 h-6" />
+                </div>
+                <h3 className="font-bold text-emerald-800 dark:text-emerald-300 mb-1">Course Completed!</h3>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-3">You've mastered this course.</p>
+                
+                <PDFDownloadLink
+                  document={
+                    <MyCertificate
+                      name={username}
+                      course={courseTitle}
+                      instructorName={creatorName}
+                      date={new Date().toLocaleDateString()}
+                    />
+                  }
+                  fileName={`certificate_${username.replace(/\s/g, "_")}_${courseTitle.replace(/\s/g, "_")}.pdf`}
+                  className="w-full py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-emerald-500/20"
+                >
+                  {({ loading }) => (
+                    <>
+                      {loading ? "Generating..." : <><FiDownload /> Download Certificate</>}
+                    </>
+                  )}
+                </PDFDownloadLink>
+              </motion.div>
+            ) : (
+              <div className="w-full flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-sm text-slate-600 dark:text-slate-400">
+                <span className="flex items-center gap-2"><FiPlayCircle /> In Progress</span>
+                <span className="font-mono font-bold">{progressPercentage}%</span>
+              </div>
+            )}
+            
+            <button
+              onClick={completed ? handleMarkInCompleted : handleMarkCompleted}
+              className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
+                completed
+                  ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-lg"
+              }`}
+              disabled={markingCompleted || markingInCompleted}
+            >
+              {completed ? <><FiRefreshCw /> Mark Incomplete</> : <><FiCheckCircle /> Mark as Completed</>}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -299,8 +449,7 @@ function EnrolledCourseLectures() {
   const videoRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
-  console.log(user?._id);
-  console.log(courseId);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const {
     data: courseData,
@@ -321,7 +470,6 @@ function EnrolledCourseLectures() {
 
   const [bookmarkedLectures, setBookmarkedLectures] = useState([]);
   const [selectedLecture, setSelectedLecture] = useState(null);
-  const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [currentNote, setCurrentNote] = useState("");
   const [playbackRate, setPlaybackRate] = useState(1);
   const [videoQuality, setVideoQuality] = useState("auto");
@@ -332,7 +480,6 @@ function EnrolledCourseLectures() {
     [progress]
   );
   const courseTitle = courseDetails.courseTitle || "Course Title";
-  console.log(courseDetails?.creator?.name)
   const username = user?.name || user?.username || "Student";
   const creatorName = courseDetails?.creator?.name || "Instructor";
 
@@ -354,6 +501,8 @@ function EnrolledCourseLectures() {
   useEffect(() => {
     if (selectedLecture) {
       setLastWatchedLecture(courseId, selectedLecture._id);
+      // Load notes for the selected lecture
+      setCurrentNote(getLectureNotes(courseId, selectedLecture._id));
     }
   }, [selectedLecture, courseId]);
 
@@ -436,18 +585,10 @@ function EnrolledCourseLectures() {
     [courseId]
   );
 
-  const openNotesModal = useCallback(() => {
-    if (selectedLecture) {
-      setCurrentNote(getLectureNotes(courseId, selectedLecture._id));
-      setNotesModalOpen(true);
-    }
-  }, [courseId, selectedLecture]);
-
   const saveNote = useCallback(() => {
     if (selectedLecture) {
       setLectureNotes(courseId, selectedLecture._id, currentNote);
-      setNotesModalOpen(false);
-      toast.success("Note saved!");
+      toast.success("Note saved successfully!");
     }
   }, [courseId, selectedLecture, currentNote]);
 
@@ -461,7 +602,7 @@ function EnrolledCourseLectures() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-emerald-500"></div>
       </div>
     );
@@ -469,13 +610,16 @@ function EnrolledCourseLectures() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white shadow-lg rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">Error loading course</h2>
-          <p className="text-gray-600">{error.message || "An unknown error occurred."}</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="bg-white dark:bg-slate-800 shadow-lg rounded-xl p-8 text-center max-w-md mx-4">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600 dark:text-red-400">
+            <FiX className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Error loading course</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">{error.message || "An unknown error occurred."}</p>
           <button
-            onClick={() => navigate(-1)}
-            className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+            onClick={() => navigate(`/course/${courseId}`)}
+            className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition font-semibold"
           >
             Go Back
           </button>
@@ -503,260 +647,290 @@ function EnrolledCourseLectures() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 pt-10">
-      <div className="max-w-6xl mx-auto w-full py-8 px-2 sm:px-6">
-        <div className="flex items-center gap-3 mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-emerald-700 transition"
-            aria-label="Back"
-          >
-            <FiArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-2xl font-bold text-emerald-700">{courseDetails.courseTitle}</h1>
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="max-w-[1600px] mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(`/course/${courseId}`)}
+              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition"
+              title="Back to Course Details"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-md">
+              {courseDetails.courseTitle}
+            </h1>
+          </div>
 
-          {/* Chat CTA - header button */}
-          <button
-            onClick={() => navigate(`/chat/${courseId}`)}
-            className="ml-4 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold shadow hover:from-blue-700 hover:to-blue-800 transition flex items-center gap-2"
-            title="Open Course Chat"
-            aria-label="Open Course Chat"
-          >
-            <FiMessageSquare className="w-5 h-5" />
-            Chat
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(`/chat/${courseId}`)}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition"
+            >
+              <FiMessageSquare className="w-4 h-4" />
+              <span>Discussion</span>
+            </button>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+            >
+              <FiMenu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
+      </header>
 
-        <div className="flex flex-col md:flex-row gap-8">
-          <aside className="hidden md:block md:w-1/3">
-            <MemoizedSidebarContent {...sidebarProps} />
-          </aside>
-
-          <main className="flex-1">
-            <div className="md:hidden mb-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold shadow hover:bg-emerald-700 transition"
-              >
-                <FiMenu className="w-5 h-5" />
-                Lectures
-              </button>
-            </div>
-
-            {sidebarOpen && (
-              <div className="fixed inset-0 z-40 flex">
-                <div
-                  className="fixed inset-0 bg-black bg-opacity-30"
-                  onClick={() => setSidebarOpen(false)}
-                  aria-hidden="true"
+      <div className="flex-1 flex max-w-[1600px] mx-auto w-full">
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* Video Player Section */}
+          <div className="bg-black aspect-video w-full relative group">
+            {selectedLecture ? (
+              selectedLecture.videoUrl ? (
+                <video
+                  key={selectedLecture._id}
+                  ref={videoRef}
+                  src={selectedLecture.videoUrl}
+                  controls
+                  controlsList="nodownload"
+                  className="w-full h-full"
+                  onTimeUpdate={handleProgress}
+                  onContextMenu={(e) => e.preventDefault()}
+                  playbackRate={playbackRate}
                 />
-                <div className="relative z-50 w-80 max-w-full h-full bg-white shadow-xl p-6 flex flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-emerald-700">Lectures</h2>
-                    <button
-                      onClick={() => setSidebarOpen(false)}
-                      className="p-2 rounded-full bg-gray-200 hover:bg-gray-300"
-                      aria-label="Close"
-                    >
-                      <FiX className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <MemoizedSidebarContent {...sidebarProps} setSidebarOpen={setSidebarOpen} />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-900">
+                  <FiVideo className="w-12 h-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">No video content available</p>
                 </div>
+              )
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-slate-900">
+                <FiPlayCircle className="w-16 h-16 mb-4 opacity-50" />
+                <p className="text-lg font-medium">Select a lecture to start learning</p>
               </div>
             )}
+          </div>
 
-            <div className="bg-white rounded-xl shadow p-6 min-h-[400px] flex flex-col">
-              {selectedLecture ? (
-                <>
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2">
-                    <h2 className="text-xl font-bold text-emerald-700">
-                      {selectedLecture.lectureTitle}
-                    </h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => toggleWatched(selectedLecture._id)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition ${
-                          watchedLectureIds.includes(selectedLecture._id)
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        }`}
-                      >
-                        {watchedLectureIds.includes(selectedLecture._id) ? (
-                          <>
-                            <FiEyeOff /> Mark as Unwatched
-                          </>
-                        ) : (
-                          <>
-                            <FiEye /> Mark as Watched
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={openNotesModal}
-                        className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200"
-                        title="Add/Edit Notes"
-                      >
-                        <FiEdit2 /> Notes
-                      </button>
-                      <button
-                        onClick={() => handleToggleBookmark(selectedLecture._id)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium ${
-                          bookmarkedLectures.includes(selectedLecture._id)
-                            ? "bg-yellow-200 text-yellow-700"
-                            : "bg-gray-100 text-gray-600 hover:bg-yellow-100"
-                        }`}
-                        title={
-                          bookmarkedLectures.includes(selectedLecture._id)
-                            ? "Remove Bookmark"
-                            : "Bookmark"
-                        }
-                      >
-                        <FiBookmark />
-                        {bookmarkedLectures.includes(selectedLecture._id)
-                          ? "Bookmarked"
-                          : "Bookmark"}
-                      </button>
-                    </div>
-                  </div>
-                  <p className="mb-4 text-gray-600">{selectedLecture.description}</p>
+          {/* Content Tabs & Details */}
+          <div className="flex-1 bg-white dark:bg-slate-900">
+            <div className="border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8">
+              <div className="flex gap-6 overflow-x-auto no-scrollbar">
+                {['overview', 'notes', 'reviews'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
+                      activeTab === tab
+                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-4 mb-2">
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="speed" className="text-sm text-gray-700 font-medium">
-                        Speed:
-                      </label>
-                      <select
-                        id="speed"
-                        value={playbackRate}
-                        onChange={handleSpeedChange}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value={0.5}>0.5x</option>
-                        <option value={0.75}>0.75x</option>
-                        <option value={1}>1x (Normal)</option>
-                        <option value={1.25}>1.25x</option>
-                        <option value={1.5}>1.5x</option>
-                        <option value={2}>2x</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="quality" className="text-sm text-gray-700 font-medium">
-                        Quality:
-                      </label>
-                      <select
-                        id="quality"
-                        value={videoQuality}
-                        onChange={handleQualityChange}
-                        className="border rounded px-2 py-1 text-sm"
-                      >
-                        <option value="auto">Auto</option>
-                        <option value="720p">720p</option>
-                        <option value="480p">480p</option>
-                        <option value="360p">360p</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4 shadow">
-                    {selectedLecture.videoUrl ? (
-                      <video
-                        key={selectedLecture._id}
-                        ref={videoRef}
-                        src={selectedLecture.videoUrl}
-                        controls
-                        controlsList="nodownload"
-                        className="w-full h-full"
-                        onTimeUpdate={handleProgress}
-                        onContextMenu={(e) => e.preventDefault()}
-                        playbackRate={playbackRate}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400 text-lg font-semibold">
-                        No video available for this lecture.
+            <div className="p-4 sm:p-8 max-w-4xl">
+              <AnimatePresence mode="wait">
+                {activeTab === 'overview' && selectedLecture && (
+                  <motion.div
+                    key="overview"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                          {selectedLecture.lectureTitle}
+                        </h2>
+                        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <FiVideo /> {selectedLecture.duration || "10m"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FiCalendar /> Last updated {new Date().toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between mt-auto">
-                    <button
-                      onClick={goToPrev}
-                      disabled={currentIdx === 0}
-                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition ${
-                        currentIdx === 0
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                    >
-                      <FiChevronLeft /> Previous
-                    </button>
-                    <button
-                      onClick={goToNext}
-                      disabled={currentIdx === courseLectures.length - 1}
-                      className={`flex items-center gap-1 px-4 py-2 rounded-lg font-medium transition ${
-                        currentIdx === courseLectures.length - 1
-                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                          : "bg-emerald-600 text-white hover:bg-emerald-700"
-                      }`}
-                    >
-                      Next <FiChevronRight />
-                    </button>
-                  </div>
-
-                  {notesModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-                      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative">
+                      
+                      <div className="flex gap-2">
                         <button
-                          className="absolute top-2 right-2 p-2 rounded-full bg-gray-100 hover:bg-gray-200"
-                          onClick={() => setNotesModalOpen(false)}
-                          aria-label="Close"
+                          onClick={() => toggleWatched(selectedLecture._id)}
+                          className={`p-2 rounded-lg border transition ${
+                            watchedLectureIds.includes(selectedLecture._id)
+                              ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
+                              : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                          }`}
+                          title={watchedLectureIds.includes(selectedLecture._id) ? "Mark as Unwatched" : "Mark as Watched"}
                         >
-                          <FiX className="w-5 h-5" />
+                          {watchedLectureIds.includes(selectedLecture._id) ? <FiCheckCircle className="w-5 h-5" /> : <FiCheckCircle className="w-5 h-5 opacity-50" />}
                         </button>
-                        <h3 className="text-lg font-bold mb-2 text-emerald-700">
-                          Notes for: {selectedLecture.lectureTitle}
-                        </h3>
-                        <textarea
-                          className="w-full min-h-[120px] border rounded p-2 mb-4"
-                          value={currentNote}
-                          onChange={(e) => setCurrentNote(e.target.value)}
-                          placeholder="Write your notes here..."
-                        />
+                        <button
+                          onClick={() => handleToggleBookmark(selectedLecture._id)}
+                          className={`p-2 rounded-lg border transition ${
+                            bookmarkedLectures.includes(selectedLecture._id)
+                              ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400"
+                              : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                          }`}
+                          title="Bookmark Lecture"
+                        >
+                          <FiBookmark className={`w-5 h-5 ${bookmarkedLectures.includes(selectedLecture._id) ? "fill-current" : ""}`} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="prose dark:prose-invert max-w-none">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Description</h3>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {selectedLecture.description || "No description available for this lecture."}
+                      </p>
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <div className="flex items-center justify-between pt-6 border-t border-slate-200 dark:border-slate-800">
+                      <button
+                        onClick={goToPrev}
+                        disabled={currentIdx === 0}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
+                          currentIdx === 0
+                            ? "text-slate-400 cursor-not-allowed"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <FiChevronLeft /> Previous Lecture
+                      </button>
+                      <button
+                        onClick={goToNext}
+                        disabled={currentIdx === courseLectures.length - 1}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-emerald-500/20 ${
+                          currentIdx === courseLectures.length - 1
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
+                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        }`}
+                      >
+                        Next Lecture <FiChevronRight />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === 'notes' && (
+                  <motion.div
+                    key="notes"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="max-w-2xl"
+                  >
+                    <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg p-4 mb-6 flex gap-3">
+                      <FiEdit2 className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-amber-800 dark:text-amber-400 text-sm">Personal Notes</h4>
+                        <p className="text-xs text-amber-700 dark:text-amber-500/80 mt-1">
+                          These notes are private and only visible to you. They are automatically saved to your browser.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Your notes for: <span className="font-bold text-slate-900 dark:text-white">{selectedLecture?.lectureTitle}</span>
+                      </label>
+                      <textarea
+                        value={currentNote}
+                        onChange={(e) => setCurrentNote(e.target.value)}
+                        placeholder="Start typing your notes here..."
+                        className="w-full h-64 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none transition-shadow shadow-sm"
+                      />
+                      <div className="flex justify-end">
                         <button
                           onClick={saveNote}
-                          className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-semibold"
+                          className="px-6 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition shadow-lg shadow-emerald-500/20 flex items-center gap-2"
                         >
-                          Save Note
+                          <FiCheckCircle /> Save Notes
                         </button>
                       </div>
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-gray-500 text-center py-16">
-                  Select a lecture to watch the video.
-                </div>
-              )}
+                  </motion.div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <motion.div
+                    key="reviews"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-center py-12"
+                  >
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FiMessageSquare className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Course Reviews</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                      Reviews are not available for individual lectures. You can view course-wide reviews on the course details page.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
+
+        {/* Sidebar (Desktop) */}
+        <aside className="hidden lg:block w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-[calc(100vh-64px)] sticky top-16 overflow-hidden">
+          <MemoizedSidebarContent {...sidebarProps} />
+        </aside>
       </div>
-      {/* Floating Chat Button (FAB) */}
+
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 right-0 w-80 max-w-full bg-white dark:bg-slate-900 shadow-2xl z-50 lg:hidden flex flex-col"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Course Content</h2>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition"
+                >
+                  <FiX className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <MemoizedSidebarContent {...sidebarProps} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Chat Button (Mobile) */}
       <button
         onClick={() => navigate(`/chat/${courseId}`)}
-        aria-label="Open Course Chat"
-        title="Open Course Chat"
-        className="fixed right-6 bottom-6 z-50 flex items-center gap-3 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-2xl hover:scale-105 transform transition focus:outline-none"
+        className="fixed right-4 bottom-4 z-30 lg:hidden p-4 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition"
       >
-        <FiMessageSquare className="w-5 h-5" />
-        <span className="hidden sm:inline font-semibold">Open Chat</span>
+        <FiMessageSquare className="w-6 h-6" />
       </button>
-
-      {/* <CourseChat courseId={courseId} userId={user._id} /> */}
-
-      <footer className="w-full py-4 bg-white border-t text-gray-500 text-center mt-auto">
-        &copy; {new Date().getFullYear()} React Mastery Bootcamp &mdash; All rights reserved.
-      </footer>
     </div>
   );
 }

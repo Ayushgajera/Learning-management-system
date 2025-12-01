@@ -1,15 +1,62 @@
-import React from 'react';
-import { FiCheckCircle, FiHeart, FiVideo, FiSmartphone, FiAward } from 'react-icons/fi';
+import React, { useMemo, useState, useCallback } from 'react';
+import { FiCheckCircle, FiHeart, FiVideo, FiAward, FiClock, FiUsers } from 'react-icons/fi';
 import BuyCourseButton from '@/components/BuyCourseButton';
+import { toast } from 'sonner';
 
-function CourseSidebar({ courseData, purchased, courseId, refetch, navigate }) {
-  const defaultCourse = { price: 1499 };
-  const coursePrice = courseData.coursePrice ?? defaultCourse.price;
+function CourseSidebar({
+  courseData,
+  purchased,
+  courseId,
+  refetch,
+  navigate,
+  isWishlistedCourse,
+  wishlistButtonDisabled,
+  onToggleWishlist,
+}) {
+  const coursePrice = typeof courseData.coursePrice === 'number' ? courseData.coursePrice : null;
+  const lectureCount = Array.isArray(courseData.lectures) ? courseData.lectures.length : null;
+  const duration = courseData.duration;
+  const level = courseData.courseLevel;
+  const enrolledCount = Array.isArray(courseData.enrolledStudents) ? courseData.enrolledStudents.length : null;
+  const [isSharing, setIsSharing] = useState(false);
+
+  const shareUrl = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/course/${courseId}`;
+  }, [courseId]);
+
+  const handleShare = useCallback(async () => {
+    if (!shareUrl || isSharing) return;
+    try {
+      setIsSharing(true);
+      const sharePayload = {
+        title: courseData.courseTitle || 'Check out this course',
+        text: courseData.subTitle || 'Found this course on the LMS platform',
+        url: shareUrl,
+      };
+
+      if (navigator.share) {
+        await navigator.share(sharePayload);
+        toast.success('Course shared');
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard');
+      } else {
+        toast.info('Sharing not supported on this device');
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        toast.error('Unable to share right now');
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  }, [courseData.courseTitle, courseData.subTitle, shareUrl, isSharing]);
 
   return (
-    <div className="md:w-1/3 w-full sticky top-20">
-      <div className="bg-white dark:bg-neutral-800 rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-neutral-700">
-        <div className="relative aspect-[16/9] w-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+    <div className="w-full sticky top-24">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="relative aspect-[16/9] w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
           <img
             src={courseData.courseThumbnail || ''}
             alt="Course Thumbnail"
@@ -18,38 +65,74 @@ function CourseSidebar({ courseData, purchased, courseId, refetch, navigate }) {
           />
         </div>
         <div className="p-8">
-          <div className="flex items-baseline gap-2 mb-2">
-            <span className="text-3xl font-bold text-gray-900 dark:text-white">₹{coursePrice}</span>
-            <span className="text-lg text-gray-500 dark:text-neutral-400 line-through">₹{defaultCourse.price}</span>
+          <div className="mb-4">
+            {coursePrice !== null ? (
+              <span className="text-3xl font-bold text-slate-900 dark:text-white">₹{coursePrice}</span>
+            ) : (
+              <span className="text-base text-slate-500 dark:text-slate-400">Pricing information will be available soon.</span>
+            )}
           </div>
 
           <div className="flex flex-col gap-4 mt-6">
             {!purchased && (
-              <BuyCourseButton courseId={courseData._id} amount={courseData?.coursePrice} refetch={refetch} />
+              <BuyCourseButton courseId={courseData._id} amount={coursePrice ?? 0} refetch={refetch} />
             )}
 
             {purchased && (
               <button
                 onClick={() => navigate(`/course-progress/${courseData._id}`)}
-                className="bg-emerald-400 text-neutral-900 dark:text-gray-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-emerald-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
               >
                 <FiCheckCircle /> Continue to Course
               </button>
             )}
 
-            <button className="border border-purple-500 text-purple-400 dark:text-purple-300 py-3 rounded-xl font-semibold hover:bg-purple-900 transition-colors flex items-center justify-center gap-2">
-              <FiHeart /> Add to Wishlist
+            <button
+              type="button"
+              aria-pressed={!!isWishlistedCourse}
+              disabled={wishlistButtonDisabled}
+              onClick={onToggleWishlist}
+              className={`border border-indigo-200 dark:border-indigo-800 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors
+                ${
+                  isWishlistedCourse
+                    ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-700'
+                    : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                }
+                ${wishlistButtonDisabled ? 'opacity-70 cursor-not-allowed' : ''}
+              `}
+            >
+              <FiHeart className={isWishlistedCourse ? 'fill-rose-500 text-rose-500' : ''} />
+              {wishlistButtonDisabled
+                ? 'Saving...'
+                : isWishlistedCourse
+                  ? 'Wishlisted'
+                  : 'Add to Wishlist'}
             </button>
-            <button className="bg-gray-100 dark:bg-neutral-700 text-gray-900 dark:text-neutral-200 py-3 rounded-xl font-semibold hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors">
-              Share
+            <button
+              type="button"
+              onClick={handleShare}
+              disabled={isSharing}
+              className={`bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 py-3 rounded-xl font-semibold transition-colors
+                ${isSharing ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}
+              `}
+            >
+              {isSharing ? 'Sharing...' : 'Share'}
             </button>
           </div>
 
-          <p className="text-center text-sm mt-6 text-gray-600 dark:text-neutral-400">30-Day Money-Back Guarantee</p>
-          <ul className="mt-6 space-y-3 text-sm text-gray-700 dark:text-neutral-400">
-            <li className="flex items-center gap-3"><FiVideo className="text-emerald-400" /> 7.5 hours on-demand video</li>
-            <li className="flex items-center gap-3"><FiSmartphone className="text-emerald-400" /> Access on mobile and TV</li>
-            <li className="flex items-center gap-3"><FiAward className="text-emerald-400" /> Certificate of completion</li>
+          <ul className="mt-6 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+            {lectureCount !== null && (
+              <li className="flex items-center gap-3"><FiVideo className="text-indigo-500" /> {lectureCount} lectures</li>
+            )}
+            {duration && (
+              <li className="flex items-center gap-3"><FiClock className="text-indigo-500" /> {duration} total length</li>
+            )}
+            {level && (
+              <li className="flex items-center gap-3"><FiAward className="text-emerald-400" /> Level: {level}</li>
+            )}
+            {typeof enrolledCount === 'number' && (
+              <li className="flex items-center gap-3"><FiUsers className="text-indigo-500" /> {enrolledCount} learners enrolled</li>
+            )}
           </ul>
         </div>
       </div>

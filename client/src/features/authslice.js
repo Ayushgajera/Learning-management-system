@@ -37,10 +37,16 @@ const authSlice = createSlice({
         userRoleChanging: (state) => {
             state.role = null;
             state.loading = true;
+            if (state.user) {
+                state.user.role = null;
+            }
         },
         userRoleChanged: (state, action) => {
             state.role = action.payload.role;
             state.loading = false;
+            if (state.user) {
+                state.user.role = action.payload.role;
+            }
         }
     },
     extraReducers: (builder) => {

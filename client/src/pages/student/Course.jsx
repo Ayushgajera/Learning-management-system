@@ -1,134 +1,262 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import {
+  FiClock,
+  FiBarChart,
+  FiStar,
+  FiArrowRight,
+  FiCheckCircle,
+  FiBookOpen,
+  FiUsers,
+  FiHeart,
+  FiCalendar,
+} from 'react-icons/fi';
 import { motion } from 'framer-motion';
-import { FiClock, FiBook, FiStar, FiBookmark } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
+import {
+  useFetchWishlistQuery,
+  useAddCourseToWishlistMutation,
+  useRemoveCourseFromWishlistMutation,
+} from '@/features/api/wishlistApi';
+import { toast } from 'sonner';
 
-const formatINR = (value) => {
-  if (!value || Number.isNaN(Number(value))) return '₹ —';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(Number(value));
-};
-
-function Course({ course, isPurchased, variant = 'default' }) {
+const Course = ({ course }) => {
   const navigate = useNavigate();
-  const isCompact = variant === 'compact';
+  const { user, isAuthenticated } = useSelector((store) => store.auth);
+  const isPurchased = user?.enrolledCourses?.includes(course._id);
+  const lectureCount = Array.isArray(course?.lectures)
+    ? course.lectures.length
+    : Number(course?.totalLectures) || 0;
+  const studentCount = Array.isArray(course?.enrolledStudents)
+    ? course.enrolledStudents.length
+    : Number(course?.enrolledStudents) || 0;
+  const levelLabel = course?.courseLevel || 'All levels';
+  const durationLabel = course?.duration?.trim() || 'Self-paced';
+  const lastUpdatedLabel = course?.updatedAt
+    ? new Date(course.updatedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
+  const subtitle = useMemo(() => {
+    if (course?.subTitle) return course.subTitle;
+    const plainDescription = course?.courseDescription?.replace(/<[^>]*>/g, '') || '';
+    return plainDescription.length > 100 ? `${plainDescription.slice(0, 100)}…` : plainDescription;
+  }, [course?.subTitle, course?.courseDescription]);
+  const ratingValue =
+    typeof course?.averageRating === 'number'
+      ? course.averageRating.toFixed(1)
+      : course?.rating
+      ? Number(course.rating).toFixed(1)
+      : null;
+  const ratingCount = course?.ratingCount ?? course?.reviewsCount ?? null;
+  const formattedPrice = typeof course?.coursePrice === 'number'
+    ? new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0,
+      }).format(course.coursePrice)
+    : 'Free';
 
-  const cardTransition = { duration: 0.45, ease: [0.22, 1, 0.36, 1] };
-  const cardPadding = isCompact ? 'p-5' : 'p-6';
-  const infoGap = isCompact ? 'gap-3' : 'gap-4';
-  const imageRatio = isCompact ? 'aspect-[4/3] lg:aspect-[3/2]' : 'aspect-[16/9]';
-  const headingSize = isCompact ? 'text-base' : 'text-lg';
-  const containerShape = isCompact ? 'rounded-2xl border-white/50 dark:border-slate-800/50 shadow-lg hover:shadow-2xl' : 'rounded-3xl border-white/60 dark:border-slate-800/60 shadow-xl hover:shadow-2xl';
+  const {
+    data: wishlistData,
+    isFetching: isWishlistLoading,
+    refetch: refetchWishlist,
+  } = useFetchWishlistQuery(undefined, {
+    skip: !isAuthenticated,
+  });
+  const wishlistIds = useMemo(
+    () => (wishlistData?.wishlist || []).map((item) => item?._id?.toString()),
+    [wishlistData]
+  );
+  const isWishlisted = isAuthenticated && wishlistIds.includes(course?._id?.toString());
+  const [addCourseToWishlist, { isLoading: isAdding }] = useAddCourseToWishlistMutation();
+  const [removeCourseFromWishlist, { isLoading: isRemoving }] = useRemoveCourseFromWishlistMutation();
+  const wishlistBusy = isAdding || isRemoving;
+
+  const handleWishlistToggle = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error('Please log in to save courses');
+      navigate(`/login?redirect=/course/${course._id}`);
+      return;
+    }
+    if (wishlistBusy) return;
+
+    try {
+      if (isWishlisted) {
+        await removeCourseFromWishlist(course._id).unwrap();
+        toast.success('Removed from wishlist');
+      } else {
+        await addCourseToWishlist(course._id).unwrap();
+        toast.success('Added to wishlist');
+      }
+      if (refetchWishlist) {
+        refetchWishlist();
+      }
+    } catch (wishlistError) {
+      toast.error(wishlistError?.data?.message || 'Unable to update wishlist');
+    }
+  };
 
   return (
     <motion.div
-      role="button"
-      tabIndex={0}
-      onClick={() => navigate(`/course/${course._id}`)}
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      transition={cardTransition}
-      whileHover={{ scale: isCompact ? 1.01 : 1.02, y: isCompact ? -4 : -6 }}
-      whileTap={{ scale: 0.99 }}
-      layout
-      className={`glass-panel ${containerShape} transition-all duration-300 cursor-pointer overflow-hidden group`}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="h-full"
     >
-      <div className={`relative overflow-hidden ${imageRatio} bg-slate-900`}>
-        <motion.img
-          src={course.courseThumbnail}
-          alt={course.courseTitle}
-          loading="lazy"
-          initial={{ opacity: 0, scale: 1.03 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-900/10 to-transparent" />
-        <button
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/90 dark:bg-slate-900/80 text-slate-600 hover:text-indigo-500 shadow"
-          aria-label="Bookmark course"
-          onClick={(e) => e.stopPropagation()}
+      <Link
+        to={`/course/${course._id}`}
+        className="block h-full relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-2xl"
+      >
+        <div
+          className={`relative h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col
+            ${isPurchased 
+              ? 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] hover:border-emerald-500/50' 
+              : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30'
+            }
+          `}
         >
-          <FiBookmark className="w-4 h-4 text-gray-600 dark:text-gray-200" />
-        </button>
-        <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2">
-          <span className="px-2.5 py-1 bg-white/95 text-slate-900 rounded-full text-xs font-semibold">
-            {course.courseLevel}
-          </span>
-          <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400">
-            {course.category || 'Featured'}
-          </span>
-        </div>
-      </div>
+          {/* Image Section */}
+          <div className="relative aspect-[16/10] overflow-hidden">
+            <img
+              src={course.courseThumbnail || 'https://placehold.co/600x400/png'}
+              alt={course.courseTitle}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
 
-      <div className={`flex flex-col ${infoGap} ${cardPadding} text-slate-900 dark:text-slate-100`}>
-        <div>
-          <h3 className={`font-semibold ${headingSize} leading-snug line-clamp-2 group-hover:text-indigo-500 transition-colors`}>
-            {course.courseTitle}
-          </h3>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-300 line-clamp-1">{course.subTitle}</p>
-        </div>
+            {/* Top Badges */}
+            <div className="absolute top-3 left-3 flex flex-wrap gap-2 z-10">
+              {course.category && (
+                <span className="px-2.5 py-1 rounded-lg bg-white/20 backdrop-blur-md border border-white/20 text-[10px] font-bold text-white uppercase tracking-wider shadow-sm">
+                  {course.category}
+                </span>
+              )}
+              {isPurchased && (
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/90 backdrop-blur-md text-[10px] font-bold text-white uppercase tracking-wider shadow-sm flex items-center gap-1">
+                  <FiCheckCircle className="w-3 h-3" />
+                  Enrolled
+                </span>
+              )}
+            </div>
 
-        <div className="flex items-center gap-3">
-          <img
-            src={course.creator?.photoUrl || 'https://ui-avatars.com/api/?name=Instructor'}
-            alt={course.creator?.name || 'Instructor'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white/70"
-          />
-          <div>
-            <p className="text-sm font-semibold">{course.creator?.name || 'Instructor'}</p>
-            <p className="text-xs text-slate-400">Instructor</p>
+            {/* Wishlist Button */}
+            <button
+              type="button"
+              onClick={handleWishlistToggle}
+              disabled={wishlistBusy || isWishlistLoading}
+              className={`absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full backdrop-blur-md border transition-all duration-300 ${
+                isWishlisted 
+                  ? 'bg-rose-500/20 border-rose-500/50 text-rose-500' 
+                  : 'bg-black/20 border-white/20 text-white hover:bg-white hover:text-rose-500'
+              }`}
+            >
+              <FiHeart className={`w-4.5 h-4.5 ${isWishlisted ? 'fill-current' : ''}`} />
+            </button>
+
+            {/* Bottom Info on Image (Instructor & Rating) */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
+               <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <img
+                      src={course.creator?.photoUrl || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Edu'}
+                      alt={course.creator?.name}
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-white/50"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 bg-blue-500 rounded-full p-[2px]">
+                       <FiCheckCircle className="w-2 h-2 text-white" />
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-white/90 truncate max-w-[100px] shadow-black/50 drop-shadow-md">
+                    {course.creator?.name || 'Instructor'}
+                  </span>
+               </div>
+               
+               {ratingValue && (
+                  <div className="flex items-center gap-1 text-xs font-bold text-white bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
+                    <FiStar className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                    <span>{ratingValue}</span>
+                  </div>
+               )}
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="p-5 flex flex-col flex-1 gap-4 relative">
+             {/* Title & Subtitle */}
+             <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-1">
+                  {course.courseTitle}
+                </h3>
+                {subtitle && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {subtitle}
+                  </p>
+                )}
+             </div>
+
+             {/* Stats Pills */}
+             <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-medium text-slate-600 dark:text-slate-300">
+                   <FiBookOpen className="w-3.5 h-3.5 text-indigo-500" />
+                   <span>{lectureCount} Lessons</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-medium text-slate-600 dark:text-slate-300">
+                   <FiClock className="w-3.5 h-3.5 text-sky-500" />
+                   <span>{durationLabel}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-slate-100 dark:bg-slate-800/50 text-xs font-medium text-slate-600 dark:text-slate-300">
+                   <FiBarChart className="w-3.5 h-3.5 text-emerald-500" />
+                   <span>{levelLabel}</span>
+                </div>
+             </div>
+
+             {/* Divider */}
+             <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
+
+             {/* Footer */}
+             <div className="flex items-center justify-between mt-auto">
+                <div>
+                   {isPurchased ? (
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        Ready to start
+                      </span>
+                   ) : (
+                      <div className="flex flex-col">
+                         <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Price</span>
+                         <span className="text-xl font-bold text-slate-900 dark:text-white">
+                            {formattedPrice}
+                         </span>
+                      </div>
+                   )}
+                </div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all ${
+                    isPurchased
+                      ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                      : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700'
+                  }`}
+                >
+                  {isPurchased ? 'Continue' : 'Enroll Now'}
+                  <FiArrowRight className="w-4 h-4" />
+                </motion.div>
+             </div>
           </div>
         </div>
-
-        <div className="flex justify-between text-[11px] sm:text-xs text-slate-500 dark:text-slate-300">
-          <div className="flex items-center gap-1">
-            <FiBook className="w-4 h-4 text-indigo-400" />
-            <span>{course.lectures?.length ?? 0} modules</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <FiClock className="w-4 h-4 text-indigo-400" />
-            <span>~5 hrs</span>
-          </div>
-          <div className="flex items-center gap-1 text-amber-400">
-            <FiStar className="w-4 h-4" />
-            <span className="text-sm font-medium">4.8</span>
-            <span className="text-xs text-slate-400">(123)</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <span className={isCompact ? 'text-lg font-semibold' : 'text-xl font-semibold'}>
-            {formatINR(course.coursePrice)}
-          </span>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Full stack</span>
-        </div>
-
-        {isPurchased ? (
-          <button
-            className="w-full rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/40"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/course-progress/${course._id}`);
-            }}
-          >
-            Go to course
-          </button>
-        ) : (
-          <button
-            className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:shadow-indigo-500/40"
-            onClick={(e) => e.stopPropagation()}
-          >
-            Enroll now
-          </button>
-        )}
-      </div>
+      </Link>
     </motion.div>
   );
-}
+};
 
 export default Course;

@@ -1,4 +1,5 @@
 import { User } from "../models/user.model.js";
+import { Course } from "../models/course.model.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 import { deleteMedia, uploadMedia } from "../utils/cloudinary.js";
@@ -195,7 +196,10 @@ export const setInstructorOnboarded = async (req, res) => {
 
         await user.save();
 
-        res.json({ success: true, role: user.role });
+        const sanitizedUser = user.toObject();
+        delete sanitizedUser.password;
+
+        res.json({ success: true, user: sanitizedUser });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Failed to save onboarding answers" });
@@ -266,6 +270,101 @@ export const updateNotificationPreferences = async (req, res) => {
     } catch (err) {
         console.error(err);
         return res.status(500).json({ success: false, message: 'Failed to update notification preferences' });
+    }
+};
+
+export const getWishlistCourses = async (req, res) => {
+    try {
+        const user = await User.findById(req.id).populate({
+            path: 'wishlist',
+            select: 'courseTitle courseThumbnail courseLevel coursePrice category duration creator enrolledStudents createdAt',
+            populate: {
+                path: 'creator',
+                select: 'name photoUrl'
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            wishlist: user.wishlist || []
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch wishlist' });
+    }
+};
+
+export const addToWishlist = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+
+        if (!courseId) {
+            return res.status(400).json({ success: false, message: 'Course ID is required' });
+        }
+
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Course not found' });
+        }
+
+        const user = await User.findById(req.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const exists = user.wishlist.some((id) => id.toString() === courseId);
+        if (exists) {
+            return res.status(200).json({ success: true, message: 'Course already in wishlist' });
+        }
+
+        user.wishlist.push(courseId);
+        await user.save();
+
+        const populatedCourse = await Course.findById(courseId)
+            .select('courseTitle courseThumbnail courseLevel coursePrice category duration creator enrolledStudents createdAt')
+            .populate('creator', 'name photoUrl');
+
+        return res.status(201).json({
+            success: true,
+            message: 'Course added to wishlist',
+            course: populatedCourse
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Failed to update wishlist' });
+    }
+};
+
+export const removeFromWishlist = async (req, res) => {
+    try {
+        const { courseId } = req.params;
+
+        if (!courseId) {
+            return res.status(400).json({ success: false, message: 'Course ID is required' });
+        }
+
+        const user = await User.findById(req.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const initialCount = user.wishlist.length;
+        user.wishlist = user.wishlist.filter((id) => id.toString() !== courseId);
+
+        if (user.wishlist.length === initialCount) {
+            return res.status(404).json({ success: false, message: 'Course not found in wishlist' });
+        }
+
+        await user.save();
+
+        return res.status(200).json({ success: true, message: 'Course removed from wishlist' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Failed to update wishlist' });
     }
 };
 

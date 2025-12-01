@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare } from 'react-icons/fi';
+import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome, FiSearch } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { userLoggedOut } from "@/features/authslice";
@@ -22,14 +22,14 @@ function throttle(func, limit) {
 const menuItems = [
   {
     to: "/dashboard",
-    icon: <FiGrid className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
+    icon: <FiHome className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Dashboard",
   },
   {
     to: "/my-courses",
     icon: <FiBook className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "My Courses",
-    badge: { content: "3", className: "px-2 py-0.5 text-xs bg-indigo-500/15 text-indigo-700 font-semibold rounded-full" }
+    badge: { content: "3", className: "px-2 py-0.5 text-xs bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold rounded-full" }
   },
   {
     to: "/messages",
@@ -102,21 +102,27 @@ function StudentNavbar() {
     if (userData && isAuthenticated) {
       return (
         <div className="hidden md:flex items-center space-x-4">
-          <button className="relative p-2 text-gray-600 hover:text-emerald-500 transition-colors duration-200">
-            <FiBell className="h-6 w-6 dark:text-gray-300" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
+          {/* Notification Bell */}
+          <button className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors duration-200">
+            <FiBell className="h-6 w-6" />
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white dark:border-slate-900"></span>
           </button>
+          
+          {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center space-x-3 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-200"
             >
               <img
-                className="h-9 w-9 rounded-full object-cover ring-2 ring-emerald-500 ring-offset-2 ring-offset-white"
+                className="h-10 w-10 rounded-full object-cover ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900"
                 src={userData?.photoUrl || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop"}
                 alt={userData?.name || "User"}
               />
-              <span className="text-sm font-semibold text-gray-800 hidden lg:block dark:text-gray-300">{userData?.name || 'User'}</span>
+              <div className="hidden lg:flex flex-col items-start">
+                <span className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">{userData?.name || 'User'}</span>
+                <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 capitalize">{userData?.role || 'Student'}</span>
+              </div>
             </button>
             <AnimatePresence>
               {isProfileDropdownOpen && (
@@ -125,17 +131,20 @@ function StudentNavbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-12 right-0 mt-2 w-72 md:w-80 glass-panel rounded-3xl py-5 border border-white/50 dark:border-slate-800/70 shadow-[0_35px_120px_-45px_rgba(15,23,42,0.9)]"
+                  className="absolute top-12 right-0 mt-2 w-72 md:w-80 glass-panel rounded-3xl py-5 border border-white/50 dark:border-slate-800/70 shadow-[0_35px_120px_-45px_rgba(15,23,42,0.9)] bg-white dark:bg-slate-900"
                 >
                   <div className="px-6 flex items-center space-x-4 mb-4">
                     <img
-                      className="h-16 w-16 rounded-full object-cover ring-2 ring-emerald-500"
+                      className="h-16 w-16 rounded-full object-cover ring-2 ring-indigo-500"
                       src={userData?.photoUrl || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop"}
                       alt="User"
                     />
                     <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900 leading-tight">{userData?.name || 'Guest'}</h4>
-                      <p className="text-sm text-gray-500">{userData?.email || 'Guest'}</p>
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white leading-tight">{userData?.name || 'Guest'}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{userData?.email || 'Guest'}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full capitalize">
+                        {userData?.role || 'Student'}
+                      </span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -155,7 +164,7 @@ function StudentNavbar() {
                     ))}
                   </div>
 
-                  <div className="border-t border-gray-100 mt-4 pt-4 space-y-1">
+                  <div className="border-t border-gray-100 dark:border-slate-700 mt-4 pt-4 space-y-1">
                     <Link
                       to="/settings"
                       className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200"
@@ -261,7 +270,7 @@ function StudentNavbar() {
                   <Link
                     key={category}
                     to={`/category/${category.toLowerCase()}`}
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-gray-700 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors duration-200"
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
                   >
                     {category}
                   </Link>
@@ -289,7 +298,7 @@ function StudentNavbar() {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg text-gray-600 hover:text-emerald-600 hover:bg-gray-100 focus:outline-none"
+              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none"
             >
               <svg className={`h-6 w-6 transition-transform ${isMenuOpen ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -316,11 +325,14 @@ function StudentNavbar() {
                   <img
                     src={userData?.photoUrl || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop"}
                     alt={userData?.name || "User"}
-                    className="h-12 w-12 rounded-full ring-2 ring-emerald-500 ring-offset-2 ring-offset-white object-cover"
+                    className="h-12 w-12 rounded-full ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 object-cover"
                   />
                   <div>
-                    <h4 className="text-base font-semibold text-gray-800 dark:text-gray-100">{userData?.name}</h4>
+                    <h4 className="text-base font-semibold text-gray-800 dark:text-white">{userData?.name}</h4>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{userData?.email}</p>
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs font-semibold bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded-full capitalize">
+                      {userData?.role || 'Student'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -365,7 +377,7 @@ function StudentNavbar() {
                           <Link
                             key={category}
                             to={`/category/${category.toLowerCase()}`}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg transition-colors"
+                            className="block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors"
                           >
                             {category}
                           </Link>
@@ -403,7 +415,7 @@ function StudentNavbar() {
                     <Link to="/login" className="w-full block text-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg">
                       <span>Login</span>
                     </Link>
-                    <Link to="/register" className="w-full block text-center bg-emerald-500 text-white hover:bg-emerald-600 px-4 py-2 rounded-lg">
+                    <Link to="/register" className="w-full block text-center bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 text-white hover:shadow-lg hover:shadow-indigo-500/30 px-4 py-2 rounded-lg font-semibold transition-all">
                       <span>Sign Up</span>
                     </Link>
                   </>

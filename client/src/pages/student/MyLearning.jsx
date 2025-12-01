@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Course from './Course';
 import { useLoaduserQuery } from '@/features/api/authApi';
+import { motion } from 'framer-motion';
+import { FiBookOpen, FiCheckCircle, FiClock, FiPlayCircle } from 'react-icons/fi';
 
 const TABS = [
-  { key: 'all', label: 'All Courses' },
-  { key: 'inProgress', label: 'In Progress' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'notStarted', label: 'Not Started' },
+  { key: 'all', label: 'All Courses', icon: FiBookOpen },
+  { key: 'inProgress', label: 'In Progress', icon: FiPlayCircle },
+  { key: 'completed', label: 'Completed', icon: FiCheckCircle },
+  { key: 'notStarted', label: 'Not Started', icon: FiClock },
 ];
 
 function MyLearning() {
@@ -74,67 +76,89 @@ function MyLearning() {
     else setIsLoading(false);
   }, [enrolledCourseIds]);
 
-  if (isLoadingUser) {
-    return <div className="text-center text-gray-500 py-16">Loading user...</div>;
-  }
-  if (userError) {
-    return <div className="text-center text-red-500 py-16">Failed to load user data.</div>;
-  }
-
-  // Gather all courses for the 'All Courses' tab
   const allCourses = [
     ...coursesByStatus.completed,
     ...coursesByStatus.inProgress,
     ...coursesByStatus.notStarted,
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50 mt-10">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Learning</h1>
-        <div className="flex gap-4 mb-8">
-          {TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 rounded-full font-medium transition ${
-                activeTab === tab.key
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-blue-100'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-        {isLoading ? (
-          <div className="text-center text-gray-500 py-16">Loading courses...</div>
-        ) : fetchError ? (
-          <div className="text-center text-red-500 py-16">{fetchError}</div>
-        ) : enrolledCourseIds.length === 0 ? (
-          <div className="text-center text-gray-500 py-16">You are not enrolled in any courses yet.</div>
-        ) : (
-          <Section
-            title={TABS.find(t => t.key === activeTab).label}
-            courses={activeTab === 'all' ? allCourses : coursesByStatus[activeTab]}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
+  const getCoursesToDisplay = () => {
+    switch (activeTab) {
+      case 'inProgress': return coursesByStatus.inProgress;
+      case 'completed': return coursesByStatus.completed;
+      case 'notStarted': return coursesByStatus.notStarted;
+      default: return allCourses;
+    }
+  };
 
-function Section({ title, courses }) {
-  if (!courses.length) return (
-    <div className="text-center text-gray-500 py-16">No courses in {title}.</div>
-  );
+  const coursesToDisplay = getCoursesToDisplay();
+
+  if (isLoadingUser) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    </div>;
+  }
+
   return (
-    <div className="mb-10">
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <Course course={course} key={course._id} isPurchased={true} />
-        ))}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        
+        <div className="mb-12">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white font-display mb-4">
+            My Learning
+          </h1>
+          
+          {/* Tabs */}
+          <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium text-sm transition-all relative ${
+                  activeTab === tab.key
+                    ? 'text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-900 border-x border-t border-slate-200 dark:border-slate-800 -mb-px'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+                {activeTab === tab.key && (
+                  <motion.div
+                    layoutId="activeTabIndicator"
+                    className="absolute top-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 rounded-3xl h-[380px] animate-pulse border border-slate-200 dark:border-slate-800" />
+            ))}
+          </div>
+        ) : coursesToDisplay.length === 0 ? (
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 border-dashed">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-4">
+              <FiBookOpen className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No courses found</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              {activeTab === 'all' 
+                ? "You haven't enrolled in any courses yet." 
+                : `You have no courses in the "${TABS.find(t => t.key === activeTab)?.label}" category.`}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {coursesToDisplay.map(course => (
+              <Course key={course._id} course={course} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -25,6 +25,15 @@ const userSchema = new mongoose.Schema({
 
         }
     ],
+    wishlist: {
+        type: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Course",
+            }
+        ],
+        default: [],
+    },
     photoUrl:{
         type:String,
         default:"",
