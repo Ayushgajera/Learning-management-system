@@ -1,136 +1,243 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FiEdit2, FiX, FiPlus, FiTrash2 } from 'react-icons/fi';
-import { useParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { useCreateLecturesMutation, useGetAllLecturesQuery, useRemoveLectureMutation } from '@/features/api/courseApi';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiEdit2,
+  FiX,
+  FiPlus,
+  FiTrash2,
+  FiLayers,
+  FiActivity,
+  FiArrowLeft,
+  FiBookOpen,
+  FiTrendingUp,
+  FiPlayCircle,
+  FiClipboard,
+} from "react-icons/fi";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  useCreateLecturesMutation,
+  useGetAllLecturesQuery,
+  useRemoveLectureMutation,
+} from "@/features/api/courseApi";
 
 function CreateLectures() {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const [lectureTitle, setLectureTitle] = useState('');
-  const [createLectures] = useCreateLecturesMutation();
-  const { data: lectureData, isLoading,refetch } = useGetAllLecturesQuery(courseId);
-  const [removeLecture,{data,isLoading:removeLoading,isSuccess}]=useRemoveLectureMutation();
+  const [lectureTitle, setLectureTitle] = useState("");
+  const [createLectures, { isLoading: isCreating }] = useCreateLecturesMutation();
+  const { data: lectureData, isLoading, refetch } = useGetAllLecturesQuery(courseId);
+  const [removeLecture, { isLoading: removeLoading }] = useRemoveLectureMutation();
+
+  const lectures = lectureData?.lectures || [];
+  const lectureStats = {
+    total: lectures.length,
+    previewable: lectures.filter((item) => item.isPreviewFree).length,
+  };
+
   const handleDelete = async (lectureId) => {
     try {
       const response = await removeLecture({ lectureId, courseId }).unwrap();
       refetch();
       if (response.success) {
-        toast.success('Lecture deleted successfully');
+        toast.success("Lecture deleted successfully");
       }
     } catch (error) {
-      toast.error(error.data?.message || 'Failed to delete lecture');
+      toast.error(error.data?.message || "Failed to delete lecture");
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-          <p className="text-gray-500 text-sm">Loading lectures...</p>
-        </div>
-      </div>
-    );
-  }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!lectureTitle.trim()) {
-      toast.error('Please enter a lecture title');
+      toast.error("Please enter a lecture title");
       return;
     }
 
     try {
       const response = await createLectures({ lectureTitle, courseId }).unwrap();
       if (response.success) {
-        setLectureTitle('');
-        toast.success('Lecture created successfully');
+        setLectureTitle("");
+        toast.success("Lecture created successfully");
+        refetch();
       }
     } catch (error) {
-      toast.error(error.data?.message || 'Failed to create lecture');
+      toast.error(error.data?.message || "Failed to create lecture");
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8"
-    >
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 bg-gray-50">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">Course Lectures</h1>
-              <p className="mt-1 text-sm text-gray-500">Add and manage your course lectures</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-violet-50/40 dark:from-slate-900 dark:via-blue-950/30 dark:to-violet-950/30 p-4 sm:p-6 lg:p-10 transition-colors duration-500">
+      <div className="max-w-5xl mx-auto space-y-8">
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={() => navigate(`/admin/courses/edit/${courseId}`)}
+          className="inline-flex items-center px-4 py-2 rounded-2xl border border-white/50 bg-white/70 dark:bg-gray-900/40 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-md shadow-blue-500/10"
+        >
+          <FiArrowLeft className="w-4 h-4 mr-2" />
+          Back to course cockpit
+        </motion.button>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl border border-white/60 dark:border-gray-800/60 shadow-2xl overflow-hidden"
+        >
+          <div className="relative p-8 pb-6 bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-cyan-500/20">
+            <div className="absolute inset-0 opacity-30 pointer-events-none">
+              <div className="absolute -bottom-12 -right-10 w-72 h-72 bg-blue-400/30 blur-3xl" />
+              <div className="absolute -top-16 -left-20 w-64 h-64 bg-violet-400/30 blur-3xl" />
             </div>
-            <button
-              onClick={() => navigate(`/admin/courses/edit/${courseId}`)}
-              className="p-2.5 text-gray-400 hover:text-gray-500 rounded-lg border border-gray-200"
-            >
-              <FiX className="w-5 h-5" />
-            </button>
+            <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/80 dark:bg-gray-900/60 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                  <FiLayers className="w-4 h-4 mr-2" />
+                  Lecture Assembly Lab
+                </div>
+                <h1 className="text-3xl font-semibold text-gray-900 dark:text-white">Design the learning flow.</h1>
+                <p className="text-gray-600 dark:text-gray-300 max-w-2xl">
+                  Batch lectures, balance depth and pacing, and give each milestone a clear unlock. Learners remember sequences—not standalone videos.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-2xl bg-white/80 dark:bg-gray-900/70 p-4 border border-white/60 dark:border-gray-800/60">
+                  <p className="text-xs text-gray-500">Total lectures</p>
+                  <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">{lectureStats.total}</p>
+                  <p className="text-xs text-green-600">Aim for 6-12 per module</p>
+                </div>
+                <div className="rounded-2xl bg-white/80 dark:bg-gray-900/70 p-4 border border-white/60 dark:border-gray-800/60">
+                  <p className="text-xs text-gray-500">Preview unlocked</p>
+                  <p className="text-3xl font-semibold text-gray-900 dark:text-gray-100">{lectureStats.previewable}</p>
+                  <p className="text-xs text-blue-600">Best practice: 1 per module</p>
+                </div>
+                <div className="col-span-2 rounded-2xl border border-dashed border-blue-200 dark:border-blue-800/60 px-4 py-3 text-sm text-blue-800 dark:text-blue-200 flex items-center gap-3">
+                  <FiTrendingUp className="w-5 h-5" />
+                  Cohorts with consistent pacing drive 18% higher completion.
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="p-6">
-          <form onSubmit={handleSubmit} className="flex gap-4">
-            <input
-              type="text"
-              value={lectureTitle}
-              onChange={(e) => setLectureTitle(e.target.value)}
-              placeholder="Enter lecture title"
-              className="flex-1 px-4 py-2 border rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-colors duration-200"
-            />
-            <button
-              type="submit"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-            >
-              <FiPlus className="w-4 h-4 mr-2" />
-              Add Lecture
-            </button>
-          </form>
-        </div>
+          <div className="p-8 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                  <FiBookOpen className="w-4 h-4 text-blue-500" />
+                  Name the next lecture
+                </label>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <input
+                    type="text"
+                    value={lectureTitle}
+                    onChange={(e) => setLectureTitle(e.target.value)}
+                    placeholder="Eg. Rapid prototyping sprint"
+                    className="flex-1 px-4 py-3 rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-800/60 focus:ring-2 focus:ring-blue-500/50 focus:outline-none text-gray-900 dark:text-gray-100"
+                  />
+                  <motion.button
+                    type="submit"
+                    disabled={isCreating}
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 shadow-lg disabled:opacity-60"
+                    whileHover={{ scale: isCreating ? 1 : 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <FiPlus className="w-4 h-4 mr-2" />
+                    {isCreating ? "Adding..." : "Add lecture"}
+                  </motion.button>
+                </div>
+              </form>
 
-        <div className="border-t border-gray-200">
-          {lectureData?.lectures?.length > 0 ? (
-            <ul className="divide-y divide-gray-200">
-              {lectureData.lectures.map((lecture, index) => (
-                <li
-                  key={lecture._id}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50"
-                >
-                  <span className="text-sm font-medium text-gray-900">
-                    Lecture {index + 1}: {lecture.lectureTitle}
-                  </span>
-                  <div>
-                    <button
-                      onClick={() => navigate(`${lecture._id}`)}
-                      className="p-2 text-emerald-600 hover:text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors duration-200"
-                    >
-                      <FiEdit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={()=>handleDelete(lecture._id)}
-                      className="p-2 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 transition-colors duration-200"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
+              <div className="rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-white/70 dark:bg-gray-900/70 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Live lecture list</h2>
+                  <span className="text-xs uppercase tracking-wide text-gray-500">{lectureStats.total} checkpoints</span>
+                </div>
+                {isLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((idx) => (
+                      <div key={idx} className="h-14 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                    ))}
                   </div>
-
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              No lectures added yet. Start by adding your first lecture.
+                ) : (
+                  <AnimatePresence mode="popLayout">
+                    {lectures.length ? (
+                      <ul className="space-y-3">
+                        {lectures.map((lecture, index) => (
+                          <motion.li
+                            layout
+                            key={lecture._id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="flex items-center justify-between gap-4 px-4 py-3 rounded-2xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-200 flex items-center justify-center font-semibold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{lecture.lectureTitle}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{lecture.isPreviewFree ? "Preview unlocked" : "Members only"}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => navigate(`${lecture._id}`)}
+                                className="p-2 rounded-xl text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                              >
+                                <FiEdit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                disabled={removeLoading}
+                                onClick={() => handleDelete(lecture._id)}
+                                className="p-2 rounded-xl text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-900/30"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 text-gray-500">
+                        <FiPlayCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                        Sketch your first lecture to unlock module planning.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-gray-200/60 dark:border-gray-800/60 p-6 bg-white/70 dark:bg-gray-900/70">
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  <FiClipboard className="w-4 h-4 text-blue-500" />
+                  Module rhythm checklist
+                </div>
+                <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                  <li>⏱️ Keep lectures under 7 minutes when introducing new concepts.</li>
+                  <li>🧩 Group 3-4 lectures into a single learner outcome.</li>
+                  <li>🎯 Alternate between instruction, demo, and action.</li>
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-dashed border-indigo-200 dark:border-indigo-800/60 p-6 bg-gradient-to-br from-indigo-50/70 to-purple-50/30 dark:from-indigo-900/30 dark:to-purple-900/10">
+                <div className="flex items-center gap-3 mb-3">
+                  <FiActivity className="w-5 h-5 text-indigo-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Flow insight</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Trigger an action step every 2 lectures</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-200">
+                  Learners retain more when they switch from watching to doing quickly. Pair each new concept with a prompt or worksheet.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

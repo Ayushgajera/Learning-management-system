@@ -23,15 +23,6 @@ export const userApi = createApi({
       query: (instructorId) => `users/${instructorId}`,
       providesTags: ['User'],
     }),
-    // Update a user's role
-    updateUserRole: builder.mutation({
-      query: ({ id, role }) => ({
-        url: `users/${id}/role`,
-        method: 'PUT',
-        body: { role },
-      }),
-      invalidatesTags: ['User'], // Re-fetches user list after update
-    }),
     // Delete a user
     deleteUser: builder.mutation({
       // The API endpoint now needs to handle both user deletion and course removal
@@ -54,7 +45,6 @@ export const userApi = createApi({
 
 export const {
   useGetAllUsersQuery,
-  useUpdateUserRoleMutation,
   useDeleteUserMutation,
   useRemoveCourseFromUserMutation,
 } = userApi;

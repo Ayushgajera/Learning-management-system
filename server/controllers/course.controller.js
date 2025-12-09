@@ -80,7 +80,7 @@ export const editCourse = async (req, res) => {
     try {
         const courseId = req.params.courseID;
 
-        const { courseTitle, subTitle, courseDescription, category, courseLevel, coursePrice } = req.body;
+        const { courseTitle, subTitle, courseDescription, category, courseLevel, coursePrice, removeThumbnail } = req.body;
         const thumbnail = req.file;
 
 
@@ -88,16 +88,23 @@ export const editCourse = async (req, res) => {
         if (!course) {
             return res.status(404).json({ message: "Course not found." });
         }
-        let courseThumbnail;
+        let uploadedThumbnail;
         if (thumbnail) {
             if (course.courseThumbnail) {
                 const publicId = course.courseThumbnail.split("/").pop().split(".")[0];
                 await deleteMedia(publicId);
             }
-            courseThumbnail = await uploadMedia(thumbnail.path);
-
+            uploadedThumbnail = await uploadMedia(thumbnail.path);
         }
-        const updateData = { courseTitle, subTitle, courseDescription, category, courseLevel, coursePrice, courseThumbnail: courseThumbnail?.secure_url }
+        const updateData = { courseTitle, subTitle, courseDescription, category, courseLevel, coursePrice };
+
+        if (uploadedThumbnail?.secure_url) {
+            updateData.courseThumbnail = uploadedThumbnail.secure_url;
+        } else if (removeThumbnail === "true" && course.courseThumbnail) {
+            const publicId = course.courseThumbnail.split("/").pop().split(".")[0];
+            await deleteMedia(publicId);
+            updateData.courseThumbnail = null;
+        }
 
 
         course = await Course.findByIdAndUpdate(courseId, updateData, { new: true });

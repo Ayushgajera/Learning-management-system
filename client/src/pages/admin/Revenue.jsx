@@ -1,27 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiDollarSign, FiTrendingUp, FiBarChart, FiBook, FiUsers, FiTarget, FiInfo } from 'react-icons/fi';
+import { FiBarChart, FiBook, FiDollarSign, FiInfo, FiTarget, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { useGetAllCoursesQuery, useGetMonthlyRevenueQuery } from '@/features/api/courseApi';
 import { useLoaduserQuery } from '@/features/api/authApi';
 
-// --- Helper function to format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+const formatCurrency = (amount = 0) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+}).format(amount || 0);
 
-// --- Helper function to format large numbers
-const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US').format(num);
-};
+const formatNumber = (value = 0) => new Intl.NumberFormat('en-US').format(value || 0);
 
-// Main Component
 export default function Revenue() {
+  const [timeframe, setTimeframe] = useState(6);
+  const [chartData, setChartData] = useState([]);
+  const [trendSummary, setTrendSummary] = useState({ bestMonth: '-', bestRevenue: 0, slowMonth: '-', slowRevenue: 0 });
+  const [revenueGrowth, setRevenueGrowth] = useState('0');
   const [stats, setStats] = useState({
     totalRevenue: 0,
     monthlyRevenue: 0,
@@ -29,133 +26,190 @@ export default function Revenue() {
     avgRevenuePerCourse: 0,
     avgEnrollmentPerCourse: 0,
     mostProfitableCourse: 'N/A',
+    totalEnrollments: 0,
+    activeCourses: 0,
+    avgCoursePrice: 0,
   });
   const [coursesData, setCoursesData] = useState([]);
-  const [timeframe, setTimeframe] = useState(6);
-  const [chartData, setChartData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [revenueGrowth, setRevenueGrowth] = useState(0); // Added new state for revenue growth
-  
-  const { data: coursesQueryData, isLoading: coursesLoading, error: coursesError } = useGetAllCoursesQuery();
-  const { data: currentUserData, isLoading: currentUserLoading } = useLoaduserQuery();
-  const instructorId = currentUserData?.user?._id;
-  console.log("Instructor ID:", instructorId);
-  const { data: monthlyData, isLoading: monthlyDataLoading, error: monthlyDataError } = useGetMonthlyRevenueQuery(instructorId);
+  const [hasAnnounced, setHasAnnounced] = useState(false);
 
-  const combinedIsLoading = coursesLoading || monthlyDataLoading || currentUserLoading;
-  const combinedError = coursesError || monthlyDataError;
+  const { data: currentUserData, isLoading: userLoading } = useLoaduserQuery();
+  const instructorId = currentUserData?.user?._id;
+
+  const {
+    data: coursesQueryData,
+    isLoading: coursesLoading,
+    error: coursesError,
+  } = useGetAllCoursesQuery(null, { skip: !instructorId });
+
+  const {
+    data: monthlyData,
+    isLoading: monthlyLoading,
+    error: monthlyError,
+  } = useGetMonthlyRevenueQuery(instructorId, { skip: !instructorId });
+
+  const combinedIsLoading = userLoading || coursesLoading || monthlyLoading;
+  const combinedError = coursesError || monthlyError;
 
   useEffect(() => {
-    if (coursesQueryData?.courses && monthlyData?.data) {
-      const courses = coursesQueryData.courses;
-      const monthlyRevenueData = monthlyData.data;
+    if (combinedIsLoading) return;
+    if (!coursesQueryData?.courses?.length) return;
 
-      const totalRevenue = courses.reduce((sum, course) => {
-        const enrollments = course.enrolledStudents?.length || 0;
-        return sum + ((course.coursePrice || 0) * enrollments);
-      }, 0);
+    const monthlyRevenueData = Array.isArray(monthlyData?.data) ? monthlyData.data : [];
+    const courses = coursesQueryData.courses;
 
-      const totalEnrollments = courses.reduce((sum, course) => {
-        return sum + (course.enrolledStudents?.length || 0);
-      }, 0);
-      // FIX: Calculate average enrollments instead of average revenue
-      const avgEnrollmentPerCourse = courses.length > 0 ? totalEnrollments / courses.length : 0;
+    const totalRevenue = courses.reduce((sum, course) => {
+      const enrollments = course.enrolledStudents?.length || 0;
+      return sum + ((course.coursePrice || 0) * enrollments);
+    }, 0);
 
-      const avgRevenuePerCourse = totalRevenue / (courses.length > 0 ? courses.length : 1);
+    const totalEnrollments = courses.reduce((sum, course) => sum + (course.enrolledStudents?.length || 0), 0);
 
-      const mostProfitableCourse = courses.reduce((max, course) => {
-        const courseRevenue = (course.coursePrice || 0) * (course.enrolledStudents?.length || 0);
-        return courseRevenue > max.totalCourseRevenue ? { title: course.courseTitle, totalCourseRevenue: courseRevenue } : max;
-      }, { title: 'N/A', totalCourseRevenue: -1 });
+    const avgEnrollmentPerCourse = courses.length ? totalEnrollments / courses.length : 0;
+    const avgRevenuePerCourse = courses.length ? totalRevenue / courses.length : 0;
+    const avgCoursePrice = courses.length
+      ? courses.reduce((sum, course) => sum + (course.coursePrice || 0), 0) / courses.length
+      : 0;
 
-            // const currentMonthlyData = monthlyRevenueData.slice(-timeframe);
-      const currentMonthlyData = [monthlyRevenueData[new Date().getMonth()]];
-      console.log("date:",new Date().getMonth())
-      console.log("current monthly data:",currentMonthlyData)
-      setChartData(currentMonthlyData);
+    const mostProfitableCourse = courses.reduce((max, course) => {
+      const courseRevenue = (course.coursePrice || 0) * (course.enrolledStudents?.length || 0);
+      return courseRevenue > max.totalCourseRevenue
+        ? { title: course.courseTitle, totalCourseRevenue: courseRevenue }
+        : max;
+    }, { title: 'N/A', totalCourseRevenue: -1 });
 
-      // --- Start of new code to calculate dynamic growth ---
-      if (monthlyRevenueData.length >= 2) {
-        const lastMonthRevenue = monthlyRevenueData[monthlyRevenueData.length - 2]?.revenue || 0;
-        const currentMonthRevenue = monthlyRevenueData[monthlyRevenueData.length - 1]?.revenue || 0;
-        
-        if (lastMonthRevenue > 0) {
-          const growth = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
-          setRevenueGrowth(growth.toFixed(1)); // Format to one decimal place
-        } else {
-          // Handle cases where last month's revenue was zero
-          setRevenueGrowth(currentMonthRevenue > 0 ? '100+' : 0);
-        }
-      } else {
-        setRevenueGrowth(0);
-      }
-      // --- End of new code ---
+    const trimmedSeries = monthlyRevenueData.slice(-timeframe);
+    const activeSeries = trimmedSeries.length ? trimmedSeries : monthlyRevenueData;
+    const sanitizedSeries = activeSeries.filter(Boolean);
+    const latestPoint = sanitizedSeries[sanitizedSeries.length - 1] || {};
 
-      setStats({
-        totalRevenue,
-        monthlyRevenue: currentMonthlyData[currentMonthlyData.length - 1]?.revenue || 0,
-        monthlyEnrollments: currentMonthlyData[currentMonthlyData.length - 1]?.enrollments || 0,
-        avgRevenuePerCourse: avgRevenuePerCourse || 0,
-        avgEnrollmentPerCourse, // Use the newly calculated average enrollment  
-        mostProfitableCourse: mostProfitableCourse.title,
+    setChartData(sanitizedSeries);
+
+    if (sanitizedSeries.length) {
+      const bestMonthEntry = sanitizedSeries.reduce((prev, curr) => (curr.revenue > (prev?.revenue || 0) ? curr : prev), sanitizedSeries[0]);
+      const slowMonthEntry = sanitizedSeries.reduce((prev, curr) => (curr.revenue < (prev?.revenue || Infinity) ? curr : prev), sanitizedSeries[0]);
+      setTrendSummary({
+        bestMonth: bestMonthEntry?.month || '-',
+        bestRevenue: bestMonthEntry?.revenue || 0,
+        slowMonth: slowMonthEntry?.month || '-',
+        slowRevenue: slowMonthEntry?.revenue || 0,
       });
-
-      setCoursesData(courses.map(course => ({
-        courseId: course._id,
-        courseTitle: course.courseTitle,
-        price: course.coursePrice || 0,
-        enrollments: course.enrolledStudents?.length || 0,
-        totalCourseRevenue: (course.coursePrice || 0) * (course.enrolledStudents?.length || 0),
-      })));
-
-      setIsLoading(false);
-      toast.success("Revenue data loaded successfully!");
+    } else {
+      setTrendSummary({ bestMonth: '-', bestRevenue: 0, slowMonth: '-', slowRevenue: 0 });
     }
-  }, [coursesQueryData, monthlyData, timeframe]);
+
+    if (monthlyRevenueData.length >= 2) {
+      const lastMonthRevenue = monthlyRevenueData[monthlyRevenueData.length - 2]?.revenue || 0;
+      const currentMonthRevenue = monthlyRevenueData[monthlyRevenueData.length - 1]?.revenue || 0;
+
+      if (lastMonthRevenue > 0) {
+        const growth = ((currentMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100;
+        setRevenueGrowth(Number.isFinite(growth) ? growth.toFixed(1) : '0');
+      } else {
+        setRevenueGrowth(currentMonthRevenue > 0 ? '100+' : '0');
+      }
+    } else {
+      setRevenueGrowth('0');
+    }
+
+    setStats({
+      totalRevenue,
+      monthlyRevenue: latestPoint?.revenue || 0,
+      monthlyEnrollments: latestPoint?.enrollments || 0,
+      avgRevenuePerCourse: avgRevenuePerCourse || 0,
+      avgEnrollmentPerCourse,
+      mostProfitableCourse: mostProfitableCourse.title,
+      totalEnrollments,
+      activeCourses: courses.length,
+      avgCoursePrice,
+    });
+
+    setCoursesData(courses.map(course => ({
+      courseId: course._id,
+      courseTitle: course.courseTitle,
+      price: course.coursePrice || 0,
+      enrollments: course.enrolledStudents?.length || 0,
+      totalCourseRevenue: (course.coursePrice || 0) * (course.enrolledStudents?.length || 0),
+    })));
+
+    if (!hasAnnounced) {
+      toast.success('Revenue data loaded successfully!');
+      setHasAnnounced(true);
+    }
+  }, [coursesQueryData, monthlyData, timeframe, combinedIsLoading, hasAnnounced]);
+
+  const revenuePerEnrollment = useMemo(() => {
+    if (!stats.totalEnrollments) return 0;
+    return stats.totalRevenue / stats.totalEnrollments;
+  }, [stats.totalRevenue, stats.totalEnrollments]);
+
+  const projectedAnnualRevenue = useMemo(() => stats.monthlyRevenue * 12, [stats.monthlyRevenue]);
+
+  const heroQuickStats = useMemo(() => ([
+    { label: 'Active Courses', value: formatNumber(stats.activeCourses || 0) },
+    { label: 'Total Enrollments', value: formatNumber(stats.totalEnrollments || 0) },
+    { label: 'Avg. Course Price', value: formatCurrency(stats.avgCoursePrice || 0) },
+  ]), [stats.activeCourses, stats.totalEnrollments, stats.avgCoursePrice, revenuePerEnrollment]);
 
   const dashboardCards = [
     {
-      label: 'Total Revenue',
-      value: formatCurrency(stats.totalRevenue),
-      icon: <FiDollarSign className="w-6 h-6" />,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'from-blue-50 to-blue-100',
-      textColor: 'text-blue-600',
-    },
-    {
       label: 'This Month\'s Revenue',
       value: formatCurrency(stats.monthlyRevenue),
+      hint: `${formatNumber(stats.monthlyEnrollments)} enrollments`,
       icon: <FiBarChart className="w-6 h-6" />,
-      color: 'from-emerald-500 to-emerald-600',
-      bgColor: 'from-emerald-50 to-emerald-100',
-      textColor: 'text-emerald-600',
+      color: 'from-blue-500 to-violet-500',
+      accent: 'text-blue-600',
     },
     {
       label: 'Monthly Enrollments',
       value: formatNumber(stats.monthlyEnrollments),
+      hint: `${formatCurrency(revenuePerEnrollment || 0)} / learner`,
       icon: <FiUsers className="w-6 h-6" />,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'from-purple-50 to-purple-100',
-      textColor: 'text-purple-600',
+      color: 'from-emerald-500 to-emerald-600',
+      accent: 'text-emerald-600',
     },
     {
-      label: 'Most Profitable Course',
+      label: 'Avg. Revenue / Course',
+      value: formatCurrency(stats.avgRevenuePerCourse || 0),
+      hint: `${formatNumber(stats.avgEnrollmentPerCourse || 0)} learners avg`,
+      icon: <FiDollarSign className="w-6 h-6" />,
+      color: 'from-amber-500 to-pink-500',
+      accent: 'text-amber-600',
+    },
+    {
+      label: 'Top Course',
       value: stats.mostProfitableCourse,
+      hint: 'Highest grossing course',
       icon: <FiBook className="w-6 h-6" />,
-      color: 'from-amber-500 to-amber-600',
-      bgColor: 'from-amber-50 to-amber-100',
-      textColor: 'text-amber-600',
+      color: 'from-purple-500 to-indigo-500',
+      accent: 'text-purple-600',
     }
   ];
 
-  const maxMonthlyRevenue = Math.max(...chartData.map(d => d.revenue)) || 1;
+  const maxMonthlyRevenue = chartData.length ? Math.max(...chartData.map(d => d.revenue || 0)) : 1;
+  const maxCourseRevenue = coursesData.length ? Math.max(...coursesData.map(course => course.totalCourseRevenue || 0)) : 1;
+
+  const topCourses = useMemo(() => {
+    if (!coursesData.length) return [];
+    return [...coursesData].sort((a, b) => b.totalCourseRevenue - a.totalCourseRevenue).slice(0, 3);
+  }, [coursesData]);
+
+  const insights = useMemo(() => ([
+    {
+      title: 'Avg. Course Price',
+      value: formatCurrency(stats.avgCoursePrice || 0),
+      meta: 'Catalog-wide pricing',
+      icon: <FiBook className="w-5 h-5" />,
+      accent: 'text-purple-600',
+    }
+  ]), [stats.avgCoursePrice]);
 
   if (combinedIsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-500 rounded-full mx-auto mb-4 animate-spin" />
-          <h3 className="text-lg font-semibold text-gray-800">Calculating revenue...</h3>
+          <div className="w-16 h-16 border-4 border-slate-200 border-t-indigo-500 rounded-full mx-auto mb-4 animate-spin" />
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Calculating revenue...</h3>
         </div>
       </div>
     );
@@ -163,8 +217,8 @@ export default function Revenue() {
 
   if (combinedError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
-        <div className="text-center text-gray-500">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6">
+        <div className="text-center text-slate-500 dark:text-slate-400">
           <FiInfo className="w-16 h-16 mx-auto mb-4" />
           <p className="text-lg font-medium">Failed to load revenue data.</p>
         </div>
@@ -172,32 +226,69 @@ export default function Revenue() {
     );
   }
 
-  const growthColor = revenueGrowth >= 0 ? 'text-emerald-600' : 'text-red-500';
+  const numericGrowth = parseFloat(revenueGrowth);
+  const isPositiveGrowth = !Number.isNaN(numericGrowth) ? numericGrowth >= 0 : true;
+  const growthColor = isPositiveGrowth
+    ? 'text-emerald-600 dark:text-emerald-300'
+    : 'text-red-600 dark:text-red-300';
+  const growthBadgeBg = isPositiveGrowth
+    ? 'bg-emerald-500/10 border border-emerald-500/30 dark:bg-emerald-500/20 dark:border-emerald-400/50'
+    : 'bg-red-500/10 border border-red-500/30 dark:bg-red-500/20 dark:border-red-400/50';
+  const growthValueLabel = (() => {
+    const raw = `${revenueGrowth}`;
+    const base = raw.includes('%') ? raw : `${raw}%`;
+    if (base.includes('+') || base.startsWith('-')) {
+      return base;
+    }
+    return isPositiveGrowth ? `+${base}` : base;
+  })();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:bg-gradient-to-br dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4 sm:p-6 lg:p-8 text-slate-900 dark:text-white transition-colors">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto space-y-8"
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Revenue Overview</h1>
-            <p className="text-gray-600 mt-1">Key financial metrics and course performance.</p>
-          </div>
-          <div className="flex items-center gap-2 mt-4 sm:mt-0">
-            <span className="text-sm font-medium text-gray-600">Timeframe:</span>
-            <select
-              value={timeframe}
-              onChange={(e) => setTimeframe(Number(e.target.value))}
-              className="px-3 py-2 border rounded-xl bg-white text-gray-700 text-sm"
-            >
-              <option value={3}>Last 3 Months</option>
-              <option value={6}>Last 6 Months</option>
-              <option value={12}>Last 12 Months</option>
-            </select>
+        {/* Hero */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-blue-50 to-slate-50 p-6 sm:p-8 text-slate-900 shadow-2xl dark:border-white/5 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-white">
+          <div className="absolute inset-0 opacity-60 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.2),_transparent_55%)] dark:bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.35),_transparent_55%)]" />
+          <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center">
+            <div className="flex-1 space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-300">Revenue control room</p>
+              <div className="flex flex-wrap items-end gap-3">
+                <h1 className="text-4xl sm:text-5xl font-semibold">{formatCurrency(stats.totalRevenue)}</h1>
+                <span className={`text-sm px-3 py-1 rounded-full ${growthBadgeBg} ${growthColor}`}>
+                  {growthValueLabel} vs last month
+                </span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-200/80 max-w-2xl">
+                Monitor every revenue stream, enrollment pulse, and course contribution in one advanced workspace.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-slate-600 dark:text-slate-200/80">
+                <span className="text-sm font-medium">View window</span>
+                <select
+                  value={timeframe}
+                  onChange={(e) => setTimeframe(Number(e.target.value))}
+                  className="px-3 py-2 rounded-2xl border border-slate-200 bg-white/80 text-sm text-slate-900 dark:border-white/20 dark:bg-white/10 dark:text-white"
+                >
+                  <option value={3}>Last 3 months</option>
+                  <option value={6}>Last 6 months</option>
+                  <option value={12}>Last 12 months</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid w-full gap-4 sm:grid-cols-2 lg:max-w-md">
+              {heroQuickStats.map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-white/60 bg-white/80 px-4 py-3 text-slate-900 backdrop-blur dark:border-white/10 dark:bg-white/10 dark:text-white"
+                >
+                  <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-300/80">{item.label}</p>
+                  <p className="text-xl font-semibold mt-1">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -208,178 +299,199 @@ export default function Revenue() {
               key={card.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
+              transition={{ delay: index * 0.08 }}
+              className="relative overflow-hidden rounded-2xl bg-white p-5 shadow-lg border border-slate-100 dark:bg-slate-900/60 dark:border-white/10 transition-colors"
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity duration-300`}></div>
-              
-              <div className="relative">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-xl bg-gradient-to-br ${card.bgColor} shadow-sm group-hover:shadow-md transition-all duration-300`}>
-                    <div className={card.textColor}>{card.icon}</div>
-                  </div>
+              <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-0 transition-opacity duration-300 hover:opacity-5`} />
+              <div className="relative space-y-3">
+                <div className={`inline-flex items-center justify-center rounded-2xl bg-slate-50 p-3 dark:bg-slate-800/80 ${card.accent}`}>
+                  {card.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-2">{card.label}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 truncate">{card.value}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{card.label}</p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white">{card.value}</p>
+                  {card.hint && <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{card.hint}</p>}
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Detailed Analytics Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Revenue Growth Widget */}
+        {/* Insight widgets */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {insights.map((insight, index) => (
+            <motion.div
+              key={insight.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 * (index + 1) }}
+              className="rounded-2xl border border-slate-100 bg-white p-5 shadow-md dark:border-white/10 dark:bg-slate-900/60 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className={`rounded-2xl bg-slate-100 p-2 dark:bg-slate-800/80 ${insight.accent}`}>{insight.icon}</span>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{insight.title}</p>
+                  <p className="text-2xl font-semibold text-slate-900 dark:text-white">{insight.value}</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-4">{insight.meta}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Chart + Leaderboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg flex flex-col justify-between"
+            className="lg:col-span-2 rounded-3xl border border-slate-100 bg-white/90 backdrop-blur-sm p-6 shadow-xl dark:border-white/10 dark:bg-slate-900/60"
           >
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl text-white">
-                  <FiTrendingUp className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">Revenue Growth</h3>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm uppercase tracking-wide text-slate-400 dark:text-slate-500">Revenue trend</p>
+                <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Monthly revenue trajectory</h2>
               </div>
-              <p className={`text-2xl font-bold mt-2 ${growthColor}`}>
-                {revenueGrowth >= 0 ? `+${revenueGrowth}%` : `${revenueGrowth}%`}
-              </p>
-              <p className="text-sm text-gray-500">vs. last month</p>
+              <div className="flex flex-wrap gap-4 text-sm text-slate-500 dark:text-slate-400">
+                <span>Best: <strong className="text-slate-800 dark:text-white">{trendSummary.bestMonth}</strong> · {formatCurrency(trendSummary.bestRevenue || 0)}</span>
+                <span>Slowest: <strong className="text-slate-800 dark:text-white">{trendSummary.slowMonth}</strong> · {formatCurrency(trendSummary.slowRevenue || 0)}</span>
+              </div>
+            </div>
+            <div className="w-full h-80 relative mt-8">
+              <div className="absolute inset-0 grid grid-rows-5 text-slate-100 dark:text-slate-800">
+                {[...Array(5)].map((_, i) => (
+                  <div key={`row-${i}`} className="border-b last:border-b-0" />
+                ))}
+              </div>
+              <div className="flex justify-between items-end h-full gap-3">
+                {chartData.length ? chartData.map((data, index) => (
+                  <motion.div
+                    key={`${data.month}-${index}`}
+                    initial={{ height: 0 }}
+                    animate={{ height: `${(data.revenue / maxMonthlyRevenue) * 100}%` }}
+                    transition={{ delay: index * 0.05, type: 'spring', stiffness: 120 }}
+                    className="flex-1 rounded-t-2xl bg-gradient-to-t from-blue-500 to-violet-500 relative group"
+                  >
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow opacity-0 group-hover:opacity-100 dark:bg-slate-900 dark:text-white">
+                      {formatCurrency(data.revenue)}
+                    </div>
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      {data.month}
+                    </div>
+                  </motion.div>
+                )) : (
+                  <div className="flex items-center justify-center w-full text-slate-400 dark:text-slate-500">No revenue data yet.</div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div>
+                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Revenue / learner</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">{formatCurrency(Math.round(revenuePerEnrollment || 0))}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Revenue / course</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">{formatCurrency(Math.round(stats.avgRevenuePerCourse || 0))}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-slate-400 dark:text-slate-500">Projected run rate</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">{formatCurrency(projectedAnnualRevenue || 0)}</p>
+              </div>
             </div>
           </motion.div>
 
-          {/* Avg. Enrollment Widget */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg flex flex-col justify-between"
+            transition={{ delay: 0.45 }}
+            className="rounded-3xl border border-slate-100 bg-white/90 p-6 shadow-xl dark:border-white/10 dark:bg-slate-900/60"
           >
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl text-white">
-                  <FiUsers className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">Avg. Enrollments</h3>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <FiTarget className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-bold text-purple-600 mt-2">{formatNumber(stats.avgEnrollmentPerCourse)}</p>
-              <p className="text-sm text-gray-500">per course</p>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Course leaderboard</p>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">High performing titles</h3>
+              </div>
             </div>
-          </motion.div>
-
-          {/* Avg. Course Price Widget */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg flex flex-col justify-between"
-          >
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl text-white">
-                  <FiDollarSign className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900">Avg. Course Price</h3>
-              </div>
-              <p className="text-2xl font-bold text-amber-600 mt-2">{formatCurrency(stats.avgRevenuePerCourse)}</p>
-              <p className="text-sm text-gray-500">across all courses</p>
+            <div className="space-y-5">
+              {topCourses.length ? topCourses.map((course, index) => {
+                const contribution = stats.totalRevenue ? ((course.totalCourseRevenue / stats.totalRevenue) * 100).toFixed(1) : 0;
+                return (
+                  <div key={course.courseId} className="rounded-2xl border border-slate-100 p-4 dark:border-white/10">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs uppercase text-slate-400 dark:text-slate-500">#{index + 1}</p>
+                        <p className="text-base font-semibold text-slate-900 mt-1 dark:text-white">{course.courseTitle}</p>
+                        <p className="text-xs text-slate-500 mt-1 dark:text-slate-400">{formatNumber(course.enrollments)} learners · {formatCurrency(course.price)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-300">{formatCurrency(course.totalCourseRevenue)}</p>
+                        <p className="text-xs text-emerald-500 dark:text-emerald-300/80">{contribution}% of total</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
+                        style={{ width: `${(course.totalCourseRevenue / maxCourseRevenue) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              }) : (
+                <p className="text-sm text-slate-500 dark:text-slate-400">No course revenue captured yet.</p>
+              )}
             </div>
           </motion.div>
         </div>
-
-        {/* Monthly Revenue Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
-                <FiBarChart className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900">Monthly Revenue Trend</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-600">Timeframe:</span>
-              <select
-                value={timeframe}
-                onChange={(e) => setTimeframe(Number(e.target.value))}
-                className="px-3 py-2 border rounded-xl bg-white text-gray-700 text-sm"
-              >
-                <option value={3}>Last 3 Months</option>
-                <option value={6}>Last 6 Months</option>
-                <option value={12}>Last 12 Months</option>
-              </select>
-            </div>
-          </div>
-          <div className="w-full h-80 relative p-4">
-            {/* Chart Grid Lines */}
-            <div className="absolute inset-0 grid grid-rows-5 -z-10">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="border-b border-gray-200 last:border-b-0"></div>
-              ))}
-            </div>
-            <div className="flex justify-between items-end h-full gap-2">
-              {chartData.map((data, index) => (
-                <motion.div
-                  key={data.month}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${(data.revenue / maxMonthlyRevenue) * 100}%` }}
-                  transition={{ delay: index * 0.1, type: "spring", stiffness: 100 }}
-                  className="w-12 sm:w-16 bg-gradient-to-b from-blue-400 to-blue-600 rounded-t-lg relative group"
-                >
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-center text-xs font-semibold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    {formatCurrency(data.revenue)}
-                  </div>
-                  <div className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 text-xs text-gray-500 font-medium">
-                    {data.month}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
 
         {/* Revenue Breakdown Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg overflow-x-auto"
+          transition={{ delay: 0.5 }}
+          className="rounded-3xl border border-slate-100 bg-white/95 p-6 shadow-xl overflow-x-auto dark:border-white/10 dark:bg-slate-900/60"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl">
-              <FiTarget className="w-5 h-5 text-white" />
+            <div className="p-2 rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/20 dark:text-blue-200">
+              <FiTarget className="w-5 h-5" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Revenue Breakdown by Course</h2>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Revenue breakdown</p>
+              <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">Course contribution map</h2>
+            </div>
           </div>
-          <table className="min-w-full table-auto text-left">
-            <thead className="text-sm text-gray-600 uppercase">
-              <tr className="border-b border-gray-200">
-                <th scope="col" className="px-4 py-3 font-medium">Course Title</th>
-                <th scope="col" className="px-4 py-3 font-medium text-right">Price</th>
-                <th scope="col" className="px-4 py-3 font-medium text-right">Enrollments</th>
-                <th scope="col" className="px-4 py-3 font-medium text-right">Total Revenue</th>
+          <table className="min-w-full text-left">
+            <thead className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <tr className="border-b border-slate-100 dark:border-white/10">
+                <th className="px-4 py-3">Course</th>
+                <th className="px-4 py-3 text-right">Price</th>
+                <th className="px-4 py-3 text-right">Enrollments</th>
+                <th className="px-4 py-3 text-right">Revenue</th>
               </tr>
             </thead>
-            <tbody className="text-sm text-gray-800 divide-y divide-gray-200">
+            <tbody className="text-sm text-slate-700 dark:text-slate-200">
               {coursesData.map(course => (
                 <motion.tr
                   key={course.courseId}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="hover:bg-gray-50/50 transition-colors duration-200"
+                  transition={{ duration: 0.2 }}
+                  className="border-b border-slate-100 last:border-0 dark:border-white/5"
                 >
-                  <td className="px-4 py-4">{course.courseTitle}</td>
-                  <td className="px-4 py-4 text-right">${course.price}</td>
+                  <td className="px-4 py-4">
+                    <p className="font-semibold text-slate-900 dark:text-white">{course.courseTitle}</p>
+                    <div className="mt-2 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-slate-400 to-blue-500"
+                        style={{ width: `${(course.totalCourseRevenue / maxCourseRevenue) * 100}%` }}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-right">{formatCurrency(course.price || 0)}</td>
                   <td className="px-4 py-4 text-right">{formatNumber(course.enrollments)}</td>
-                  <td className="px-4 py-4 text-right font-semibold text-emerald-600">{formatCurrency(course.totalCourseRevenue)}</td>
+                  <td className="px-4 py-4 text-right font-semibold text-emerald-600 dark:text-emerald-300">{formatCurrency(course.totalCourseRevenue)}</td>
                 </motion.tr>
               ))}
             </tbody>

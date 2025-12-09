@@ -108,7 +108,7 @@ const Course = ({ course }) => {
       viewport={{ once: true }}
       whileHover={{ y: -8 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="h-full"
+      className="h-full "
     >
       <Link
         to={`/course/${course._id}`}

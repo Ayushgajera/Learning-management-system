@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiUsers, FiDollarSign, FiPlusCircle, FiHome, FiBarChart2 } from 'react-icons/fi';
+import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiUsers, FiDollarSign, FiPlusCircle, FiHome, FiBarChart2, FiTrendingUp, FiCreditCard } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchUser, userLoggedOut } from "@/features/authslice";
@@ -40,14 +40,14 @@ const menuItems = [
     badge: { content: "156", className: "px-2 py-0.5 text-xs bg-emerald-500/15 text-emerald-700 font-semibold rounded-full" }
   },
   {
-    to: "/admin/analytics",
-    icon: <FiBarChart2 className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Analytics",
+    to: "admin/revenue",
+    icon: <FiTrendingUp  className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
+    label: "revenue",
   },
   {
-    to: "/admin/earnings",
-    icon: <FiDollarSign className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Earnings",
+    to: "/admin/wallet",
+    icon: <FiCreditCard   className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
+    label: "wallet",
   },
 ];
 
@@ -126,7 +126,7 @@ function AdminNavbar() {
         <div className="hidden md:flex items-center space-x-4">
           {/* Create Course Button */}
           <Link
-            to="/admin/course/create"
+            to="/admin/courses/create"
             className="flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-200"
           >
             <FiPlusCircle className="w-4 h-4" />
@@ -211,14 +211,7 @@ function AdminNavbar() {
                       <FiUsers className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />
                       <span className="font-medium">{loading ? 'Switching...' : 'Switch to Student View'}</span>
                     </button>
-                    <Link
-                      to="/settings"
-                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                    >
-                      <FiSettings className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />
-                      <span className="font-medium">Settings</span>
-                    </Link>
+                    
                     <button
                       onClick={handleLogout}
                       className="group flex items-center space-x-3 px-6 py-3 text-sm text-rose-600 w-full text-left hover:bg-rose-50/80 dark:hover:bg-rose-500/10 transition-all duration-200"
@@ -390,7 +383,7 @@ function AdminNavbar() {
 
                 {/* Create Course - Mobile */}
                 <Link 
-                  to="/admin/course/create" 
+                  to="admin/courses/create" 
                   className="flex items-center gap-3 px-3 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400"
                 >
                   <FiPlusCircle className="w-5 h-5" />

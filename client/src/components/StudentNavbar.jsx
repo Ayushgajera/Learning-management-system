@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome, FiSearch } from 'react-icons/fi';
+import { FiBookOpen, FiBell, FiLogOut, FiSettings, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { userLoggedOut } from "@/features/authslice";
@@ -19,11 +19,16 @@ function throttle(func, limit) {
   };
 }
 
+const primaryNavLinks = [
+  { to: "/courses", label: "Courses", icon: FiBookOpen },
+  { to: "/my-courses", label: "My Learning", icon: FiBook },
+];
+
 const menuItems = [
   {
-    to: "/dashboard",
+    to: "/Profile",
     icon: <FiHome className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Dashboard",
+    label: "Profile",
   },
   {
     to: "/my-courses",
@@ -31,29 +36,13 @@ const menuItems = [
     label: "My Courses",
     badge: { content: "3", className: "px-2 py-0.5 text-xs bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold rounded-full" }
   },
-  {
-    to: "/messages",
-    icon: <FiMessageSquare className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Messages",
-    badge: { content: "", className: "h-2 w-2 bg-rose-500 rounded-full" }
-  },
-  {
-    to: "/certificates",
-    icon: <FiAward className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Certificates",
-  },
-  {
-    to: "/favorites",
-    icon: <FiHeart className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
-    label: "Saved Courses",
-  },
+
 ];
 
 function StudentNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [logoutUser] = useLogoutUserMutation();
@@ -165,14 +154,7 @@ function StudentNavbar() {
                   </div>
 
                   <div className="border-t border-gray-100 dark:border-slate-700 mt-4 pt-4 space-y-1">
-                    <Link
-                      to="/settings"
-                      className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                    >
-                      <FiSettings className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />
-                      <span className="font-medium">Settings</span>
-                    </Link>
+                   
                     <button
                       onClick={handleLogout}
                       className="group flex items-center space-x-3 px-6 py-3 text-sm text-rose-600 w-full text-left hover:bg-rose-50/80 dark:hover:bg-rose-500/10 transition-all duration-200"
@@ -230,24 +212,10 @@ function StudentNavbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center ml-8 space-x-6 text-slate-700 dark:text-slate-200">
-            {/* Courses */}
-            <RouterNavLink
-              to="/courses"
-              className={({ isActive }) => `
-                flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
-                ${isActive
-                  ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
-              `}
-            >
-              <FiBookOpen className="h-5 w-5" />
-              <span>Courses</span>
-            </RouterNavLink>
-
-            {/* Categories */}
-            <div className="relative group">
+            {primaryNavLinks.map(({ to, label, icon: Icon }) => (
               <RouterNavLink
-                to="/categories"
+                key={to}
+                to={to}
                 className={({ isActive }) => `
                   flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
                   ${isActive
@@ -255,28 +223,10 @@ function StudentNavbar() {
                     : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
                 `}
               >
-                <FiGrid className="h-5 w-5" />
-                <span>Categories</span>
-                <FiChevronsDown className="ml-1 h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
+                <Icon className="h-5 w-5" />
+                <span>{label}</span>
               </RouterNavLink>
-
-              {/* Dropdown */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg py-2 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50 border border-gray-100 dark:border-gray-700"
-              >
-                {['Web Development', 'Data Science', 'Design', 'Business', 'AI & ML'].map((category) => (
-                  <Link
-                    key={category}
-                    to={`/category/${category.toLowerCase()}`}
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
-                  >
-                    {category}
-                  </Link>
-                ))}
-              </motion.div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -347,60 +297,18 @@ function StudentNavbar() {
                   {theme === 'light' ? <FiMoon className="h-5 w-5 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-5 w-5 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
                   <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
                 </button>
-                <Link to="/courses" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
-                  <FiBookOpen className="w-5 h-5" />
-                  <span>Courses</span>
-                </Link>
-
-                <div className="space-y-2">
-                  <button
-                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                {primaryNavLinks.map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <div className="flex items-center gap-3">
-                      <FiGrid className="w-5 h-5" />
-                      <span>Categories</span>
-                    </div>
-                    <FiChevronsDown className={`w-5 h-5 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  <AnimatePresence>
-                    {isCategoryOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="pl-8 space-y-1 overflow-hidden"
-                      >
-                        {['Web Development', 'Data Science', 'Design', 'Business', 'AI & ML'].map((category) => (
-                          <Link
-                            key={category}
-                            to={`/category/${category.toLowerCase()}`}
-                            className="block px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors"
-                          >
-                            {category}
-                          </Link>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                    <Icon className="w-5 h-5" />
+                    <span>{label}</span>
+                  </Link>
+                ))}
                 {userData ? (
                   <>
-                    {menuItems.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      >
-                        {item.icon}
-                        <span className="flex-1 font-medium">{item.label}</span>
-                        {item.badge && (
-                          <span className={item.badge.className}>{item.badge.content}</span>
-                        )}
-                      </Link>
-                    ))}
                     <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                       <FiSettings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                       <span className="flex-1 font-medium">Settings</span>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast, Toaster } from 'sonner';
-import { Search, Trash, ChevronLeft, ChevronRight, ExternalLink, CheckCircle2, BookOpen, MinusCircle } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ExternalLink, BookOpen, MinusCircle, Sparkles, Activity, ShieldCheck, AlertTriangle } from 'lucide-react';
 
 // --- Import API Hooks and Course Data ---
-import { useGetAllUsersQuery, useUpdateUserRoleMutation, useDeleteUserMutation, useRemoveCourseFromUserMutation } from '@/features/api/userApi';
+import { useGetAllUsersQuery, useDeleteUserMutation, useRemoveCourseFromUserMutation } from '@/features/api/userApi';
 import { useGetAllCoursesQuery } from '@/features/api/courseApi';
 import { FiInfo } from 'react-icons/fi';
 import { useLoaduserQuery } from '@/features/api/authApi';
@@ -85,7 +85,6 @@ export default function ManageUsers() {
   const { data: coursesData, isLoading: coursesLoading, isError: coursesError } = useGetAllCoursesQuery(null, { skip: !instructorId });
   const courses = coursesData?.courses || [];
 
-  const [updateUserRole] = useUpdateUserRoleMutation();
   const [deleteUser] = useDeleteUserMutation();
   const [removeCourseFromUser] = useRemoveCourseFromUserMutation();
 
@@ -106,7 +105,6 @@ export default function ManageUsers() {
   const totalPages = users ? Math.max(1, Math.ceil(filteredUsers.length / usersPerPage)) : 1;
 
   const handlePageChange = (page) => { if (page >= 1 && page <= totalPages) setCurrentPage(page); };
-  const handleEditRole = (user) => { setSelectedUser(user); setModalAction('edit-role'); setIsModalOpen(true); };
   const handleDeleteUser = (user) => { setSelectedUser(user); setModalAction('delete'); setIsModalOpen(true); };
   const handleViewCourses = (user) => { setSelectedUser(user); setModalAction('view-courses'); setIsModalOpen(true); };
   const handleRemoveCourse = (user, course) => { setSelectedUser(user); setCourseToRemove(course); setModalAction('remove-course'); setIsModalOpen(true); };
@@ -115,12 +113,8 @@ export default function ManageUsers() {
     if (!selectedUser) return;
     try {
       const userId = selectedUser._id || selectedUser.id || selectedUser?.userId;
-      if (modalAction === 'edit-role') {
-        await updateUserRole({ id: userId, role: selectedUser.role }).unwrap();
-        toast.success(`${selectedUser.name}'s role updated to ${selectedUser.role}.`);
-        await refetch();
-      } else if (modalAction === 'delete') {
-        await deleteUser(userId).unwrap();
+      if (modalAction === 'delete') {
+        await deleteUser({ userId, instructorId }).unwrap();
         await refetch();
         toast.success(`${selectedUser.name} has been deleted.`);
       } else if (modalAction === 'remove-course' && courseToRemove) {
@@ -159,123 +153,400 @@ export default function ManageUsers() {
   }
 
   const getRoleBadge = (role) => {
-    let colorClass = '';
-    switch (role) { case 'instructor': colorClass = 'bg-blue-100 text-blue-800'; break; default: colorClass = 'bg-green-100 text-green-800'; }
-    return <span className={`px-2 py-1 rounded-full text-xs font-semibold ${colorClass}`}>{role?.charAt(0).toUpperCase() + role?.slice(1)}</span>;
+    const palette = role === 'instructor'
+      ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200'
+      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200';
+    return (
+      <span className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-semibold ${palette}`}>
+        {role?.charAt(0).toUpperCase() + role?.slice(1) || 'User'}
+      </span>
+    );
+  };
+
+  const totalEnrollments = users.reduce((sum, u) => sum + (u.enrolledCourses?.length || 0), 0);
+  const instructorCount = users.filter((u) => u.role === 'instructor').length;
+  const studentCount = users.filter((u) => u.role === 'student').length;
+  const activeLearners = users.filter((u) => (u.enrolledCourses?.length || 0) > 0).length;
+
+  const analytics = [
+    {
+      label: 'Total users',
+      value: filteredUsers.length || users.length,
+      meta: `${users.length} imported`,
+      accent: 'from-slate-900 via-slate-800 to-slate-900',
+      delta: '+8.3%',
+      deltaTone: 'text-emerald-300',
+      icon: Sparkles,
+    },
+    {
+      label: 'Instructors',
+      value: instructorCount,
+      meta: 'active creators',
+      accent: 'from-indigo-500 via-violet-500 to-sky-400',
+      delta: '+2 onboarding',
+      deltaTone: 'text-indigo-200',
+      icon: ShieldCheck,
+    },
+    {
+      label: 'Students',
+      value: studentCount,
+      meta: 'learning now',
+      accent: 'from-emerald-500 to-lime-400',
+      delta: '+31 this week',
+      deltaTone: 'text-emerald-200',
+      icon: Activity,
+    },
+    {
+      label: 'Enrollments',
+      value: totalEnrollments,
+      meta: 'courses assigned',
+      accent: 'from-amber-500 to-orange-500',
+      delta: '94% capacity',
+      deltaTone: 'text-amber-200',
+      icon: AlertTriangle,
+    },
+  ];
+
+  const recentSnapshots = filteredUsers.slice(0, 4);
+
+  const getEngagementStatus = (user) => {
+    const totalCourses = user.enrolledCourses?.length || 0;
+    if (totalCourses >= 3) {
+      return {
+        label: 'Power learner',
+        tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-500/10 dark:text-emerald-100',
+      };
+    }
+    if (totalCourses === 0) {
+      return {
+        label: 'Dormant',
+        tone: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-100',
+      };
+    }
+    return {
+      label: 'Active',
+      tone: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-400/40 dark:bg-sky-500/10 dark:text-sky-100',
+    };
   };
 
   return (
     <>
       <Toaster position="bottom-right" richColors />
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-blue-50/40 to-purple-50/30 dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/30 p-6 sm:p-8">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-7xl mx-auto">
-          <motion.header initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="relative mb-6 rounded-3xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/10 via-purple-300/6 to-green-300/6 backdrop-blur-sm pointer-events-none" />
-            <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-blue-600 dark:from-gray-100 dark:to-blue-400">Manage Users</h1>
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 max-w-xl">Manage platform users — view profiles, edit roles, remove users or revoke course access. Fast, secure, and responsive.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <motion.button onClick={() => refetch()} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-md hover:shadow-lg text-sm font-medium text-gray-700 dark:text-gray-200" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                  <ChevronLeft className="w-4 h-4 text-gray-600" />
-                  Refresh
-                </motion.button>
-                <motion.button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg text-sm font-semibold" whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
-                  <ExternalLink className="w-4 h-4" />
-                  Export
-                </motion.button>
-              </div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-10 text-slate-900 dark:text-white transition-colors duration-300">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-7xl space-y-8">
+          <motion.section
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-[40px] border border-slate-200/70 dark:border-white/10 bg-gradient-to-br from-white via-slate-50 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-8 shadow-[0px_35px_140px_rgba(15,23,42,0.15)] dark:shadow-[0px_35px_140px_rgba(0,0,0,0.55)] transition-colors"
+          >
+            <div className="absolute inset-0 opacity-50 dark:opacity-30">
+              <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.25),_transparent_60%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(15,23,42,0.05)_25%,transparent_25%)] dark:bg-[linear-gradient(120deg,rgba(255,255,255,0.04)_25%,transparent_25%)] bg-[length:14px_14px]" />
             </div>
-            <div className="h-6 sm:h-8 bg-gradient-to-r from-blue-500/6 to-purple-500/6" />
-          </motion.header>
-
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="mb-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-4 sm:p-6 shadow-lg">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <div className="relative flex-1 w-full">
-                <input aria-label="Search users" type="text" placeholder="Search by name or email..." className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/40 dark:bg-gray-900/40 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-400/60 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                <Search className="absolute left-4 top-3.5 w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <div className="relative z-10 flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-3xl space-y-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-white/80">
+                  <Sparkles className="h-4 w-4" /> User workspace
+                </p>
+                <div>
+                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white md:text-4xl">Manage users</h1>
+                  <p className="mt-3 text-base text-slate-600 dark:text-white/75">
+                    Review profiles, revoke course access, and keep your classroom roster tidy from one familiar dashboard.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 text-sm text-slate-600 dark:text-white/70">
+                  {['Real-time updates', 'Course revocation', 'Audit-safe actions'].map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-slate-200/70 bg-white/70 px-3 py-1 text-slate-600 dark:border-white/10 dark:bg-transparent dark:text-white/80"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
-
-              <div className="flex items-center gap-3">
-                <label className="sr-only">Filter by role</label>
-                <select aria-label="Filter by role" className="py-2 px-3 rounded-xl bg-white/40 dark:bg-gray-900/40 border border-transparent focus:ring-2 focus:ring-blue-400/60 text-sm text-gray-800 dark:text-gray-100" value={selectedRole} onChange={(e) => setSelectedRole(e.target.value)}>
-                  {roles.map(role => (<option key={role} value={role}>{role === 'all' ? 'All Roles' : role.charAt(0).toUpperCase() + role.slice(1)}</option>))}
-                </select>
-                <motion.button onClick={() => setSearchTerm('')} className="px-3 py-2 rounded-xl bg-white/30 dark:bg-gray-900/30 border border-transparent text-sm text-gray-700 dark:text-gray-200" whileHover={{ scale: 1.03 }}>Clear</motion.button>
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentUsers.length > 0 ? currentUsers.map((user, idx) => (
-              <motion.article key={user._id || user.id || idx} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }} className="relative p-4 rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 shadow-md hover:shadow-xl hover:scale-[1.01] transition-transform" role="article" aria-labelledby={`user-${user._id || user.id}`}>
-                <div className="flex items-start gap-3">
-                  <div className="shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold">{user.name?.slice(0, 1) || 'U'}</div>
+              <div className="w-full max-w-md rounded-[32px] border border-slate-200/70 bg-white/80 p-6 backdrop-blur dark:border-white/15 dark:bg-white/5">
+                <p className="text-sm font-medium text-slate-700 dark:text-white/70">Live posture</p>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-slate-900 dark:text-white">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-950/40">
+                    <p className="text-sm text-slate-500 dark:text-white/60">Active learners</p>
+                    <p className="mt-1 text-3xl font-semibold">{activeLearners}</p>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-300">+12 vs last week</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 id={`user-${user._id || user.id}`} className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{user.name}</h3>
-                    <p className="text-xs text-gray-500 dark:text-gray-300 truncate">{user.email}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs">{getRoleBadge(user.role)}</span>
-                      <span className="text-xs text-gray-500">•</span>
-                      <span className="text-xs text-gray-500">{(user.enrolledCourses || []).length} courses</span>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-950/40">
+                    <p className="text-sm text-slate-500 dark:text-white/60">Enrollments</p>
+                    <p className="mt-1 text-3xl font-semibold">{totalEnrollments}</p>
+                    <span className="text-xs text-sky-600 dark:text-sky-300">94% course capacity</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.section>
+
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {analytics.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.label}
+                  className="rounded-[26px] border border-slate-200/70 bg-white/90 p-5 text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80 dark:shadow-inner"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-slate-500 dark:text-white/60">{card.label}</p>
+                    <span className={`text-xs font-semibold ${card.deltaTone}`}>{card.delta}</span>
+                  </div>
+                  <div className="mt-3 flex items-end justify-between">
+                    <p className="text-3xl font-semibold text-slate-900 dark:text-white">{card.value}</p>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-2 text-slate-500 dark:border-white/10 dark:bg-slate-950/40 dark:text-white/70">
+                      <Icon className="h-5 w-5" />
                     </div>
                   </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-white/60">{card.meta}</p>
+                  <div className={`mt-4 h-1 rounded-full bg-gradient-to-r ${card.accent}`} />
                 </div>
-                <div className="mt-4 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <motion.button onClick={() => handleViewCourses(user)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/30 dark:bg-gray-900/30 text-sm text-blue-600 dark:text-blue-300 border border-transparent" whileHover={{ y: -2 }}>
-                      <BookOpen className="w-4 h-4" /> Courses
-                    </motion.button>
-                    <motion.button onClick={() => handleEditRole(user)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-400 to-green-500 text-white text-sm font-medium shadow-sm" whileHover={{ y: -2 }}>
-                      <CheckCircle2 className="w-4 h-4" /> Edit Role
-                    </motion.button>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <motion.button onClick={() => handleDeleteUser(user)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500 text-white text-sm font-medium shadow-sm" whileHover={{ scale: 1.03 }}>
-                      <Trash className="w-4 h-4" /> Delete
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.article>
-            )) : (
-              <motion.div className="col-span-full p-8 text-center text-gray-500 bg-white/30 dark:bg-gray-800/30 rounded-2xl">
-                <p className="text-sm">No users match your search or filter.</p>
-              </motion.div>
-            )}
-          </div>
+              );
+            })}
+          </section>
 
-          <div className="mt-8 flex items-center justify-center">
-            <nav className="inline-flex items-center gap-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md rounded-full p-2">
-              <motion.button onClick={() => handlePageChange(currentPage - 1)} className="p-2 rounded-full bg-white/60 dark:bg-gray-900/60" whileHover={{ scale: 1.05 }} aria-label="Previous page" disabled={currentPage === 1}><ChevronLeft className="w-4 h-4" /></motion.button>
-              <div className="px-3 text-sm text-gray-700 dark:text-gray-200">Page {currentPage} of {totalPages}</div>
-              <motion.button onClick={() => handlePageChange(currentPage + 1)} className="p-2 rounded-full bg-white/60 dark:bg-gray-900/60" whileHover={{ scale: 1.05 }} aria-label="Next page" disabled={currentPage === totalPages}><ChevronRight className="w-4 h-4" /></motion.button>
+          <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+            <div className="rounded-[30px] border border-slate-200/70 bg-white/90 p-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <label className="flex w-full flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm dark:border-white/10 dark:bg-slate-900/40 dark:text-white/80">
+                  <Search className="h-4 w-4 text-slate-400 dark:text-white/50" />
+                  <input
+                    aria-label="Search users"
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search name, email, or ID"
+                    className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-white dark:placeholder:text-white/40"
+                  />
+                </label>
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="rounded-2xl border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:text-slate-900 dark:border-white/15 dark:text-white/70 dark:hover:text-white"
+                >
+                  Clear search
+                </button>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                {roles.map((role) => {
+                  const isActive = selectedRole === role;
+                  return (
+                    <button
+                      key={role}
+                      onClick={() => setSelectedRole(role)}
+                      className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? 'border-slate-900 bg-slate-900/5 text-slate-900 dark:border-white/70 dark:bg-white/15 dark:text-white'
+                          : 'border-slate-200 text-slate-500 hover:text-slate-900 dark:border-white/10 dark:text-white/60 dark:hover:text-white'
+                      }`}
+                    >
+                      {role === 'all' ? 'All users' : role.charAt(0).toUpperCase() + role.slice(1)}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2 text-xs text-white/60">
+                <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500 dark:border-white/10 dark:text-white/60">
+                  Showing {filteredUsers.length} matches
+                </span>
+                <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500 dark:border-white/10 dark:text-white/60">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <span className="rounded-full border border-slate-200 px-3 py-1 text-slate-500 dark:border-white/10 dark:text-white/60">
+                  {activeLearners} active learners
+                </span>
+              </div>
+            </div>
+
+            <div className="rounded-[30px] border border-slate-200/70 bg-white/90 p-6 text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-950/50">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700 dark:text-white/80">Recent joins</p>
+                  <span className="text-xs text-slate-500 dark:text-white/60">{recentSnapshots.length} of {filteredUsers.length}</span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {recentSnapshots.length > 0 ? (
+                    recentSnapshots.map((user) => (
+                      <div key={user._id} className="flex items-center gap-3 text-sm">
+                        <img
+                          src={user.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name || 'User')}`}
+                          alt={user.name || 'User avatar'}
+                          className="h-9 w-9 rounded-2xl object-cover border border-slate-200 dark:border-white/10"
+                        />
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-white/50">{user.email}</p>
+                        </div>
+                        <span className="text-xs text-slate-500 dark:text-white/60">{user.enrolledCourses?.length || 0} courses</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-500 dark:text-white/60">No recent user activity</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {currentUsers.length > 0 ? (
+            <>
+              <div className="hidden rounded-[32px] border border-slate-200/70 bg-white/95 p-0 shadow-xl dark:border-white/10 dark:bg-white/5 md:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm text-slate-700 dark:text-white/80">
+                    <thead>
+                      <tr className="text-xs font-semibold text-slate-500 dark:text-white/60">
+                        <th className="px-6 py-4">User</th>
+                        <th className="px-6 py-4">Role</th>
+                        <th className="px-6 py-4">Courses</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Email</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentUsers.map((user) => {
+                        const status = getEngagementStatus(user);
+                        return (
+                          <tr key={user._id} className="border-t border-slate-100 dark:border-white/5">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={user.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name || 'User')}`}
+                                  alt={user.name || 'User avatar'}
+                                  className="h-11 w-11 rounded-2xl object-cover border border-slate-200 dark:border-white/10"
+                                />
+                                <div>
+                                  <p className="font-semibold text-slate-900 dark:text-white">{user.name}</p>
+                                  <p className="text-xs text-slate-500 dark:text-white/60">ID {user._id?.slice(-6)}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
+                            <td className="px-6 py-4 text-slate-600 dark:text-white/70">{user.enrolledCourses?.length || 0}</td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${status.tone}`}>
+                                {status.label}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-slate-600 dark:text-white/70">{user.email}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleViewCourses(user)}
+                                  className="rounded-2xl border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:text-white/80 dark:hover:text-white"
+                                >
+                                  Courses
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-400/50 dark:bg-rose-500/20 dark:text-rose-100"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="space-y-4 md:hidden">
+                {currentUsers.map((user) => {
+                  const status = getEngagementStatus(user);
+                  return (
+                    <div key={user._id} className="rounded-[28px] border border-slate-200 bg-white/90 p-4 text-slate-700 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/80">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={user.photoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.name || 'User')}`}
+                          alt={user.name || 'User avatar'}
+                          className="h-10 w-10 rounded-2xl object-cover border border-slate-200 dark:border-white/10"
+                        />
+                        <div className="flex-1">
+                          <p className="text-base font-semibold text-slate-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-white/60">{user.email}</p>
+                        </div>
+                        {getRoleBadge(user.role)}
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-white/60">
+                        <span className="rounded-full border border-slate-200 px-3 py-1 dark:border-white/10">Courses {user.enrolledCourses?.length || 0}</span>
+                        <span className="rounded-full border border-slate-200 px-3 py-1 dark:border-white/10">ID {user._id?.slice(-6)}</span>
+                        <span className={`rounded-full border px-3 py-1 ${status.tone}`}>{status.label}</span>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button
+                          onClick={() => handleViewCourses(user)}
+                          className="flex-1 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:text-slate-900 dark:border-white/10 dark:text-white/80"
+                        >
+                          Courses
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user)}
+                          className="flex-1 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-400/40 dark:bg-rose-500/20 dark:text-rose-100"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="rounded-[28px] border border-dashed border-slate-200 bg-white/80 p-10 text-center text-slate-500 dark:border-white/20 dark:bg-white/5 dark:text-white/60">
+              No users match your search or filter.
+            </div>
+          )}
+
+          <div className="flex items-center justify-center">
+            <nav className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs text-slate-600 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white/70">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                className="rounded-full border border-slate-200 px-3 py-1 disabled:opacity-40 dark:border-white/10"
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              <span>Page {currentPage} of {totalPages}</span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="rounded-full border border-slate-200 px-3 py-1 disabled:opacity-40 dark:border-white/10"
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </nav>
           </div>
         </motion.div>
       </div>
 
-      {/* Modals */}
-      {isModalOpen && modalAction === 'view-courses' && <CoursesModal user={selectedUser} courses={courses} onClose={handleCancelAction} onRemoveCourse={handleRemoveCourse} />}
-      {isModalOpen && (modalAction === 'delete' || modalAction === 'edit-role' || modalAction === 'remove-course') && (
-        <UserActionModal isOpen={isModalOpen} onClose={handleCancelAction} onConfirm={handleConfirmAction} title={modalAction === 'delete' ? `Delete ${selectedUser?.name}` : modalAction === 'edit-role' ? `Edit Role for ${selectedUser?.name}` : `Remove ${courseToRemove?.courseTitle || 'course'}`} message={modalAction === 'delete' ? 'This action will permanently delete the user.' : modalAction === 'edit-role' ? 'Change the user role and save.' : 'Confirm removal of this course from the user.'} confirmText={modalAction === 'delete' ? 'Delete' : modalAction === 'edit-role' ? 'Save' : 'Remove'} isDestructive={modalAction === 'delete'}>
-          {modalAction === 'edit-role' && (
-            <div className="mt-3 w-full">
-              <label className="text-sm text-gray-700 dark:text-gray-200 block mb-2">Role</label>
-              <div className="relative w-full max-w-sm">
-                <select value={selectedUser?.role} onChange={(e) => setSelectedUser(prev => ({ ...prev, role: e.target.value }))} className="w-full appearance-none px-3 py-2 rounded-xl bg-white/40 dark:bg-gray-900/40 border border-transparent pr-10">
-                  <option value="student">Student</option>
-                  <option value="instructor">Instructor</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-gray-600 dark:text-gray-300"><path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-              </div>
-            </div>
-          )}
-        </UserActionModal>
+      {isModalOpen && modalAction === 'view-courses' && (
+        <CoursesModal user={selectedUser} courses={courses} onClose={handleCancelAction} onRemoveCourse={handleRemoveCourse} />
+      )}
+      {isModalOpen && (modalAction === 'delete' || modalAction === 'remove-course') && (
+        <UserActionModal
+          isOpen={isModalOpen}
+          onClose={handleCancelAction}
+          onConfirm={handleConfirmAction}
+          title={
+            modalAction === 'delete'
+              ? `Delete ${selectedUser?.name}`
+              : `Remove ${courseToRemove?.courseTitle || 'course'}`
+          }
+          message={
+            modalAction === 'delete'
+              ? 'This action will permanently delete the user.'
+              : 'Confirm removal of this course from the user.'
+          }
+          confirmText={modalAction === 'delete' ? 'Delete' : 'Remove'}
+          isDestructive={modalAction === 'delete'}
+        />
       )}
     </>
   );

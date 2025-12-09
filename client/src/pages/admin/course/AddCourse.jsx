@@ -1,6 +1,22 @@
 import React, { useState, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiBook, FiGrid, FiPlus, FiX, FiLoader, FiChevronDown, FiCheck, FiStar, FiZap, FiArrowLeft } from "react-icons/fi";
+import {
+  FiBook,
+  FiGrid,
+  FiPlus,
+  FiX,
+  FiLoader,
+  FiChevronDown,
+  FiCheck,
+  FiStar,
+  FiZap,
+  FiArrowLeft,
+  FiCompass,
+  FiTarget,
+  FiLayers,
+  FiActivity,
+  FiCheckCircle,
+} from "react-icons/fi";
 import { useCreateCourseMutation } from "@/features/api/courseApi";
 import { useNavigate } from "react-router-dom";
 import { Listbox } from "@headlessui/react";
@@ -9,9 +25,37 @@ import { ThemeContext } from "@/extensions/ThemeProvider";
 
 // ✅ Constants for category options
 const COURSE_CATEGORIES = [
-  "Web Development", "Mobile Development", "Design", "Marketing", "Data Science",
-  "Business", "AI & Machine Learning", "Cybersecurity", "Cloud Computing", "DevOps",
-  "Game Development", "Digital Marketing", "UI/UX Design"
+  "Web Development",
+  "Mobile Development",
+  "Design",
+  "Marketing",
+  "Data Science",
+  "Business",
+  "AI & Machine Learning",
+  "Cybersecurity",
+  "Cloud Computing",
+  "DevOps",
+  "Game Development",
+  "Digital Marketing",
+  "UI/UX Design",
+];
+
+const CREATION_STAGES = [
+  { title: "Foundation", desc: "Craft the promise and pick the right audience", status: "current" },
+  { title: "Structure", desc: "Map modules, craft learning paths", status: "pending" },
+  { title: "Launch", desc: "Add lectures, pricing, and preview", status: "pending" },
+];
+
+const QUALITY_CALL_OUTS = [
+  "Lead with outcomes—explain what changes for the learner",
+  "Keep module names active: Build, Launch, Audit...",
+  "Promise a transformation in 12 words or less",
+];
+
+const QUICK_METRICS = [
+  { label: "Avg. Completion", value: "82%", sub: "+6% vs cohort" },
+  { label: "Market Demand", value: "High", sub: "4.1k monthly searches" },
+  { label: "Build Time", value: "~6 hrs", sub: "based on similar courses" },
 ];
 
 // ✅ Futuristic Input Component with Glassmorphism
@@ -206,7 +250,7 @@ function AddCourse() {
         />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-5xl mx-auto space-y-6">
         {/* Back Button */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -224,55 +268,102 @@ function AddCourse() {
         </motion.button>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }} 
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl shadow-2xl 
-                     border border-gray-200/50 dark:border-gray-700/50 
+          className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-3xl shadow-2xl
+                     border border-gray-200/50 dark:border-gray-700/50
                      hover:shadow-3xl transition-all duration-500"
           style={{
-            boxShadow: isDarkMode 
-              ? '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-              : '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)'
+            boxShadow: isDarkMode
+              ? "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+              : "0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)",
           }}
         >
           {/* Header Section */}
-          <div className="relative p-8 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-green-500/10 
-                          dark:from-blue-400/20 dark:via-purple-400/20 dark:to-green-400/20">
-            <div className="absolute top-0 left-0 w-full h-full bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm" />
-            <div className="relative">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 
-                          rounded-2xl flex items-center justify-center shadow-lg"
-              >
-                <FiZap className="w-8 h-8 text-white" />
-              </motion.div>
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-3xl font-bold text-center bg-gradient-to-r from-gray-800 to-gray-600 
-                          dark:from-gray-100 dark:to-gray-300 bg-clip-text text-transparent"
-              >
-                Create New Course
-              </motion.h1>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-2 text-center text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-              >
-                Transform your expertise into engaging educational content that inspires learners worldwide
-              </motion.p>
+          <div className="relative p-8 bg-gradient-to-r from-blue-500/15 via-purple-500/15 to-emerald-500/15
+                          dark:from-blue-500/20 dark:via-purple-500/20 dark:to-emerald-500/20 overflow-hidden rounded-t-3xl">
+            <div className="absolute inset-0 opacity-40 mix-blend-overlay pointer-events-none">
+              <div className="absolute -right-24 -top-24 w-72 h-72 bg-gradient-to-br from-blue-400/30 to-cyan-400/30 blur-3xl" />
+              <div className="absolute -left-24 bottom-0 w-80 h-80 bg-gradient-to-tr from-purple-400/20 to-pink-400/20 blur-3xl" />
+            </div>
+            <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="space-y-4">
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 140 }}
+                  className="inline-flex items-center px-4 py-2 rounded-full bg-white/70 dark:bg-gray-900/50 text-sm font-semibold text-blue-600 dark:text-blue-300 shadow-lg shadow-blue-500/10"
+                >
+                  <FiCompass className="w-4 h-4 mr-2" />
+                  Course Creation Command Deck
+                </motion.div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-3xl lg:text-4xl font-semibold text-gray-900 dark:text-white"
+                >
+                  Launch a course that feels crafted—not cobbled together.
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-gray-600 dark:text-gray-300 max-w-2xl"
+                >
+                  Start with the promise, align the format, and the rest of the build will follow. This workspace keeps
+                  you focused on impact over busywork.
+                </motion.p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {QUICK_METRICS.map((metric, idx) => (
+                    <motion.div
+                      key={metric.label}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.35 + idx * 0.08 }}
+                      className="rounded-2xl border border-white/60 dark:border-gray-700/60 bg-white/70 dark:bg-gray-900/40 px-4 py-3 backdrop-blur"
+                    >
+                      <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">{metric.label}</p>
+                      <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{metric.value}</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-300">{metric.sub}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4 bg-white/40 dark:bg-gray-900/30 rounded-2xl p-5 border border-white/40 dark:border-gray-700/40">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center">
+                  <FiTarget className="w-4 h-4 mr-2 text-blue-500" />
+                  Stage Navigator
+                </h3>
+                <div className="space-y-3">
+                  {CREATION_STAGES.map((stage) => (
+                    <div key={stage.title} className="flex items-start gap-3">
+                      <div
+                        className={`mt-1 h-2.5 w-2.5 rounded-full ${
+                          stage.status === "current" ? "bg-blue-500 shadow-lg shadow-blue-500/40" : "bg-gray-300 dark:bg-gray-600"
+                        }`}
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{stage.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{stage.desc}</p>
+                      </div>
+                      {stage.status === "current" && (
+                        <span className="ml-auto inline-flex items-center text-xs font-semibold text-blue-600 dark:text-blue-300">
+                          <FiActivity className="w-3.5 h-3.5 mr-1" />
+                          In motion
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Form Section */}
-          <motion.form 
-            onSubmit={handleSubmit} 
+          <motion.form
+            onSubmit={handleSubmit}
             className="p-8 space-y-8"
             onFocus={() => setIsFormFocused(true)}
             onBlur={() => setIsFormFocused(false)}
@@ -307,26 +398,51 @@ function AddCourse() {
             </AnimatePresence>
 
             {/* Form Fields */}
-            <div className="grid grid-cols-1 gap-8">
-              <FormInput
-                label="Course Title"
-                name="courseTitle"
-                value={formData.courseTitle}
-                onChange={handleChange}
-                placeholder="Enter an engaging course title..."
-                icon={FiBook}
-                error={errors.courseTitle}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-8">
+              <div className="space-y-8">
+                <FormInput
+                  label="Course Title"
+                  name="courseTitle"
+                  value={formData.courseTitle}
+                  onChange={handleChange}
+                  placeholder="Enter an engaging course title..."
+                  icon={FiBook}
+                  error={errors.courseTitle}
+                />
 
-              <FormSelect
-                label="Category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                options={COURSE_CATEGORIES}
-                icon={FiGrid}
-                error={errors.category}
-              />
+                <FormSelect
+                  label="Category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  options={COURSE_CATEGORIES}
+                  icon={FiGrid}
+                  error={errors.category}
+                />
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-gray-200/60 dark:border-gray-700/60 bg-gradient-to-br from-blue-50/70 to-indigo-50/30 dark:from-blue-900/20 dark:to-indigo-900/10 p-5">
+                  <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                    <FiLayers className="w-4 h-4 text-blue-500" />
+                    Quality cues
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    {QUALITY_CALL_OUTS.map((tip) => (
+                      <li key={tip} className="flex items-start gap-2">
+                        <FiCheckCircle className="w-4 h-4 mt-0.5 text-blue-500" />
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-5 bg-white/50 dark:bg-gray-900/30">
+                  <p className="text-xs uppercase font-semibold text-gray-500 tracking-wide mb-2">Pro Tip</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-200">
+                    Give the course a working title for now. You can refine the headline when you finalize the curriculum—momentum beats polish.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Submit Button */}

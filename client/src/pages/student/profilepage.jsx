@@ -20,7 +20,7 @@ const StatCard = ({ icon: Icon, label, value, index }) => (
     initial={{ opacity: 0, y: 20 }} 
     animate={{ opacity: 1, y: 0 }} 
     transition={{ delay: 0.1 * index }} 
-    className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow"
+    className="p-6 rounded-2xl bg-white  dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow"
   >
     <div className="flex items-center gap-4">
       <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">

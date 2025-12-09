@@ -175,6 +175,7 @@ function EditCourse() {
     const [showPreview, setShowPreview] = useState(false);
     const [autoSave, setAutoSave] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [thumbnailRemoved, setThumbnailRemoved] = useState(false);
 
     // API calls
     const { data: courseData, isLoading: isCourseLoading, error, refetch } = useGetCourseByIdQuery(courseId);
@@ -221,6 +222,10 @@ function EditCourse() {
             });
             if (course.courseThumbnail) {
                 setPreviewUrl(course.courseThumbnail);
+                setThumbnailRemoved(false);
+            } else {
+                setPreviewUrl('');
+                setThumbnailRemoved(false);
             }
         }
     }, [course]);
@@ -246,6 +251,7 @@ function EditCourse() {
             setFormData(prev => ({ ...prev, courseThumbnail: file }));
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
+            setThumbnailRemoved(false);
         }
     };
 
@@ -264,6 +270,7 @@ function EditCourse() {
             formDataToSubmit.append('courseThumbnail', courseThumbnail);
         }
         formDataToSubmit.append('isPublished', isPublished);
+        formDataToSubmit.append('removeThumbnail', thumbnailRemoved);
 
         try {
             await editCourse({ formData: formDataToSubmit, courseId }).unwrap();
@@ -340,6 +347,7 @@ function EditCourse() {
             formDataToSubmit.append('courseLevel', formData.courseLevel);
             formDataToSubmit.append('coursePrice', formData.coursePrice);
             formDataToSubmit.append('isPublished', formData.isPublished);
+            formDataToSubmit.append('removeThumbnail', thumbnailRemoved);
 
             await editCourse({ formData: formDataToSubmit, courseId }).unwrap();
             setLastSaved(new Date());
@@ -868,6 +876,7 @@ function EditCourse() {
                                                                 onClick={() => {
                                                                     setPreviewUrl('');
                                                                     setFormData(prev => ({ ...prev, courseThumbnail: null }));
+                                                                    setThumbnailRemoved(true);
                                                                 }}
                                                                 className="absolute top-4 right-4 p-3 bg-rose-500/90 backdrop-blur-md 
                                                                               text-white rounded-2xl hover:bg-rose-600 transition-all duration-200 
@@ -877,7 +886,7 @@ function EditCourse() {
                                                             >
                                                                 <FiX className="w-5 h-5" />
                                                             </motion.button>
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
                                                         </motion.div>
                                                     ) : (
                                                         <label className="w-full cursor-pointer group">
@@ -1105,38 +1114,7 @@ function EditCourse() {
                                 </div>
                             )}
 
-                            {/* Helpful Tips */}
-                            <motion.div
-                                className="mt-8 p-6 bg-gradient-to-r from-blue-50/80 via-purple-50/80 to-blue-50/80 
-                                          dark:from-blue-900/20 dark:via-purple-900/20 dark:to-blue-900/20 
-                                          backdrop-blur-sm rounded-2xl border border-blue-200/50 dark:border-blue-700/50"
-                                whileHover={{ scale: 1.02 }}
-                            >
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl">
-                                        <FiZap className="w-5 h-5 text-white" />
-                                    </div>
-                                    <h4 className="text-lg font-bold text-gray-800 dark:text-gray-100">Pro Tips</h4>
-                                </div>
-                                <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
-                                    <li className="flex items-center gap-2">
-                                        <FiSettings className="w-4 h-4 text-blue-500" />
-                                        Use Ctrl+S (Cmd+S) to save quickly
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <FiEye className="w-4 h-4 text-purple-500" />
-                                        Use Ctrl+P (Cmd+P) to toggle preview
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <FiRefreshCw className="w-4 h-4 text-green-500" />
-                                        Enable auto-save to prevent data loss
-                                    </li>
-                                    <li className="flex items-center gap-2">
-                                        <FiStar className="w-4 h-4 text-yellow-500" />
-                                        Use AI generation for better content
-                                    </li>
-                                </ul>
-                            </motion.div>
+                           
                         </motion.div>
                     </div>
                 </div>
