@@ -1050,7 +1050,7 @@ function EnrolledCourseLectures() {
                     <div className="grid grid-cols-1 gap-4">
                       {selectedLecture?.resources && selectedLecture.resources.length > 0 ? (
                         selectedLecture.resources.map((resource, idx) => {
-                          const downloadUrl = `http://localhost:8000/api/v1/resource/download/${resource._id}?t=${Date.now()}`;
+                          const downloadUrl = `https://learning-management-system-20d6.onrender.com/api/v1/resource/download/${resource._id}?t=${Date.now()}`;
 
                           return (
                             <div key={resource._id || idx} className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">

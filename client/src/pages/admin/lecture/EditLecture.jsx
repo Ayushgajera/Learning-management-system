@@ -18,7 +18,7 @@ import { useEditLectureMutation, useGetLectureByIdQuery, useCreateResourceMutati
 import { useNavigate, useParams } from "react-router-dom";
 import { FiFile, FiDownload, FiLoader } from "react-icons/fi";
 
-const MEDIA_API = "http://localhost:8000/api/v1/media";
+const MEDIA_API = "https://learning-management-system-20d6.onrender.com/api/v1/media";
 
 const uploadTips = [
   "Aim for 1080p MP4/H.264 for best balance of clarity and size.",

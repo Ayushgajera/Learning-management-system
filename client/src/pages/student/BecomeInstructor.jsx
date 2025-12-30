@@ -56,7 +56,7 @@ function BecomeInstructor() {
   // 🔹 Check if user already onboarded
   useEffect(() => {
     let mounted = true;
-    axios.get('http://localhost:8000/api/v1/user/instructor-onboard', { withCredentials: true })
+    axios.get('https://learning-management-system-20d6.onrender.com/api/v1/user/instructor-onboard', { withCredentials: true })
       .then(res => {
         if (!mounted) return;
         if (res.data.onboarded) {
@@ -92,7 +92,7 @@ function BecomeInstructor() {
       dispatch(userRoleChanging());
 
       const res = await axios.post(
-        'http://localhost:8000/api/v1/user/instructor-onboard',
+        'https://learning-management-system-20d6.onrender.com/api/v1/user/instructor-onboard',
         { answers },
         { withCredentials: true }
       );

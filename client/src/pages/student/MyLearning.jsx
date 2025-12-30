@@ -38,14 +38,14 @@ function MyLearning() {
           enrolledCourseIds.map(async (courseId) => {
             try {
               // Fetch course details
-              const courseRes = await fetch(`http://localhost:8000/api/v1/course/${courseId}`, { credentials: 'include' });
+              const courseRes = await fetch(`https://learning-management-system-20d6.onrender.com/api/v1/course/${courseId}`, { credentials: 'include' });
               if (!courseRes.ok) throw new Error('Failed to fetch course');
               const courseData = await courseRes.json();
               const course = courseData.course;
               if (!course) throw new Error('Course not found');
 
               // Fetch progress
-              const progressRes = await fetch(`http://localhost:8000/api/v1/progress/${courseId}`, { credentials: 'include' });
+              const progressRes = await fetch(`https://learning-management-system-20d6.onrender.com/api/v1/progress/${courseId}`, { credentials: 'include' });
               if (!progressRes.ok) throw new Error('Failed to fetch progress');
               const progressData = await progressRes.json();
               const progress = progressData.data;
@@ -102,23 +102,22 @@ function MyLearning() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        
+
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white font-display mb-4">
             My Learning
           </h1>
-          
+
           {/* Tabs */}
           <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-1">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium text-sm transition-all relative ${
-                  activeTab === tab.key
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-medium text-sm transition-all relative ${activeTab === tab.key
                     ? 'text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-900 border-x border-t border-slate-200 dark:border-slate-800 -mb-px'
                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                }`}
+                  }`}
               >
                 <tab.icon className="w-4 h-4" />
                 {tab.label}
@@ -147,8 +146,8 @@ function MyLearning() {
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No courses found</h3>
             <p className="text-slate-600 dark:text-slate-400">
-              {activeTab === 'all' 
-                ? "You haven't enrolled in any courses yet." 
+              {activeTab === 'all'
+                ? "You haven't enrolled in any courses yet."
                 : `You have no courses in the "${TABS.find(t => t.key === activeTab)?.label}" category.`}
             </p>
           </div>

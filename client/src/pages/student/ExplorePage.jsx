@@ -45,28 +45,28 @@ function ExplorePage() {
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const { data, isLoading, error , refetch} = useGetPublishCourseQuery();
+  const { data, isLoading, error, refetch } = useGetPublishCourseQuery();
   const courses = data?.courses || [];
   const observerRef = useRef();
 
-   const { data: userData } = useLoaduserQuery(undefined, {
-      refetchOnMountOrArgChange: true,
-    });
-    const user = userData?.user || {};
-    
-    const enrolledCourseIds = user.enrolledCourses || [];
-    const isCoursePurchased = (course) => enrolledCourseIds.includes(course._id);
+  const { data: userData } = useLoaduserQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const user = userData?.user || {};
 
-     useEffect(() => {
-        refetch();
-        const handleCourseUpdated = () => {
-          refetch();
-        };
-        socket.on("courseUpdated", handleCourseUpdated);
-        return () => {
-          socket.off("courseUpdated", handleCourseUpdated);
-        };
-      }, [refetch]);
+  const enrolledCourseIds = user.enrolledCourses || [];
+  const isCoursePurchased = (course) => enrolledCourseIds.includes(course._id);
+
+  useEffect(() => {
+    refetch();
+    const handleCourseUpdated = () => {
+      refetch();
+    };
+    socket.on("courseUpdated", handleCourseUpdated);
+    return () => {
+      socket.off("courseUpdated", handleCourseUpdated);
+    };
+  }, [refetch]);
 
   // Filter and sort courses
   useEffect(() => {
@@ -165,8 +165,8 @@ function ExplorePage() {
 
   // Get paginated courses
   const displayedCourses = filteredCourses.slice(0, page * 12);
-  console.log("course data:",displayedCourses)
-  
+
+
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -218,7 +218,7 @@ function ExplorePage() {
       {/* Header Section */}
       <div className="backdrop-blur-xl border-b border-gray-200/10 dark:border-gray-800 sticky top-16 z-40 bg-white/60 dark:bg-gray-900/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <motion.div 
+          <motion.div
             className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -232,7 +232,7 @@ function ExplorePage() {
                 Discover the best courses from top instructors worldwide
               </p>
             </div>
-            
+
             {/* Search Bar */}
             <div className="relative flex-1 max-w-lg">
               <div className="relative group">
@@ -253,14 +253,14 @@ function ExplorePage() {
       {/* Filters Section */}
       <div className="backdrop-blur-xl border-b border-gray-200/10 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <motion.div 
+          <motion.div
             className="flex flex-wrap items-center justify-between gap-4"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
             {/* Filter Toggle */}
-                <motion.button
+            <motion.button
               onClick={() => setShowFilters(!showFilters)}
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-200/50 rounded-xl hover:bg-gray-50/50 transition-all duration-200 bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
@@ -288,7 +288,7 @@ function ExplorePage() {
 
             {/* View Toggle */}
             <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl p-1 border border-gray-200/50 dark:border-gray-700">
-                <motion.button
+              <motion.button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-all duration-200 ${viewMode === 'grid' ? 'bg-blue-500 text-white shadow-md' : 'text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 whileHover={{ scale: 1.05 }}
@@ -382,7 +382,7 @@ function ExplorePage() {
       {/* Results Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Results Count */}
-        <motion.div 
+        <motion.div
           className="flex items-center justify-between mb-8"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -403,7 +403,7 @@ function ExplorePage() {
 
         {/* Courses Grid */}
         {error ? (
-          <motion.div 
+          <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -423,7 +423,7 @@ function ExplorePage() {
             </div>
           </motion.div>
         ) : displayedCourses.length === 0 ? (
-          <motion.div 
+          <motion.div
             className="text-center py-16"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -443,11 +443,10 @@ function ExplorePage() {
             </div>
           </motion.div>
         ) : (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid'
+          <div className={`grid gap-6 ${viewMode === 'grid'
               ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
               : 'grid-cols-1'
-          }`}>
+            }`}>
             <AnimatePresence>
               {displayedCourses.map((course, index) => (
                 <motion.div
@@ -469,7 +468,7 @@ function ExplorePage() {
 
         {/* Loading More Indicator */}
         {isLoadingMore && (
-          <motion.div 
+          <motion.div
             className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -483,7 +482,7 @@ function ExplorePage() {
 
         {/* End of Results */}
         {!hasMore && displayedCourses.length > 0 && (
-          <motion.div 
+          <motion.div
             className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -4,11 +4,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-const BuyCourseButton = ({ courseId, amount = 499 ,refetch}) => {
+const BuyCourseButton = ({ courseId, amount = 499, refetch }) => {
   const [loading, setLoading] = useState(false);
-   const userData = useSelector((state) => state.auth.user);
-   const userId = userData?._id || "ayush-user-id-demo"; 
-   console.log("User ID:", userId);
+  const userData = useSelector((state) => state.auth.user);
+  const userId = userData?._id || "ayush-user-id-demo";
+
   // const courseId = params.courseId;
   const navigate = useNavigate();
 
@@ -30,21 +30,21 @@ const BuyCourseButton = ({ courseId, amount = 499 ,refetch}) => {
       toast.error("Missing course or amount details.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     const res = await loadRazorpay();
     if (!res) {
       alert("Razorpay SDK failed to load");
       setLoading(false);
       return;
     }
-  
+
     try {
       // Step 1️⃣: Create order from backend
-      const { data: orderData } = await axios.post("http://localhost:8000/api/v1/payment/create-order", {
+      const { data: orderData } = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/payment/create-order", {
         amount,
-      },{ withCredentials: true });
+      }, { withCredentials: true });
 
       // Step 2️⃣: Setup Razorpay Options
       const options = {
@@ -56,15 +56,15 @@ const BuyCourseButton = ({ courseId, amount = 499 ,refetch}) => {
         order_id: orderData.orderId || orderData.id,
         handler: async function (response) {
           try {
-            const { data: verifyRes } = await axios.post("http://localhost:8000/api/v1/payment/verify", {
+            const { data: verifyRes } = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/payment/verify", {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               courseId,
               amount,
               userId: userId || null, // ✅ If not logged in, backend should handle it
-            },{ withCredentials: true });
-  
+            }, { withCredentials: true });
+
             if (verifyRes.success) {
               toast.success("✅ Payment successful!");
               refetch(); // refresh course access
@@ -83,7 +83,7 @@ const BuyCourseButton = ({ courseId, amount = 499 ,refetch}) => {
           hide_topbar: false,
         },
       };
-  
+
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (error) {
@@ -94,7 +94,7 @@ const BuyCourseButton = ({ courseId, amount = 499 ,refetch}) => {
       setLoading(false);
     }
   };
-  
+
 
   return (
     <button

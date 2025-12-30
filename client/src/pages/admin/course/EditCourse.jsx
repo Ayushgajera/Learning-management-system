@@ -186,7 +186,7 @@ function EditCourse() {
     const { isDarkMode } = useContext(ThemeContext);
 
     const course = courseData?.course;
-    console.log('Course Data:', course?.ispublished);
+
 
     const publishStatusHandler = async (action) => {
         try {
@@ -288,7 +288,7 @@ function EditCourse() {
         }
         setIsDescriptionLoading(true);
         try {
-            const response = await axios.post("http://localhost:8000/api/v1/ai/description", {
+            const response = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/ai/description", {
                 courseTitle: formData.courseTitle,
             });
             const description = response.data?.description;
@@ -313,7 +313,7 @@ function EditCourse() {
         }
         setIsSubtitleLoading(true);
         try {
-            const response = await axios.post("http://localhost:8000/api/v1/ai/subtitle", {
+            const response = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/ai/subtitle", {
                 courseTitle: formData.courseTitle,
             });
             const subtitle = response.data?.subtitle;

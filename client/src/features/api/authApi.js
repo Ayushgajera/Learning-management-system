@@ -38,7 +38,7 @@ export const authApi = createApi({
                     dispatch(userLoggedIn({ user: result.data.user }));
 
                 } catch (error) {
-                    console.log(error)
+                    // console.log(error)
 
                 }
             }
@@ -49,14 +49,14 @@ export const authApi = createApi({
                 method: 'GET'
             }),
             async onQueryStarted(_, { queryFulfilled, dispatch }) {
-                console.log("loaduser API call started");
+                // console.log("loaduser API call started");
                 try {
                     //queryFUlfilled used to store data from the server(recieved response from backend)
                     const result = await queryFulfilled;
                     dispatch(userLoggedIn({ user: result.data.user }));
 
                 } catch (error) {
-                    console.log(error)
+                    // console.log(error)
 
                 }
             }
@@ -73,7 +73,7 @@ export const authApi = createApi({
                     const result = await queryFulfilled;
                     dispatch(userLoggedIn({ user: result.data.user }));
                 } catch (error) {
-                    console.log(error);
+                    // console.log(error);
                 }
             }
         }),
@@ -88,7 +88,7 @@ export const authApi = createApi({
                     dispatch(userLoggedOut());
 
                 } catch (error) {
-                    console.log(error)
+                    // console.log(error)
 
                 }
             }

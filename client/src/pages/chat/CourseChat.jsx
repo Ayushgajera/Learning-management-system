@@ -57,7 +57,7 @@ const CourseChat = () => {
   const [currentCourse, setCurrentCourse] = useState(null);
   const messageRefs = useRef({});
   const [highlightedMessageId, setHighlightedMessageId] = useState(null);
-  
+
 
   const user = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
@@ -110,7 +110,7 @@ const CourseChat = () => {
   useEffect(() => {
     const fetchPrefs = async () => {
       try {
-        const res = await fetch('http://localhost:8000/api/v1/user/notifications', { credentials: 'include' });
+        const res = await fetch('https://learning-management-system-20d6.onrender.com/api/v1/user/notifications', { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.notificationPreferences) setNotificationPrefs(data.notificationPreferences);
@@ -128,14 +128,14 @@ const CourseChat = () => {
 
   // Socket event handlers
   useEffect(() => {
-  if (!courseId || !userId) return;
+    if (!courseId || !userId) return;
 
-  // Clear any leftover typing or online users when switching courses
-  setTyping([]);
-  setOnlineUsers([]);
+    // Clear any leftover typing or online users when switching courses
+    setTyping([]);
+    setOnlineUsers([]);
 
-  // Join course chat
-  socket.emit("join_course_chat", { courseId, userId });
+    // Join course chat
+    socket.emit("join_course_chat", { courseId, userId });
 
     // Listen for chat history (server may send either an array or an object)
     socket.on("chat_history", (data) => {
@@ -205,38 +205,38 @@ const CourseChat = () => {
         // don't notify for our own messages
         if (String(senderId) === String(userId)) return;
 
-    // Respect user preferences using the ref (always up-to-date):
-    // - Do not show any real notifications until preferences are loaded (strict enforcement)
-    // - If prefs are loaded, require both global and per-course to be enabled
-  const prefs = notificationPrefsRef.current;
-  const coursePref = prefs?.courses?.find((c) => String(c.courseId) === String(courseId));
-  const perCourseEnabled = coursePref ? coursePref.enabled : false; // default to false when missing
-  const prefsLoaded = prefs !== null;
-  const allowedByPrefs = prefsLoaded && !!prefs?.global && !!perCourseEnabled;
+        // Respect user preferences using the ref (always up-to-date):
+        // - Do not show any real notifications until preferences are loaded (strict enforcement)
+        // - If prefs are loaded, require both global and per-course to be enabled
+        const prefs = notificationPrefsRef.current;
+        const coursePref = prefs?.courses?.find((c) => String(c.courseId) === String(courseId));
+        const perCourseEnabled = coursePref ? coursePref.enabled : false; // default to false when missing
+        const prefsLoaded = prefs !== null;
+        const allowedByPrefs = prefsLoaded && !!prefs?.global && !!perCourseEnabled;
 
-  // Debug: log decision so we can trace why a notification was/wasn't shown
-  try {
-    console.debug('CourseChat: notification decision', {
-      prefsLoaded,
-      global: notificationPrefs?.global,
-      perCourseEnabled,
-      allowedByPrefs,
-      windowFocused: windowFocusedRef.current,
-      permission: typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
-      senderId: message.userId && (typeof message.userId === 'object' ? message.userId._id : message.userId),
-      courseId,
-      messageId: message._id || message.tempId,
-    });
-  } catch (e) {
-    // ignore logging errors
-  }
+        // Debug: log decision so we can trace why a notification was/wasn't shown
+        try {
+          console.debug('CourseChat: notification decision', {
+            prefsLoaded,
+            global: notificationPrefs?.global,
+            perCourseEnabled,
+            allowedByPrefs,
+            windowFocused: windowFocusedRef.current,
+            permission: typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
+            senderId: message.userId && (typeof message.userId === 'object' ? message.userId._id : message.userId),
+            courseId,
+            messageId: message._id || message.tempId,
+          });
+        } catch (e) {
+          // ignore logging errors
+        }
 
-  if (
-    !windowFocusedRef.current &&
-    typeof Notification !== "undefined" &&
-    Notification.permission === "granted" &&
-    allowedByPrefs
-  ) {
+        if (
+          !windowFocusedRef.current &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted" &&
+          allowedByPrefs
+        ) {
           const title = message.isCode ? `Code snippet from ${message.userId?.name || 'Someone'}` : `New message from ${message.userId?.name || 'Someone'}`;
           const body = message.isCode ? (message.code?.slice(0, 100) + (message.code?.length > 100 ? '...' : '')) : (message.text?.slice(0, 150) || '');
           const notif = new Notification(title, { body });
@@ -244,7 +244,7 @@ const CourseChat = () => {
             try {
               window.focus();
               notif.close();
-            } catch (e) {}
+            } catch (e) { }
           };
         }
       } catch (err) {
@@ -391,13 +391,13 @@ const CourseChat = () => {
 
   // Insert code block into the text input (quick wrap) or open modal
   const openCodeModal = (useModal = true, lang = "javascript") => {
-  if (useModal) {
-    setShowCodeModal(true);
-  } else {
-    const block = `\n\`\`\`${lang}\n// paste your code here\n\`\`\`\n`;
-    setText((t) => (t ? t + block : block));
-  }
-};
+    if (useModal) {
+      setShowCodeModal(true);
+    } else {
+      const block = `\n\`\`\`${lang}\n// paste your code here\n\`\`\`\n`;
+      setText((t) => (t ? t + block : block));
+    }
+  };
 
 
   const closeCodeModal = () => {
@@ -463,7 +463,7 @@ const CourseChat = () => {
       setNotificationPrefs(optimistic);
       notificationPrefsRef.current = optimistic;
 
-      const res = await fetch('http://localhost:8000/api/v1/user/notifications', {
+      const res = await fetch('https://learning-management-system-20d6.onrender.com/api/v1/user/notifications', {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -494,7 +494,7 @@ const CourseChat = () => {
       setNotificationPrefs(optimistic);
       notificationPrefsRef.current = optimistic;
 
-      const res = await fetch('http://localhost:8000/api/v1/user/notifications', {
+      const res = await fetch('https://learning-management-system-20d6.onrender.com/api/v1/user/notifications', {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -539,7 +539,7 @@ const CourseChat = () => {
 
     try {
       const n = new Notification('Test: LMS Chat', { body: `This is a test notification for course ${currentCourse?.title || courseId}` });
-      n.onclick = () => { try { window.focus(); n.close(); } catch (e) {} };
+      n.onclick = () => { try { window.focus(); n.close(); } catch (e) { } };
     } catch (err) {
       console.error('Test notification failed', err);
       alert('Failed to show notification. Check console for details.');
@@ -596,12 +596,12 @@ const CourseChat = () => {
       tempId,
     };
 
-  // detect mentions in text
-  const mentionRegex = /@([a-zA-Z0-9_\-\.]+)/g;
-  const mentions = [];
-  let mm;
-  while ((mm = mentionRegex.exec(text.trim())) !== null) mentions.push(mm[1]);
-  if (mentions.length) messageData.mentions = mentions;
+    // detect mentions in text
+    const mentionRegex = /@([a-zA-Z0-9_\-\.]+)/g;
+    const mentions = [];
+    let mm;
+    while ((mm = mentionRegex.exec(text.trim())) !== null) mentions.push(mm[1]);
+    if (mentions.length) messageData.mentions = mentions;
 
     socket.emit("send_message", messageData);
     setText("");
@@ -769,11 +769,10 @@ const CourseChat = () => {
             <button
               key={emoji}
               onClick={() => (userReacted ? removeReaction(message._id, emoji) : addReaction(message._id, emoji))}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition border ${
-                userReacted
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition border ${userReacted
                   ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400"
                   : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-              }`}
+                }`}
               title={`React with ${emoji}`}
             >
               <span>{emoji}</span>
@@ -781,8 +780,8 @@ const CourseChat = () => {
             </button>
           );
         })}
-        
-        <button 
+
+        <button
           className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
           title="Add reaction"
         >
@@ -810,21 +809,19 @@ const CourseChat = () => {
             <Link
               to={`/chat/${course._id}`}
               key={course._id}
-              className={`relative flex items-center gap-3 px-3 lg:px-4 py-3 mx-2 rounded-xl transition-all group ${
-                courseId === course._id
+              className={`relative flex items-center gap-3 px-3 lg:px-4 py-3 mx-2 rounded-xl transition-all group ${courseId === course._id
                   ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
+                }`}
               title={course.courseTitle}
             >
               {courseId === course._id && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-indigo-600 rounded-r-full" />
               )}
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0 ${
-                courseId === course._id 
-                  ? "bg-white dark:bg-slate-800 shadow-sm" 
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0 ${courseId === course._id
+                  ? "bg-white dark:bg-slate-800 shadow-sm"
                   : "bg-slate-100 dark:bg-slate-800 group-hover:bg-white dark:group-hover:bg-slate-700"
-              }`}>
+                }`}>
                 {course.courseTitle.charAt(0)}
               </div>
               <div className="hidden lg:block flex-1 min-w-0">
@@ -863,13 +860,13 @@ const CourseChat = () => {
             <button onClick={() => navigate(-1)} className="lg:hidden p-2 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400">
               <ArrowLeft className="w-5 h-5" />
             </button>
-            
-            <Link 
-              to={`/course-progress/${courseId}`} 
+
+            <Link
+              to={`/course-progress/${courseId}`}
               className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition text-sm font-medium"
             >
-               <ArrowLeft className="w-4 h-4" />
-               <span>Back to Class</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Class</span>
             </Link>
 
             <div>
@@ -898,16 +895,15 @@ const CourseChat = () => {
                 className="bg-transparent border-none focus:outline-none text-sm ml-2 w-32 lg:w-48 text-slate-700 dark:text-slate-200 placeholder-slate-400"
               />
             </div>
-            
+
             <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
-            <button 
+            <button
               onClick={toggleCourseNotifications}
-              className={`p-2 rounded-full transition ${
-                notificationPrefs?.courses?.find(c => String(c.courseId) === String(courseId))?.enabled
+              className={`p-2 rounded-full transition ${notificationPrefs?.courses?.find(c => String(c.courseId) === String(courseId))?.enabled
                   ? "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
                   : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
-              }`}
+                }`}
               title="Course Notifications"
             >
               <div className="relative">
@@ -917,8 +913,8 @@ const CourseChat = () => {
                 )}
               </div>
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setShowSearch(!showSearch)}
               className="md:hidden p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"
             >
@@ -940,10 +936,10 @@ const CourseChat = () => {
                   onClick={() => handlePinnedClick(msg)}
                   className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800/30 px-3 py-1.5 rounded-lg cursor-pointer hover:shadow-sm transition flex-shrink-0 max-w-xs"
                 >
-                  <img 
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId?.name || "User"}`} 
-                    className="w-4 h-4 rounded-full" 
-                    alt="" 
+                  <img
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.userId?.name || "User"}`}
+                    className="w-4 h-4 rounded-full"
+                    alt=""
                   />
                   <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
                     {msg.userId?.name}:
@@ -978,10 +974,10 @@ const CourseChat = () => {
               const isOwn = msgUserId === userId;
               const replyMsg = msg.replyTo ? messages.find((m) => m._id === msg.replyTo) : null;
               const isPinned = pinnedMessages.some((p) => p._id === msg._id);
-              
+
               // Check if previous message was from same user to group them
               const isSequence = index > 0 && (
-                (typeof messages[index-1].userId === "object" ? messages[index-1].userId._id : messages[index-1].userId) === msgUserId
+                (typeof messages[index - 1].userId === "object" ? messages[index - 1].userId._id : messages[index - 1].userId) === msgUserId
               );
 
               return (
@@ -991,9 +987,8 @@ const CourseChat = () => {
                     const key = msg._id || msg.tempId;
                     if (el) messageRefs.current[key] = el;
                   }}
-                  className={`group flex gap-4 ${isOwn ? "flex-row-reverse" : ""} ${isSequence ? "mt-1" : "mt-6"} ${
-                    highlightedMessageId === msg._id ? "bg-yellow-50 dark:bg-yellow-900/10 -mx-4 px-4 py-2 rounded-xl transition-colors duration-1000" : ""
-                  }`}
+                  className={`group flex gap-4 ${isOwn ? "flex-row-reverse" : ""} ${isSequence ? "mt-1" : "mt-6"} ${highlightedMessageId === msg._id ? "bg-yellow-50 dark:bg-yellow-900/10 -mx-4 px-4 py-2 rounded-xl transition-colors duration-1000" : ""
+                    }`}
                 >
                   {/* Avatar */}
                   {!isSequence ? (
@@ -1021,19 +1016,17 @@ const CourseChat = () => {
                     )}
 
                     {/* Message Bubble */}
-                    <div className={`relative px-5 py-3 shadow-sm text-[15px] leading-relaxed ${
-                      isOwn
+                    <div className={`relative px-5 py-3 shadow-sm text-[15px] leading-relaxed ${isOwn
                         ? "bg-indigo-600 text-white rounded-2xl rounded-tr-sm"
                         : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-2xl rounded-tl-sm border border-slate-200 dark:border-slate-700"
-                    } ${msg.sending ? "opacity-70" : ""}`}>
-                      
+                      } ${msg.sending ? "opacity-70" : ""}`}>
+
                       {/* Reply Context */}
                       {replyMsg && (
-                        <div className={`mb-2 px-3 py-2 rounded-lg text-xs border-l-2 ${
-                          isOwn 
-                            ? "bg-indigo-700/50 border-indigo-300 text-indigo-100" 
+                        <div className={`mb-2 px-3 py-2 rounded-lg text-xs border-l-2 ${isOwn
+                            ? "bg-indigo-700/50 border-indigo-300 text-indigo-100"
                             : "bg-slate-100 dark:bg-slate-700/50 border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400"
-                        }`}>
+                          }`}>
                           <div className="font-bold mb-0.5 opacity-80">
                             {replyMsg.userId?.name || "User"}
                           </div>
@@ -1200,22 +1193,20 @@ const CourseChat = () => {
                   </div>
                   <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{file.name}</span>
                 </div>
-                <button onClick={() => { setFile(null); if(fileInputRef.current) fileInputRef.current.value = ''; }} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
+                <button onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full">
                   <X className="w-4 h-4 text-slate-500" />
                 </button>
               </div>
             )}
 
             {/* Main Input Bar */}
-            <div className={`relative flex items-end gap-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-3xl border transition-all ${
-              (replyTo || file) ? "rounded-t-none border-t-0" : ""
-            } ${
-              text.length > 0 ? "border-indigo-500 ring-1 ring-indigo-500/20" : "border-slate-200 dark:border-slate-700"
-            }`}>
-              
+            <div className={`relative flex items-end gap-2 bg-slate-50 dark:bg-slate-800 p-2 rounded-3xl border transition-all ${(replyTo || file) ? "rounded-t-none border-t-0" : ""
+              } ${text.length > 0 ? "border-indigo-500 ring-1 ring-indigo-500/20" : "border-slate-200 dark:border-slate-700"
+              }`}>
+
               {/* Attachment Button */}
               <div className="flex items-center gap-1 pb-2 pl-2">
-                <button 
+                <button
                   onClick={() => fileInputRef.current?.click()}
                   className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-indigo-600 transition"
                   title="Attach file"
@@ -1229,8 +1220,8 @@ const CourseChat = () => {
                   className="hidden"
                   accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip"
                 />
-                
-                <button 
+
+                <button
                   onClick={() => openCodeModal(true)}
                   className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-indigo-600 transition"
                   title="Insert Code"
@@ -1239,7 +1230,7 @@ const CourseChat = () => {
                 </button>
 
                 <div className="relative">
-                  <button 
+                  <button
                     onClick={() => setShowEmoji(!showEmoji)}
                     className="p-2 rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-amber-500 transition"
                     title="Emoji"
@@ -1287,11 +1278,10 @@ const CourseChat = () => {
                 <button
                   onClick={sendMessage}
                   disabled={isUploading || (!text.trim() && !file)}
-                  className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center ${
-                    isUploading || (!text.trim() && !file)
+                  className={`p-3 rounded-full transition-all duration-200 flex items-center justify-center ${isUploading || (!text.trim() && !file)
                       ? "bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed"
                       : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:scale-105 active:scale-95"
-                  }`}
+                    }`}
                 >
                   {isUploading ? (
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1301,7 +1291,7 @@ const CourseChat = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="text-center mt-2 text-xs text-slate-400">
               <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for new line
             </div>
@@ -1320,7 +1310,7 @@ const CourseChat = () => {
             {onlineUsers.length + 1} active in this course
           </p>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
           <div>
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">You</h4>
@@ -1373,13 +1363,13 @@ const CourseChat = () => {
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
-            
+
             <div className="p-6 flex-1 overflow-y-auto">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Language</label>
-                <select 
-                  value={codeLang} 
-                  onChange={(e) => setCodeLang(e.target.value)} 
+                <select
+                  value={codeLang}
+                  onChange={(e) => setCodeLang(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="javascript">JavaScript</option>
@@ -1396,7 +1386,7 @@ const CourseChat = () => {
                   <option value="text">Plain Text</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Code</label>
                 <textarea
@@ -1413,8 +1403,8 @@ const CourseChat = () => {
               <button onClick={closeCodeModal} className="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition">
                 Cancel
               </button>
-              <button 
-                onClick={sendCodeMessage} 
+              <button
+                onClick={sendCodeMessage}
                 disabled={!codeContent.trim()}
                 className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >

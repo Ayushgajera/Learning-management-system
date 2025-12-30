@@ -63,13 +63,13 @@ const Login = () => {
         const res = await loginUser(loginInput).unwrap();
         navigate('/'); // Redirect to homepage or dashboard
 
-        console.log("Login Success:", res);
+
       } else {
         const res = await registerUser(signupInput).unwrap();
-        console.log("Register Success:", res);
+
       }
     } catch (err) {
-      console.error("API Error:", err);
+      // console.error("API Error:", err);
     }
   };
 
