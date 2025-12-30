@@ -1,4 +1,5 @@
 import React from 'react';
+// Corrected import casing for Vercel deployment
 import Navbar from '../components/Navbar';
 import { Outlet } from 'react-router-dom';
 
