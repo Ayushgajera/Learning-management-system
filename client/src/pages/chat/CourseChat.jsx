@@ -98,6 +98,17 @@ const CourseChat = () => {
     notificationPrefsRef.current = notificationPrefs;
   }, [notificationPrefs]);
 
+  // Fallback: If currentCourse is not set via chat_history, try to find it in courses list
+  useEffect(() => {
+    if ((!currentCourse || !currentCourse.title) && courses.length > 0) {
+      const found = courses.find(c => c._id === courseId || c.courseId === courseId);
+      if (found) {
+        // Ensure we normalize the title property
+        setCurrentCourse({ ...found, title: found.courseTitle || found.title });
+      }
+    }
+  }, [courses, currentCourse, courseId]);
+
   // Socket logic
   useEffect(() => {
     if (!courseId || !userId) return;
@@ -433,11 +444,11 @@ const CourseChat = () => {
           <button onClick={() => setShowMobileMenu(true)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300">
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">
-              {currentCourse?.title || "Course Chat"}
+          <div className="flex flex-col ml-0">
+            <span className="font-bold text-slate-900 dark:text-white text-base lg:text-lg">
+              {currentCourse ? currentCourse.courseTitle || currentCourse.title : "Loading..."}
             </span>
-            <span className="text-[10px] text-emerald-500 font-medium flex items-center gap-1">
+            <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {onlineUsers.length + 1} Online
             </span>
@@ -715,9 +726,9 @@ const CourseChat = () => {
         </AnimatePresence>
 
         {/* Input Area */}
-        <div className="p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30">
-          <div className="max-w-4xl mx-auto flex gap-3 items-end relative">
-            {/* Reply/File Preview Banner could be absolute top -12 */}
+        <div className="p-3 lg:p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-30">
+          <div className="max-w-4xl mx-auto flex gap-2 lg:gap-3 items-end relative">
+            {/* Reply/File Preview Banner */}
             {replyTo && (
               <div className="absolute -top-14 left-0 right-0 bg-indigo-50 dark:bg-slate-800 rounded-xl p-2 flex justify-between border border-indigo-100 dark:border-slate-700 shadow-lg mb-2">
                 <div className="flex items-center gap-2 text-sm text-indigo-800 dark:text-indigo-300">
@@ -727,8 +738,8 @@ const CourseChat = () => {
               </div>
             )}
 
-            <div className="flex-1 bg-slate-100 dark:bg-slate-800/80 rounded-[28px] border border-transparent focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all flex items-center shadow-inner">
-              <button onClick={() => setShowEmoji(!showEmoji)} className="p-3 text-slate-400 hover:text-amber-500 transition-colors"><Smile className="w-5 h-5" /></button>
+            <div className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800/80 rounded-[28px] border border-transparent focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all flex items-center shadow-inner">
+              <button onClick={() => setShowEmoji(!showEmoji)} className="p-3 text-slate-400 hover:text-amber-500 transition-colors"><Smile className="w-5 h-5 flex-shrink-0" /></button>
               <AnimatePresence>
                 {showEmoji && (
                   <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute bottom-20 left-0 shadow-2xl rounded-2xl overflow-hidden z-50">
@@ -743,13 +754,13 @@ const CourseChat = () => {
                 onChange={handleTyping}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 placeholder="Type a message..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 dark:text-slate-200 py-3.5 max-h-32 min-h-[50px] resize-none placeholder-slate-400"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-800 dark:text-slate-200 py-3.5 max-h-32 min-h-[50px] resize-none placeholder-slate-400 min-w-0"
                 rows={1}
               />
 
               <div className="flex items-center gap-1 pr-2">
-                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Paperclip className="w-5 h-5" /></button>
-                <button onClick={() => setShowCodeModal(true)} className="p-2 text-slate-400 hover:text-emerald-500 transition-colors"><Code className="w-5 h-5" /></button>
+                <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"><Paperclip className="w-5 h-5 flex-shrink-0" /></button>
+                <button onClick={() => setShowCodeModal(true)} className="p-2 text-slate-400 hover:text-emerald-500 transition-colors"><Code className="w-5 h-5 flex-shrink-0" /></button>
               </div>
               <input type="file" ref={fileInputRef} onChange={(e) => setFile(e.target.files[0])} className="hidden" />
             </div>
@@ -757,7 +768,7 @@ const CourseChat = () => {
             <button
               onClick={sendMessage}
               disabled={!text.trim() && !file}
-              className="p-3.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+              className="flex-shrink-0 p-3.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
             >
               <Send className="w-5 h-5 ml-0.5" />
             </button>
