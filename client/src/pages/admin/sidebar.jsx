@@ -98,7 +98,7 @@ function Sidebar() {
               <FiBook className="h-6 w-6" />
             </div>
             <div className="min-w-0">
-              <p className="truncate text-xl font-semibold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent">EduLearn</p>
+              <p className="truncate text-xl font-semibold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent">LearnGPT</p>
               <p className="text-[11px] uppercase  text-slate-400 dark:text-white/70">instructor</p>
             </div>
           </Link>
@@ -182,7 +182,7 @@ function Sidebar() {
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent">
-                      EduLearn
+                      LearnGPT
                     </p>
                     <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 dark:text-white/70">Instructor</p>
                   </div>

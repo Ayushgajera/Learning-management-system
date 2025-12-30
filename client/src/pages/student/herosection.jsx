@@ -185,8 +185,8 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                                     onMouseDown={() => handleCourseSuggestionClick(course)}
                                                     onMouseEnter={() => setActiveIdx(idx)}
                                                     className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${activeIdx === idx
-                                                            ? 'bg-slate-50 dark:bg-slate-800'
-                                                            : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                                                        ? 'bg-slate-50 dark:bg-slate-800'
+                                                        : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                                                         }`}
                                                 >
                                                     <img
@@ -251,7 +251,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                         <div className="w-3 h-3 rounded-full bg-amber-400" />
                                         <div className="w-3 h-3 rounded-full bg-emerald-400" />
                                     </div>
-                                    <div className="text-xs font-medium text-slate-400">Edulearn Dashboard</div>
+                                    <div className="text-xs font-medium text-slate-400">LearnGPT Dashboard</div>
                                 </div>
 
                                 {/* Mock UI Content */}

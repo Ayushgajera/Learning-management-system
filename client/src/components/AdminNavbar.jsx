@@ -263,7 +263,7 @@ function AdminNavbar() {
                 animate={{ scale: 1, opacity: 1 }}
                 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent"
               >
-                EduLearn
+                LearnGPT
               </motion.div>
             </Link>
 

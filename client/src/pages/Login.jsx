@@ -128,7 +128,7 @@ const Login = () => {
               <Link to="/" className="flex items-center group">
                 <FiBook className="w-8 h-8 text-emerald-600 group-hover:scale-110 transition-transform" />
                 <span className="ml-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-500 group-hover:text-emerald-700 transition-colors">
-                  EduLearn
+                  LearnGPT
                 </span>
               </Link>
             </div>

@@ -320,7 +320,7 @@ const MyCertificate = ({
         <View style={styles.cornerBottomRight} />
 
         <View style={styles.innerContainer}>
-          <Text style={styles.logo}>EduLearn</Text>
+          <Text style={styles.logo}>LearnGPT</Text>
 
           <Text style={styles.title}>Certificate of Completion</Text>
           <Text style={styles.subtitle}>Excellence in Education</Text>
@@ -334,7 +334,7 @@ const MyCertificate = ({
           <View style={styles.sealContainer}>
             <View style={styles.sealCircle}>
               <Text style={styles.sealText}>Verified</Text>
-              <Text style={styles.sealText}>EduLearn</Text>
+              <Text style={styles.sealText}>LearnGPT</Text>
             </View>
           </View>
 

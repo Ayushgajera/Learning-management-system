@@ -219,7 +219,7 @@ const Homepage = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4 font-display">
-              Why Top Learners Choose EduLearn
+              Why Top Learners Choose LearnGPT
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400">
               We provide a comprehensive learning ecosystem designed to take you from beginner to pro.
@@ -349,7 +349,7 @@ const Homepage = () => {
             Ready to Start Your Journey?
           </h2>
           <p className="text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
-            Join thousands of learners who are already building their future with EduLearn.
+            Join thousands of learners who are already building their future with LearnGPT.
             Get unlimited access to all courses today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
