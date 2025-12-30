@@ -96,7 +96,7 @@ function StudentNavbar() {
             <FiBell className="h-6 w-6" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white dark:border-slate-900"></span>
           </button>
-          
+
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
@@ -154,7 +154,7 @@ function StudentNavbar() {
                   </div>
 
                   <div className="border-t border-gray-100 dark:border-slate-700 mt-4 pt-4 space-y-1">
-                   
+
                     <button
                       onClick={handleLogout}
                       className="group flex items-center space-x-3 px-6 py-3 text-sm text-rose-600 w-full text-left hover:bg-rose-50/80 dark:hover:bg-rose-500/10 transition-all duration-200"
@@ -199,62 +199,62 @@ function StudentNavbar() {
         <div className="mx-auto flex h-16 w-full max-w-[1380px] items-center justify-between gap-4">
           {/* Logo and Main Nav */}
           <div className="flex items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <FiBook className="w-7 h-7 text-indigo-500" />
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent"
-            >
-              EduLearn
-            </motion.div>
-          </Link>
+            <Link to="/" className="flex items-center space-x-2">
+              <FiBook className="w-7 h-7 text-indigo-500" />
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-2xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-400 bg-clip-text text-transparent"
+              >
+                EduLearn
+              </motion.div>
+            </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center ml-8 space-x-6 text-slate-700 dark:text-slate-200">
-            {primaryNavLinks.map(({ to, label, icon: Icon }) => (
-              <RouterNavLink
-                key={to}
-                to={to}
-                className={({ isActive }) => `
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center ml-8 space-x-6 text-slate-700 dark:text-slate-200">
+              {primaryNavLinks.map(({ to, label, icon: Icon }) => (
+                <RouterNavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) => `
                   flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
                   ${isActive
-                    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
+                      ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
+                      : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
                 `}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{label}</span>
-              </RouterNavLink>
-            ))}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{label}</span>
+                </RouterNavLink>
+              ))}
+            </div>
           </div>
-        </div>
 
           {/* Right Side Menu */}
           <div className="flex items-center space-x-4">
-          {renderAuthButtons()}
-          {/* Desktop theme toggle (always visible on desktop) */}
-          <div className="hidden md:flex items-center mr-2">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-full text-slate-600 dark:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/80 transition-colors"
-              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-            >
-              {theme === 'light' ? <FiMoon className="h-6 w-6 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-6 w-6 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
-            </button>
-          </div>
+            {renderAuthButtons()}
+            {/* Desktop theme toggle (always visible on desktop) */}
+            <div className="hidden md:flex items-center mr-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-slate-600 dark:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/80 transition-colors"
+                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              >
+                {theme === 'light' ? <FiMoon className="h-6 w-6 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-6 w-6 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
+              </button>
+            </div>
 
-          {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none"
-            >
-              <svg className={`h-6 w-6 transition-transform ${isMenuOpen ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-              </svg>
-            </button>
-          </div>
+            {/* Mobile menu button */}
+            <div className="flex items-center md:hidden">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none"
+              >
+                <svg className={`h-6 w-6 transition-transform ${isMenuOpen ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>

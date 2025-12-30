@@ -10,7 +10,7 @@ const Login = () => {
   const [isLogin, setIsLogin] = useState(true); // <-- Add this
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   const [signupInput, setSignupInput] = useState({
     name: "",
     email: "",
@@ -22,15 +22,15 @@ const Login = () => {
   })
 
   const isFormIncomplete = isLogin
-  ? !loginInput.email || !loginInput.password
-  : !signupInput.name || !signupInput.email || !signupInput.password;
+    ? !loginInput.email || !loginInput.password
+    : !signupInput.name || !signupInput.email || !signupInput.password;
 
 
   const [registerUser, {
     data: registerData,
     error: registerError,
     isLoading: registerLoading,
-    isSuccess: registerSuccess 
+    isSuccess: registerSuccess
   }] = useRegisterUserMutation({
   });
 
@@ -38,10 +38,10 @@ const Login = () => {
     data: loginData,
     error: loginError,
     isLoading: loginLoading,
-    isSuccess: loginSuccess}] = useLoginUserMutation({
-      
+    isSuccess: loginSuccess }] = useLoginUserMutation({
+
     });
- 
+
   const changeHandler = (e) => {
     const { name, value } = e.target
     if (isLogin) {
@@ -56,38 +56,38 @@ const Login = () => {
       }))
     }
   }
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
       if (isLogin) {
         const res = await loginUser(loginInput).unwrap();
         navigate('/'); // Redirect to homepage or dashboard
 
         console.log("Login Success:", res);
-    } else {
-      const res = await registerUser(signupInput).unwrap();
-      console.log("Register Success:", res);
+      } else {
+        const res = await registerUser(signupInput).unwrap();
+        console.log("Register Success:", res);
+      }
+    } catch (err) {
+      console.error("API Error:", err);
     }
-  } catch (err) {
-    console.error("API Error:", err);
-  }
-};
+  };
 
-useEffect(() => {
-  if (registerSuccess && registerData) {
-    toast.success("Registration successful! Please log in.");
-  }
-  if(registerError){
-    toast.error(registerError.data.message || "Registration failed. Please try again.");
-  }
-  if (loginSuccess && loginData) {
-    toast.success("Login successful! Welcome back.");
-    
-  }
-  if(loginError) {
-    toast.error( "Login failed. Please check your credentials.");
-  }
-}, [loginLoading, registerLoading, loginData, registerData, loginError, registerError]);
+  useEffect(() => {
+    if (registerSuccess && registerData) {
+      toast.success("Registration successful! Please log in.");
+    }
+    if (registerError) {
+      toast.error(registerError.data.message || "Registration failed. Please try again.");
+    }
+    if (loginSuccess && loginData) {
+      toast.success("Login successful! Welcome back.");
+
+    }
+    if (loginError) {
+      toast.error("Login failed. Please check your credentials.");
+    }
+  }, [loginLoading, registerLoading, loginData, registerData, loginError, registerError]);
 
 
   const fadeIn = {
@@ -112,7 +112,7 @@ useEffect(() => {
 
   const containerVariants = {
     initial: { height: isLogin ? "450px" : "520px" },
-    animate: { 
+    animate: {
       height: isLogin ? "450px" : "520px",
       transition: { duration: 0.3, ease: "easeInOut" }
     }
@@ -177,7 +177,7 @@ useEffect(() => {
                         stiffness: 400,
                         damping: 30
                       }}
-                      style={{ 
+                      style={{
                         zIndex: -1,
                       }}
                     />
@@ -198,7 +198,7 @@ useEffect(() => {
               variants={slideIn}
             >
               {/* Form Header */}
-              <motion.div 
+              <motion.div
                 variants={fadeIn}
                 className="text-center space-y-1"
               >
@@ -294,8 +294,8 @@ useEffect(() => {
                       disabled:hover:shadow-none disabled:hover:translate-y-0"
                     disabled={isFormIncomplete || (isLogin ? loginLoading : registerLoading)}
                   >
-                    {isLogin 
-                      ? (loginLoading ? 'Logging in...' : 'Login') 
+                    {isLogin
+                      ? (loginLoading ? 'Logging in...' : 'Login')
                       : (registerLoading ? 'Creating Account...' : 'Create Account')}
                   </Button>
                 </motion.div>

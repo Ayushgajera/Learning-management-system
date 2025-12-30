@@ -1,27 +1,27 @@
-import mongoose from "mongoose";    
+import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true
+    name: {
+        type: String,
+        required: true
     },
-    email:{
-        type:String,
-        required:true
+    email: {
+        type: String,
+        required: true
     }
     ,
-    password:{
-        type:String,
-        required:true
+    password: {
+        type: String,
+        required: true
     },
-    role:{
-        type:String,
-        enum:["instructor","student"],
-        default:'student'
+    role: {
+        type: String,
+        enum: ["instructor", "student"],
+        default: 'student'
     },
-    enrolledCourses:[
+    enrolledCourses: [
         {
-            type:mongoose.Schema.Types.ObjectId,
-            ref:"Course",
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Course",
 
         }
     ],
@@ -34,18 +34,34 @@ const userSchema = new mongoose.Schema({
         ],
         default: [],
     },
-    photoUrl:{
-        type:String,
-        default:"",
+    photoUrl: {
+        type: String,
+        default: "",
 
     },
+    // Instructor Reputation System
+    instructorLevel: {
+        type: String,
+        enum: ['New Instructor', 'Level 1', 'Level 2', 'Top Instructor'],
+        default: 'New Instructor'
+    },
+    reputationScore: {
+        type: Number,
+        default: 0
+    },
+    reputationMetrics: {
+        responseRate: { type: Number, default: 0 },
+        completionRate: { type: Number, default: 0 },
+        avgRating: { type: Number, default: 0 },
+        totalStudents: { type: Number, default: 0 }
+    },
     onboardedAsInstructor: {
-      type: Boolean,
-      default: false,
+        type: Boolean,
+        default: false,
     },
     instructorOnboardingAnswers: {
-      type: [String], // or [{question: String, answer: String}] for more detail
-      default: [],
+        type: [String], // or [{question: String, answer: String}] for more detail
+        default: [],
     },
     walletBalance: {
         type: Number,
@@ -55,7 +71,7 @@ const userSchema = new mongoose.Schema({
         {
             type: {
                 type: String,
-                enum: ['credit','payout'], // only credit since no withdraw
+                enum: ['credit', 'payout'], // only credit since no withdraw
                 default: "credit"
             },
             amount: Number,
@@ -89,7 +105,7 @@ const userSchema = new mongoose.Schema({
             }
         ]
     }
-},{timestamps: true},);
+}, { timestamps: true },);
 
 
 export const User = mongoose.model("User", userSchema);

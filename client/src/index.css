@@ -2,41 +2,47 @@
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   /* Light Mode - Clean, Professional, Trustworthy */
   --background: oklch(1 0 0);
-  --foreground: oklch(0.13 0.02 260); /* Slate 900 */
-  
+  --foreground: oklch(0.13 0.02 260);
+  /* Slate 900 */
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.13 0.02 260);
-  
+
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.13 0.02 260);
-  
-  --primary: oklch(0.45 0.25 270); /* Deep Indigo/Violet */
+
+  --primary: oklch(0.45 0.25 270);
+  /* Deep Indigo/Violet */
   --primary-foreground: oklch(0.98 0 0);
-  
-  --secondary: oklch(0.96 0.01 260); /* Slate 100 */
+
+  --secondary: oklch(0.96 0.01 260);
+  /* Slate 100 */
   --secondary-foreground: oklch(0.13 0.02 260);
-  
+
   --muted: oklch(0.96 0.01 260);
-  --muted-foreground: oklch(0.55 0.03 260); /* Slate 500 */
-  
+  --muted-foreground: oklch(0.55 0.03 260);
+  /* Slate 500 */
+
   --accent: oklch(0.96 0.01 260);
   --accent-foreground: oklch(0.13 0.02 260);
-  
+
   --destructive: oklch(0.58 0.25 27);
   --destructive-foreground: oklch(0.98 0 0);
-  
-  --border: oklch(0.92 0.01 260); /* Slate 200 */
+
+  --border: oklch(0.92 0.01 260);
+  /* Slate 200 */
   --input: oklch(0.92 0.01 260);
   --ring: oklch(0.45 0.25 270);
-  
+
   --radius: 0.75rem;
-  
+
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.13 0.02 260);
   --sidebar-primary: oklch(0.45 0.25 270);
@@ -49,34 +55,39 @@
 
 .dark {
   /* Dark Mode - Deep, Rich, Modern */
-  --background: oklch(0.10 0.02 260); /* Slate 950 */
+  --background: oklch(0.10 0.02 260);
+  /* Slate 950 */
   --foreground: oklch(0.98 0 0);
-  
-  --card: oklch(0.12 0.02 260); /* Slate 900 */
+
+  --card: oklch(0.12 0.02 260);
+  /* Slate 900 */
   --card-foreground: oklch(0.98 0 0);
-  
+
   --popover: oklch(0.12 0.02 260);
   --popover-foreground: oklch(0.98 0 0);
-  
-  --primary: oklch(0.65 0.25 270); /* Brighter Indigo/Violet for dark mode */
+
+  --primary: oklch(0.65 0.25 270);
+  /* Brighter Indigo/Violet for dark mode */
   --primary-foreground: oklch(0.10 0.02 260);
-  
-  --secondary: oklch(0.20 0.03 260); /* Slate 800 */
+
+  --secondary: oklch(0.20 0.03 260);
+  /* Slate 800 */
   --secondary-foreground: oklch(0.98 0 0);
-  
+
   --muted: oklch(0.20 0.03 260);
-  --muted-foreground: oklch(0.65 0.03 260); /* Slate 400 */
-  
+  --muted-foreground: oklch(0.65 0.03 260);
+  /* Slate 400 */
+
   --accent: oklch(0.20 0.03 260);
   --accent-foreground: oklch(0.98 0 0);
-  
+
   --destructive: oklch(0.40 0.15 25);
   --destructive-foreground: oklch(0.98 0 0);
-  
+
   --border: oklch(0.20 0.03 260);
   --input: oklch(0.20 0.03 260);
   --ring: oklch(0.65 0.25 270);
-  
+
   --sidebar: oklch(0.12 0.02 260);
   --sidebar-foreground: oklch(0.98 0 0);
   --sidebar-primary: oklch(0.65 0.25 270);
@@ -107,7 +118,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -116,20 +127,28 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  
+
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-  
+
   --font-sans: 'Inter', sans-serif;
   --font-display: 'Space Grotesk', sans-serif;
-  
+
   --animate-gradient: gradient 8s linear infinite;
-  
+
   @keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
   }
 }
 
@@ -138,20 +157,28 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-display tracking-tight;
   }
 }
 
-  
+
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     font-family: var(--font-lms);
     @apply bg-background text-foreground antialiased;
@@ -160,8 +187,7 @@
 
 /* Add to your global.css or index.css */
 .mobile-nav-link {
-  @apply flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm text-gray-700
-    hover:bg-gray-50 hover:text-green-600 transition-all duration-200;
+  @apply flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-all duration-200;
 }
 
 @media (max-width: 768px) {
@@ -172,7 +198,7 @@
 
 /* Add these styles for the rich text editor */
 .ProseMirror {
-  > * + * {
+  >*+* {
     margin-top: 0.75em;
   }
 
@@ -267,7 +293,7 @@
   font-weight: bold;
   margin-top: 1.2em;
   margin-bottom: 0.5em;
-   
+
 }
 
 .course-description b,
@@ -332,6 +358,8 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }

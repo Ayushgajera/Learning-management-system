@@ -11,6 +11,14 @@ const courseSchema = new mongoose.Schema({
     courseDescription: {
         type: String,
     },
+    requirements: {
+        type: [String],
+        default: []
+    },
+    learningGoals: {
+        type: [String],
+        default: []
+    },
     category: {
         type: String,
         required: true,
@@ -18,7 +26,7 @@ const courseSchema = new mongoose.Schema({
     },
     courseLevel: {
         type: String,
-        enum: ['Beginner', 'Intermediate', 'Advanced','Expert']
+        enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert']
     },
     coursePrice: {
         type: Number,
@@ -27,18 +35,18 @@ const courseSchema = new mongoose.Schema({
     },
     courseThumbnail: {
         type: String,
-      
+
     },
     enrolledStudents: [
         {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
         }
     ],
-    lectures: [
+    modules: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Lecture',
+            ref: 'Module',
         }
     ],
     creator: {
@@ -49,5 +57,23 @@ const courseSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-},{timestamps: true});
+    averageRating: {
+        type: Number,
+        default: 0
+    },
+    totalRatings: {
+        type: Number,
+        default: 0
+    },
+    ratingDistribution: {
+        type: Map,
+        of: Number,
+        default: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    },
+    rankingScore: {
+        type: Number,
+        default: 0,
+        index: true // Add index for sorting performance
+    }
+}, { timestamps: true });
 export const Course = mongoose.model('Course', courseSchema);

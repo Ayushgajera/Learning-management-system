@@ -3,6 +3,7 @@ import { Course } from "../models/course.model.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 import { deleteMedia, uploadMedia } from "../utils/cloudinary.js";
+import { calculateInstructorReputation } from "../utils/reputation.js";
 
 
 
@@ -220,23 +221,23 @@ export const getInstructorOnboarded = async (req, res) => {
 
 export const revertToStudent = async (req, res) => {
     try {
-      const userId = req.id; // from auth middleware
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-  
-      // Revert role
-      user.role = 'student';
-      user.onboardedAsInstructor = false;
-      user.instructorOnboardingAnswers = [];
-  
-      await user.save();
-  
-      res.json({ success: true, role: user.role });
+        const userId = req.id; // from auth middleware
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Revert role
+        user.role = 'student';
+        user.onboardedAsInstructor = false;
+        user.instructorOnboardingAnswers = [];
+
+        await user.save();
+
+        res.json({ success: true, role: user.role });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Failed to revert to student role" });
+        console.error(err);
+        res.status(500).json({ message: "Failed to revert to student role" });
     }
-  };
+};
 
 export const getNotificationPreferences = async (req, res) => {
     try {
@@ -368,5 +369,15 @@ export const removeFromWishlist = async (req, res) => {
     }
 };
 
+export const getInstructorReputation = async (req, res) => {
+    try {
+        const userId = req.id;
+        const result = await calculateInstructorReputation(userId);
+        return res.json({ success: true, ...result });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ success: false, message: 'Failed to calculate reputation' });
+    }
+};
 
-  
+

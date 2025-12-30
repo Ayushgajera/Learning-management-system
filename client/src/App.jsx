@@ -28,6 +28,7 @@ import Revenue from "./pages/admin/Revenue"
 import Wallet from "./pages/admin/Wallet"
 import ChatPage from "./pages/student/ChatPage"
 import CourseChat from "./pages/chat/CourseChat"
+import Reputation from "./pages/admin/Reputation"
 
 const appRouter = createBrowserRouter([
   {
@@ -36,11 +37,11 @@ const appRouter = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: < Homepage/>
+        element: < Homepage />
       },
       {
         path: "/unauthorized",
-        element: < UnauthorizedAccess/>
+        element: < UnauthorizedAccess />
       },
       {
         path: "/become-instructor",
@@ -66,8 +67,8 @@ const appRouter = createBrowserRouter([
         path: "/courses",
         element: <ExplorePage />
       },
-     
-      
+
+
 
 
       // Admin Routes
@@ -110,6 +111,10 @@ const appRouter = createBrowserRouter([
           {
             path: "wallet",
             element: <RoleRoute allowedRole="instructor"><Wallet /></RoleRoute>
+          },
+          {
+            path: "reputation",
+            element: <RoleRoute allowedRole="instructor"><Reputation /></RoleRoute>
           }
         ]
 
@@ -124,9 +129,9 @@ const appRouter = createBrowserRouter([
     element: <RoleRoute allowedRole="student"><EnrolledCourseLectures /></RoleRoute>
   },
   {
-        path: "/chat/:courseId",
-        element: <RoleRoute allowedRole="student"><CourseChat /></RoleRoute>
-      },
+    path: "/chat/:courseId",
+    element: <RoleRoute allowedRole="student"><CourseChat /></RoleRoute>
+  },
   {
     path: "login",
     element: <Login />
@@ -136,8 +141,8 @@ const appRouter = createBrowserRouter([
     element: <Login />
   },
   {
-    path:"/certificate",
-    element:<CertificateDemo />
+    path: "/certificate",
+    element: <CertificateDemo />
   }
 
 ]);

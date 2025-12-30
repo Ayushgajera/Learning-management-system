@@ -17,6 +17,18 @@ const lectureSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-},{timestamps: true});
+    moduleId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Module'
+    },
+    resources: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Resource'
+    }],
+    duration: {
+        type: Number, // Duration in seconds
+        default: 0
+    },
+}, { timestamps: true });
 const Lecture = mongoose.model('Lecture', lectureSchema);
 export default Lecture;

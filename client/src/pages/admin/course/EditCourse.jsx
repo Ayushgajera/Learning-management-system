@@ -167,7 +167,9 @@ function EditCourse() {
         courseLevel: 'Beginner',
         coursePrice: '',
         courseThumbnail: null,
-        isPublished: false
+        isPublished: false,
+        requirements: [],
+        learningGoals: []
     });
     const [previewUrl, setPreviewUrl] = useState('');
     const [isDescriptionLoading, setIsDescriptionLoading] = useState(false);
@@ -192,15 +194,8 @@ function EditCourse() {
             refetch();
             toast.success("Course status updated successfully!");
         } catch (error) {
-            const backendMsg = error?.data?.message;
-            if (
-                backendMsg === "A course must have at least 2 lectures before publishing." ||
-                backendMsg === "Each lecture must have a video before publishing the course."
-            ) {
-                toast.error(backendMsg);
-            } else {
-                toast.error("Failed to update course status. Please try again.");
-            }
+            const backendMsg = error?.data?.message || "Failed to update course status. Please try again.";
+            toast.error(backendMsg);
             console.error("Edit Course Error:", error);
         }
     };
@@ -217,8 +212,10 @@ function EditCourse() {
                 courseLevel: course.courseLevel || 'Beginner',
                 coursePrice: course.coursePrice || '',
                 courseThumbnail: null, // Clear file input
-                // This is the bug fix: `isPublished` is now correctly pulled from the server data.
-                isPublished: course.isPublished,
+                // This is the bug fix: `ispublished` is now correctly pulled from the server data.
+                isPublished: course.ispublished,
+                requirements: course.requirements || [],
+                learningGoals: course.learningGoals || [],
             });
             if (course.courseThumbnail) {
                 setPreviewUrl(course.courseThumbnail);
@@ -271,6 +268,8 @@ function EditCourse() {
         }
         formDataToSubmit.append('isPublished', isPublished);
         formDataToSubmit.append('removeThumbnail', thumbnailRemoved);
+        formDataToSubmit.append('requirements', JSON.stringify(formData.requirements));
+        formDataToSubmit.append('learningGoals', JSON.stringify(formData.learningGoals));
 
         try {
             await editCourse({ formData: formDataToSubmit, courseId }).unwrap();
@@ -301,7 +300,8 @@ function EditCourse() {
             }
         } catch (error) {
             console.error("Generate Description Error:", error);
-            toast.error("❌ Failed to generate description. Check API or try again.");
+            const errMsg = error.response?.data?.details || error.response?.data?.error || "Failed to generate description.";
+            toast.error(`Error: ${errMsg}.`);
         }
         setIsDescriptionLoading(false);
     };
@@ -325,7 +325,8 @@ function EditCourse() {
             }
         } catch (error) {
             console.error("Generate Subtitle Error:", error);
-            toast.error("❌ Failed to generate subtitle. Check API or try again.");
+            const errMsg = error.response?.data?.details || error.response?.data?.error || "Failed to generate subtitle.";
+            toast.error(`Error: ${errMsg}.`);
         }
         setIsSubtitleLoading(false);
     };
@@ -348,6 +349,8 @@ function EditCourse() {
             formDataToSubmit.append('coursePrice', formData.coursePrice);
             formDataToSubmit.append('isPublished', formData.isPublished);
             formDataToSubmit.append('removeThumbnail', thumbnailRemoved);
+            formDataToSubmit.append('requirements', JSON.stringify(formData.requirements));
+            formDataToSubmit.append('learningGoals', JSON.stringify(formData.learningGoals));
 
             await editCourse({ formData: formDataToSubmit, courseId }).unwrap();
             setLastSaved(new Date());
@@ -647,8 +650,8 @@ function EditCourse() {
                                         whileTap={{ y: 0 }}
                                     >
                                         <span className={`p-2 rounded-xl transition-colors duration-300 ${activeTab === tab.id
-                                                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
-                                                : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                                            ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                                            : 'bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
                                             }`}>
                                             {tab.icon}
                                         </span>
@@ -803,6 +806,115 @@ function EditCourse() {
                                                     }}
                                                 />
                                             </div>
+
+                                            {/* Requirements & Learning Goals */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* Requirements */}
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                                            Requirements
+                                                        </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, requirements: [...prev.requirements, ""] }))}
+                                                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                                        >
+                                                            + Add Requirement
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {formData.requirements.map((req, index) => (
+                                                            <div key={index} className="flex gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={req}
+                                                                    onChange={(e) => {
+                                                                        const newReqs = [...formData.requirements];
+                                                                        newReqs[index] = e.target.value;
+                                                                        setFormData(prev => ({ ...prev, requirements: newReqs }));
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            e.preventDefault();
+                                                                            setFormData(prev => ({ ...prev, requirements: [...prev.requirements, ""] }));
+                                                                        }
+                                                                    }}
+                                                                    className="flex-1 px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md 
+                                                                             border border-gray-200/50 dark:border-gray-700/50 rounded-xl text-sm"
+                                                                    placeholder={`Requirement ${index + 1}`}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newReqs = formData.requirements.filter((_, i) => i !== index);
+                                                                        setFormData(prev => ({ ...prev, requirements: newReqs }));
+                                                                    }}
+                                                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                                                                >
+                                                                    <FiX className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        {formData.requirements.length === 0 && (
+                                                            <p className="text-sm text-gray-400 italic">No requirements added yet.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Learning Goals */}
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                                            What You'll Learn
+                                                        </label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, learningGoals: [...prev.learningGoals, ""] }))}
+                                                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                                                        >
+                                                            + Add Goal
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        {formData.learningGoals.map((goal, index) => (
+                                                            <div key={index} className="flex gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={goal}
+                                                                    onChange={(e) => {
+                                                                        const newGoals = [...formData.learningGoals];
+                                                                        newGoals[index] = e.target.value;
+                                                                        setFormData(prev => ({ ...prev, learningGoals: newGoals }));
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            e.preventDefault();
+                                                                            setFormData(prev => ({ ...prev, learningGoals: [...prev.learningGoals, ""] }));
+                                                                        }
+                                                                    }}
+                                                                    className="flex-1 px-4 py-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md 
+                                                                             border border-gray-200/50 dark:border-gray-700/50 rounded-xl text-sm"
+                                                                    placeholder={`Learning Goal ${index + 1}`}
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newGoals = formData.learningGoals.filter((_, i) => i !== index);
+                                                                        setFormData(prev => ({ ...prev, learningGoals: newGoals }));
+                                                                    }}
+                                                                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
+                                                                >
+                                                                    <FiX className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        {formData.learningGoals.length === 0 && (
+                                                            <p className="text-sm text-gray-400 italic">No learning goals added yet.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </motion.div>
                                     )}
 
@@ -839,7 +951,7 @@ function EditCourse() {
                                                 error={errors.courseLevel}
                                             />
 
-                                           
+
                                         </motion.div>
                                     )}
 
@@ -1078,8 +1190,8 @@ function EditCourse() {
                                         <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
                                             <span className="text-sm text-gray-600">Status</span>
                                             <span className={`text-sm font-medium px-2 py-1 rounded-full ${course?.isPublished
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-yellow-100 text-yellow-700'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-yellow-100 text-yellow-700'
                                                 }`}>
                                                 {course?.isPublished ? 'Published' : 'Draft'}
                                             </span>
@@ -1098,8 +1210,8 @@ function EditCourse() {
                                             ].map((item) => (
                                                 <div key={item.field} className="flex items-center gap-2">
                                                     <div className={`w-2 h-2 rounded-full ${item.value && item.value.toString().trim() !== ''
-                                                            ? 'bg-green-500'
-                                                            : 'bg-red-500'
+                                                        ? 'bg-green-500'
+                                                        : 'bg-red-500'
                                                         }`} />
                                                     <span className="text-xs text-gray-600">{item.label}</span>
                                                 </div>
@@ -1114,7 +1226,7 @@ function EditCourse() {
                                 </div>
                             )}
 
-                           
+
                         </motion.div>
                     </div>
                 </div>

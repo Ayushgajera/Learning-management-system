@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import HeroSection from './student/herosection';
 import Course from './student/Course';
 import Footer from '../components/Footer';
-import { useGetPublishCourseQuery } from '@/features/api/courseApi';
+import { useGetPublishCourseQuery, useGetTopCoursesQuery } from '@/features/api/courseApi';
 import { motion } from 'framer-motion';
 import {
   FiAward,
@@ -53,27 +53,27 @@ const features = [
 ];
 
 const instructors = [
-  { 
-    name: 'Sarah Chen', 
-    role: 'Senior Engineer @ Google', 
+  {
+    name: 'Sarah Chen',
+    role: 'Senior Engineer @ Google',
     image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
     bio: 'Ex-Google, 10+ years in distributed systems. Led the team that built Google Cloud Spanner.',
   },
-  { 
-    name: 'Alex Rivera', 
-    role: 'Product Designer @ Airbnb', 
+  {
+    name: 'Alex Rivera',
+    role: 'Product Designer @ Airbnb',
     image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
     bio: 'Design system architect at Airbnb. Previously at Apple and IDEO.',
   },
-  { 
-    name: 'Michael Chang', 
-    role: 'Data Scientist @ Netflix', 
+  {
+    name: 'Michael Chang',
+    role: 'Data Scientist @ Netflix',
     image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop',
     bio: 'Building recommendation engines at Netflix. PhD in Machine Learning from Stanford.',
   },
-  { 
-    name: 'Emma Wilson', 
-    role: 'DevOps Lead @ Amazon', 
+  {
+    name: 'Emma Wilson',
+    role: 'DevOps Lead @ Amazon',
     image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
     bio: 'AWS Community Hero. Expert in Kubernetes, Terraform, and Cloud Native architectures.',
   },
@@ -88,25 +88,61 @@ const faqs = [
 
 const Homepage = () => {
   const { data, isLoading } = useGetPublishCourseQuery();
+  const { data: topCoursesData, isLoading: topCoursesLoading } = useGetTopCoursesQuery();
   const [search, setSearch] = useState('');
   const courses = data?.courses || [];
+  const topCourses = topCoursesData?.courses || [];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans selection:bg-indigo-500/30">
-      
+
       {/* Hero Section */}
       <HeroSection search={search} setSearch={setSearch} courses={courses} />
+
+      {/* Top Rated Courses Section */}
+      <section className="py-12 bg-indigo-50/50 dark:bg-indigo-900/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
+            <div>
+              <span className="text-amber-500 font-semibold tracking-wider uppercase text-sm flex items-center gap-2">
+                <FiStar className="fill-current" /> Top Rated
+              </span>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mt-2 font-display">
+                Student Favorites
+              </h2>
+            </div>
+          </div>
+
+          {topCoursesLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-[320px] rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+              ))}
+            </div>
+          ) : topCourses.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {topCourses.slice(0, 4).map((course) => (
+                <Course key={course._id} course={course} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 opacity-60">
+              <p className="text-slate-600 dark:text-slate-400">No top rated courses yet.</p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Trusted By Section */}
       <section className="py-12 border-y border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-8">Trusted by engineering teams at</p>
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-             {['Netflix', 'Google', 'Amazon', 'Microsoft', 'Spotify'].map(brand => (
-               <span key={brand} className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                 <FiZap className="w-6 h-6" /> {brand}
-               </span>
-             ))}
+            {['Netflix', 'Google', 'Amazon', 'Microsoft', 'Spotify'].map(brand => (
+              <span key={brand} className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FiZap className="w-6 h-6" /> {brand}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -123,7 +159,7 @@ const Homepage = () => {
               View All <FiArrowRight />
             </button>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               {
@@ -214,7 +250,7 @@ const Homepage = () => {
       {/* Featured Courses */}
       <section id="courses-section" className="py-24 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-800/50 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:[mask-image:linear-gradient(0deg,rgba(255,255,255,0.1),rgba(255,255,255,0.5))]" />
-        
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
@@ -251,63 +287,63 @@ const Homepage = () => {
 
       {/* Instructors Section - Redesigned */}
       <section className="py-32 bg-slate-900 relative overflow-hidden">
-         {/* Dark theme section for contrast */}
-         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
-         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/20 rounded-full blur-[120px]" />
-         
-         <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-              <div className="max-w-2xl">
-                <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">World-Class Mentors</span>
-                <h2 className="text-4xl md:text-5xl font-bold text-white mt-3 font-display">
-                  Learn from the people <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">who built the industry.</span>
-                </h2>
-              </div>
-              <button className="px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
-                Meet All Instructors
-              </button>
-            </div>
+        {/* Dark theme section for contrast */}
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-indigo-500/20 rounded-full blur-[120px]" />
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {instructors.map((instructor, idx) => (
-                <motion.div 
-                  key={idx}
-                  whileHover={{ y: -10 }}
-                  className="group relative bg-slate-800/50 border border-slate-700 rounded-3xl overflow-hidden backdrop-blur-sm"
-                >
-                  <div className="aspect-[4/5] relative overflow-hidden">
-                    <img 
-                      src={instructor.image} 
-                      alt={instructor.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
-                    
-                    {/* Social Links Overlay */}
-                    <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-10 group-hover:translate-x-0 transition-transform duration-300">
-                      <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-indigo-500 transition-colors"><FiLinkedin /></a>
-                      <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-sky-500 transition-colors"><FiTwitter /></a>
-                    </div>
-                  </div>
-                  
-                  <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <h3 className="text-xl font-bold text-white mb-1">{instructor.name}</h3>
-                    <p className="text-indigo-400 text-sm font-medium mb-2">{instructor.role}</p>
-                    <p className="text-slate-400 text-sm line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
-                      {instructor.bio}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+            <div className="max-w-2xl">
+              <span className="text-indigo-400 font-semibold tracking-wider uppercase text-sm">World-Class Mentors</span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mt-3 font-display">
+                Learn from the people <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">who built the industry.</span>
+              </h2>
             </div>
-         </div>
+            <button className="px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors backdrop-blur-sm">
+              Meet All Instructors
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {instructors.map((instructor, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ y: -10 }}
+                className="group relative bg-slate-800/50 border border-slate-700 rounded-3xl overflow-hidden backdrop-blur-sm"
+              >
+                <div className="aspect-[4/5] relative overflow-hidden">
+                  <img
+                    src={instructor.image}
+                    alt={instructor.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent opacity-60" />
+
+                  {/* Social Links Overlay */}
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-10 group-hover:translate-x-0 transition-transform duration-300">
+                    <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-indigo-500 transition-colors"><FiLinkedin /></a>
+                    <a href="#" className="p-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-sky-500 transition-colors"><FiTwitter /></a>
+                  </div>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <h3 className="text-xl font-bold text-white mb-1">{instructor.name}</h3>
+                  <p className="text-indigo-400 text-sm font-medium mb-2">{instructor.role}</p>
+                  <p className="text-slate-400 text-sm line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-4 group-hover:translate-y-0">
+                    {instructor.bio}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-24 bg-indigo-600 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-600 to-violet-600" />
-        
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 font-display">
             Ready to Start Your Journey?
@@ -333,7 +369,7 @@ const Homepage = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-12 text-center font-display">
             Frequently Asked Questions
           </h2>
-          
+
           <div className="space-y-4">
             {faqs.map((faq, idx) => (
               <div key={idx} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -357,7 +393,7 @@ const Homepage = () => {
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20" />
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-            
+
             <div className="relative z-10 max-w-2xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 font-display">
                 Join our newsletter
@@ -365,11 +401,11 @@ const Homepage = () => {
               <p className="text-indigo-100 mb-8 text-lg">
                 Get weekly insights on learning, career growth, and the latest tech trends delivered straight to your inbox.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email" 
+                <input
+                  type="email"
+                  placeholder="Enter your email"
                   className="flex-1 px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-indigo-200 focus:outline-none focus:bg-white/20 transition-colors"
                 />
                 <button className="px-8 py-4 rounded-full bg-white text-indigo-600 font-bold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">

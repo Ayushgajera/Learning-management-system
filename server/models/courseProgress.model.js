@@ -4,12 +4,12 @@ const lectureProgressSchema = new mongoose.Schema({
     lectureId: {
         type: String
     },
-    viewed:{
+    viewed: {
         type: Boolean
     }
 });
 
-const courseProgressSchema = new mongoose.Schema({  
+const courseProgressSchema = new mongoose.Schema({
     userId: {
         type: String
     },

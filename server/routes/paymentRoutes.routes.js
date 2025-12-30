@@ -10,9 +10,9 @@ const router = express.Router();
 
 
 // Pass razorpay instance to controller via closure
-router.route("/create-order").post(isAuthenticated,createPurchase);
-router.route("/verify").post(isAuthenticated,verifyPayment);
-router.route("/:courseId/purchase").get(isAuthenticated,getUserPurchases);
+router.route("/create-order").post(isAuthenticated, createPurchase);
+router.route("/verify").post(isAuthenticated, verifyPayment);
+router.route("/:courseId/purchase").get(isAuthenticated, getUserPurchases);
 router.route("/withdraw").post(isAuthenticated, withdrawFromWallet);
 
 export default router;

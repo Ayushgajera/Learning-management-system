@@ -72,14 +72,15 @@ export const courseApi = createApi({
             providesTags: ['Refetch_Creator_Lecture']
         }),
         editLecture: builder.mutation({
-            query: ({ lectureId, courseId, lectureTitle, isPreviewFree, secure_url, public_id }) => ({
+            query: ({ lectureId, courseId, lectureTitle, isPreviewFree, secure_url, public_id, duration }) => ({
                 url: `/${courseId}/lectures/${lectureId}`,
                 method: 'PUT',
                 body: {
                     lectureTitle,
                     isPreviewFree,
                     secure_url,
-                    public_id
+                    public_id,
+                    duration
                 }
             }),
             invalidatesTags: ['Refetch_Creator_Lecture']
@@ -121,8 +122,45 @@ export const courseApi = createApi({
             }),
             providesTags: ['Refetch_Creator_Course']
         }),
+        addRating: builder.mutation({
+            query: ({ courseId, rating, comment }) => ({
+                url: `/${courseId}/rate`,
+                method: 'POST',
+                body: { rating, comment }
+            }),
+            invalidatesTags: ['Refetch_Creator_Course']
+        }),
+        getTopCourses: builder.query({
+            query: () => ({
+                url: "/ranking",
+                method: 'GET'
+            }),
+            providesTags: ['Refetch_Creator_Course']
+        }),
+        getCourseReviews: builder.query({
+            query: (courseId) => ({
+                url: `/${courseId}/reviews`,
+                method: 'GET'
+            }),
+            providesTags: ['Refetch_Creator_Course']
+        }),
+        createResource: builder.mutation({
+            query: ({ lectureId, formData }) => ({
+                url: `../resource/${lectureId}`,
+                method: 'POST',
+                body: formData
+            }),
+            invalidatesTags: ['Refetch_Creator_Lecture']
+        }),
+        deleteResource: builder.mutation({
+            query: ({ resourceId }) => ({
+                url: `../resource/${resourceId}`,
+                method: 'DELETE'
+            }),
+            invalidatesTags: ['Refetch_Creator_Lecture']
+        }),
 
     })
 })
 //build in hooks created by rtk query
-export const { useCreateCourseMutation, useGetAllCoursesQuery, useEditCourseMutation, useGetCourseByIdQuery, useCreateLecturesMutation, useGetAllLecturesQuery, useEditLectureMutation, useGetLectureByIdQuery, useRemoveLectureMutation, usePublishCourseMutation, useGetPublishCourseQuery, useRemoveCourseMutation, useGetMonthlyRevenueQuery } = courseApi;
+export const { useCreateCourseMutation, useGetAllCoursesQuery, useEditCourseMutation, useGetCourseByIdQuery, useCreateLecturesMutation, useGetAllLecturesQuery, useEditLectureMutation, useGetLectureByIdQuery, useRemoveLectureMutation, usePublishCourseMutation, useGetPublishCourseQuery, useRemoveCourseMutation, useGetMonthlyRevenueQuery, useAddRatingMutation, useGetTopCoursesQuery, useGetCourseReviewsQuery, useCreateResourceMutation, useDeleteResourceMutation } = courseApi;

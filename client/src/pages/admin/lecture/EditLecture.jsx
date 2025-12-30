@@ -14,8 +14,9 @@ import {
 } from "react-icons/fi";
 import axios from "axios";
 import { toast } from "sonner";
-import { useEditLectureMutation, useGetLectureByIdQuery } from "@/features/api/courseApi";
+import { useEditLectureMutation, useGetLectureByIdQuery, useCreateResourceMutation, useDeleteResourceMutation } from "@/features/api/courseApi";
 import { useNavigate, useParams } from "react-router-dom";
+import { FiFile, FiDownload, FiLoader } from "react-icons/fi";
 
 const MEDIA_API = "http://localhost:8000/api/v1/media";
 
@@ -37,7 +38,9 @@ const EditLecture = () => {
     videoUrl: "",
     videoFile: null,
     secure_url: "",
+    secure_url: "",
     public_id: "",
+    duration: 0
   });
 
   const navigate = useNavigate();
@@ -57,6 +60,7 @@ const EditLecture = () => {
         videoUrl: lectureData.videoUrl || "",
         secure_url: lectureData.secure_url || "",
         public_id: lectureData.public_id || "",
+        duration: lectureData.duration || 0,
       }));
     }
   }, [lectureSuccess, lectureData]);
@@ -101,13 +105,14 @@ const EditLecture = () => {
       }
 
       if (response.data.success) {
-        const { secure_url, public_id } = response.data.data;
+        const { secure_url, public_id, duration } = response.data.data;
         setSecureUrl(secure_url);
         setPublicId(public_id);
         setFormData((prev) => ({
           ...prev,
           secure_url,
           public_id,
+          duration,
           videoUrl: previewUrl,
         }));
         toast.success("Video uploaded successfully!");
@@ -139,12 +144,43 @@ const EditLecture = () => {
         secure_url: secure_url || formData.secure_url || "",
         public_id: public_id || formData.public_id || "",
         isPreviewFree: formData.isPreviewFree,
+        duration: formData.duration
       }).unwrap();
 
       toast.success("Lecture updated successfully!");
       navigate(-1);
     } catch (error) {
       toast.error(error?.data?.message || "Failed to update lecture");
+    }
+  };
+
+  // Resource Management
+  const [createResource, { isLoading: isResourceUploading }] = useCreateResourceMutation();
+  const [deleteResource, { isLoading: isResourceDeleting }] = useDeleteResourceMutation();
+  const resourceInputRef = useRef(null);
+
+  const handleResourceUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", file.name);
+
+    try {
+      await createResource({ lectureId, formData }).unwrap();
+      toast.success("Resource uploaded successfully!");
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to upload resource");
+    }
+  };
+
+  const handleDeleteResource = async (resourceId) => {
+    try {
+      await deleteResource({ resourceId }).unwrap();
+      toast.success("Resource deleted successfully");
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to delete resource");
     }
   };
 
@@ -337,8 +373,63 @@ const EditLecture = () => {
                   Save changes
                 </motion.button>
               </div>
+
+
+              {/* Resource Section */}
+              <div className="space-y-6 mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Lecture Resources</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Add PDFs, assignments, or notes for this lecture.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => resourceInputRef.current?.click()}
+                    disabled={isResourceUploading}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition"
+                  >
+                    {isResourceUploading ? <FiLoader className="animate-spin" /> : <FiUpload />}
+                    Add Resource
+                  </button>
+                  <input
+                    type="file"
+                    hidden
+                    ref={resourceInputRef}
+                    onChange={handleResourceUpload}
+                  />
+                </div>
+
+                <div className="grid gap-4">
+                  {lectureData?.resources?.length > 0 ? (
+                    lectureData.resources.map((res) => (
+                      <div key={res._id} className="flex items-center justify-between p-4 bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-lg">
+                            <FiFile className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-100">{res.title}</p>
+                            <a href={res.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">View File</a>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteResource(res._id)}
+                          disabled={isResourceDeleting}
+                          className="p-2 text-gray-400 hover:text-rose-500 transition"
+                        >
+                          <FiTrash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">No resources attached.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
+            {/* Right Column Content */}
             <div className="space-y-6">
               <div className="rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-white/75 dark:bg-gray-900/70 p-6">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">
@@ -379,8 +470,8 @@ const EditLecture = () => {
                 </ul>
               </div>
             </div>
-          </form>
-        </motion.div>
+          </form >
+        </motion.div >
       </div>
     </div>
   );

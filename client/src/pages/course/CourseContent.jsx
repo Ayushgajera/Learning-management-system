@@ -21,12 +21,28 @@ import DOMPurify from 'dompurify';
 import { socket } from '../../extensions/socket';
 import { useGetPurchaseCourseQuery } from '@/features/api/paymentApi';
 import { useFetchWishlistQuery, useAddCourseToWishlistMutation, useRemoveCourseFromWishlistMutation } from '@/features/api/wishlistApi';
+import { useGetCourseReviewsQuery } from '@/features/api/courseApi';
+import Rating from '@/components/Rating';
 import UnauthorizedAccess from '@/components/UnauthorizedAccess';
 import CourseSidebar from '../../components/CourseSidebar';
 import LecturePreviewModal from '../../components/LecturePreviewModal';
 import CourseSkeleton from '../../components/CourseSkeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+
+const getLevelBadge = (level) => {
+  if (!level || level === 'New Instructor') return null;
+  switch (level) {
+    case 'Top Instructor':
+      return <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xs font-bold border border-yellow-500/20 flex items-center gap-1">🏆 Top Instructor</span>;
+    case 'Level 2':
+      return <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">⭐ Level 2 Instructor</span>;
+    case 'Level 1':
+      return <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold border border-blue-500/20">⚡ Level 1 Instructor</span>;
+    default:
+      return null;
+  }
+};
 
 function CourseContent() {
   const [openSection, setOpenSection] = useState(null);
@@ -46,14 +62,21 @@ function CourseContent() {
     isFetching: isWishlistFetching,
     refetch: refetchWishlist,
   } = useFetchWishlistQuery(undefined, { skip: !isAuthenticated });
+  const { data: reviewsData } = useGetCourseReviewsQuery(courseId);
+  const reviews = reviewsData?.reviews || [];
   const [addCourseToWishlist] = useAddCourseToWishlistMutation();
   const [removeCourseFromWishlist] = useRemoveCourseFromWishlistMutation();
 
   const courseData = useMemo(() => data?.course || {}, [data]);
   const purchased = data?.purchased;
   const lectures = useMemo(
-    () => (Array.isArray(courseData.lectures) ? courseData.lectures : []),
-    [courseData.lectures]
+    () => {
+      if (courseData.modules) {
+        return courseData.modules.flatMap(m => m.lectures || []);
+      }
+      return Array.isArray(courseData.lectures) ? courseData.lectures : [];
+    },
+    [courseData.modules, courseData.lectures]
   );
 
   const {
@@ -62,13 +85,37 @@ function CourseContent() {
     courseDescription,
     courseThumbnail,
     duration,
-    whatYouWillLearn,
+    learningGoals,
     requirements,
     courseLevel,
     enrolledStudents,
     createdAt,
     updatedAt
   } = courseData;
+
+  // Calculate Total Duration
+  const totalDurationSeconds = useMemo(() => {
+    return lectures.reduce((acc, lecture) => acc + (lecture.duration || 0), 0);
+  }, [lectures]);
+
+  const formatDuration = (seconds) => {
+    if (!seconds) return '00:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    // const secs = Math.floor(seconds % 60); // Optional: if needed
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const formatLectureDuration = (seconds) => {
+    if (!seconds) return '00:00';
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }
 
   const enrolledCount = Array.isArray(enrolledStudents) ? enrolledStudents.length : null;
   const lectureCount = lectures.length;
@@ -83,9 +130,7 @@ function CourseContent() {
     if (!courseDescription) return '';
 
     let cleanedDescription = courseDescription
-      .replace(/<li><p>(.*?)<\/p><\/li>/g, '<li>$1</li>') // fix nested p inside li
-      .replace(/\r\n/g, '') // remove carriage returns
-      .replace(/\n/g, '<br/>'); // preserve line breaks
+      .replace(/<li><p>(.*?)<\/p><\/li>/g, '<li>$1</li>'); // fix nested p inside li
 
     return DOMPurify.sanitize(cleanedDescription, {
       ALLOWED_TAGS: [
@@ -112,6 +157,7 @@ function CourseContent() {
         'pre',
         'code',
         'hr',
+        'div'
       ],
       ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'style', 'class', 'target', 'rel', 'loading'],
     });
@@ -140,6 +186,11 @@ function CourseContent() {
       socket.off('courseUpdated', handleCourseUpdated);
     };
   }, [courseId, refetch]);
+
+  // Fix: Scroll to top when course opens
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [courseId]);
 
   const toggleSection = useCallback(
     (idx) => {
@@ -204,12 +255,12 @@ function CourseContent() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pt-24 pb-20">
-      
+
       {/* Hero Section */}
       <div className="bg-slate-900 text-white pt-20 pb-20 lg:pb-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/40 to-slate-900 z-0" />
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 z-0" />
-        
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-slate-400 text-sm mb-6 font-medium">
@@ -225,7 +276,17 @@ function CourseContent() {
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 font-display leading-tight">
                 {courseTitle || 'Untitled Course'}
               </h1>
-              
+
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-yellow-400 font-bold text-lg">
+                  {courseData.averageRating?.toFixed(1) || "0.0"}
+                </span>
+                <Rating rating={courseData.averageRating || 0} totalStars={5} readOnly={true} size="text-yellow-400" />
+                <span className="text-slate-400 text-sm">
+                  ({courseData.totalRatings || 0} ratings)
+                </span>
+              </div>
+
               <p className="text-lg text-slate-300 mb-8 leading-relaxed max-w-3xl">
                 {descriptionPreview || 'Course description will be available soon.'}
               </p>
@@ -236,6 +297,7 @@ function CourseContent() {
                     <FiUser className="text-indigo-400" />
                     <span>
                       Created by <span className="text-white underline decoration-indigo-500/30 underline-offset-4">{creator.name}</span>
+                      <span className="ml-2 inline-flex">{getLevelBadge(creator.instructorLevel)}</span>
                     </span>
                   </div>
                 )}
@@ -284,10 +346,9 @@ function CourseContent() {
                   disabled={wishlistButtonDisabled}
                   whileTap={{ scale: wishlistButtonDisabled ? 1 : 0.95 }}
                   className={`relative inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all border overflow-hidden
-                    ${
-                      isWishlistedCourse
-                        ? 'bg-rose-500/20 border-rose-400 text-white hover:bg-rose-500/30'
-                        : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                    ${isWishlistedCourse
+                      ? 'bg-rose-500/20 border-rose-400 text-white hover:bg-rose-500/30'
+                      : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
                     }
                     ${wishlistButtonDisabled ? 'opacity-70 cursor-not-allowed' : ''}
                   `}
@@ -323,16 +384,16 @@ function CourseContent() {
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-          
+
           {/* Left Column - Main Content */}
           <div className="lg:w-2/3 space-y-8 py-8 lg:py-0 lg:-mt-12">
-            
+
             {/* What you'll learn */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 font-display">What you'll learn</h2>
-              {Array.isArray(whatYouWillLearn) && whatYouWillLearn.length > 0 ? (
+              {Array.isArray(learningGoals) && learningGoals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {whatYouWillLearn.map((item, idx) => (
+                  {learningGoals.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3 text-slate-600 dark:text-slate-300">
                       <FiCheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                       <span className="text-sm leading-relaxed">{item}</span>
@@ -344,13 +405,15 @@ function CourseContent() {
               )}
             </div>
 
-            {/* Course Content Accordion */}
+            {/* Course Content Accordion (Modules) */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white font-display">Course Content</h2>
                 <div className="flex items-center gap-4 text-sm text-slate-500">
-                  <span className="font-medium">{lectures.length} lectures • {duration || '10h 30m'} total length</span>
-                  <button 
+                  <span className="font-medium">
+                    {courseData.modules?.length || 0} modules • {lectures.length} lectures • {formatDuration(totalDurationSeconds)} total length
+                  </span>
+                  <button
                     className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
                     onClick={() => setOpenSection(openSection === 'all' ? null : 'all')}
                   >
@@ -358,34 +421,40 @@ function CourseContent() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden divide-y divide-slate-200 dark:divide-slate-800">
-                {lectures.length === 0 ? (
+                {(!courseData.modules || courseData.modules.length === 0) ? (
                   <div className="text-slate-500 italic py-8 text-center bg-slate-50 dark:bg-slate-800/50">
-                    No lectures found for this course.
+                    No modules found for this course.
                   </div>
                 ) : (
-                  lectures.map((lecture, idx) => (
-                    <div key={lecture._id ?? idx} className="bg-white dark:bg-slate-900">
+                  courseData.modules.map((module, modIdx) => (
+                    <div key={module._id || modIdx} className="bg-white dark:bg-slate-900">
+                      {/* Module Header */}
                       <button
                         className="w-full flex justify-between items-center py-4 px-6 text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
-                        onClick={() => toggleSection(idx)}
+                        onClick={() => toggleSection(modIdx)}
                       >
                         <div className="flex items-center gap-4">
-                          {openSection === idx || openSection === 'all' ? (
+                          {openSection === modIdx || openSection === 'all' ? (
                             <FiChevronUp className="text-indigo-600 dark:text-indigo-400 text-xl transition-transform duration-300" />
                           ) : (
                             <FiChevronDown className="text-slate-400 text-xl transition-transform duration-300 group-hover:text-slate-600" />
                           )}
-                          <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                            {lecture?.lectureTitle || 'Untitled Lecture'}
-                          </span>
+                          <div>
+                            <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors block">
+                              {module.moduleTitle || `Module ${modIdx + 1}`}
+                            </span>
+                            <span className="text-xs text-slate-400 font-normal">
+                              {module.lectures?.length || 0} lectures
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-sm text-slate-500 hidden sm:block">{lecture?.duration || '10:00'}</span>
                       </button>
-                      
+
+                      {/* Lectures List (Animated) */}
                       <AnimatePresence>
-                        {(openSection === idx || openSection === 'all') && (
+                        {(openSection === modIdx || openSection === 'all') && (
                           <motion.div
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
@@ -393,43 +462,45 @@ function CourseContent() {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                           >
-                            <div className="px-6 pb-5 pt-1 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/50">
-                              <div
-                                className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-transparent
-                                  ${
-                                    lecture.isPreviewFree
+                            <div className="px-6 pb-5 pt-1 bg-slate-50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/50 space-y-2">
+                              {module.lectures?.map((lecture, lecIdx) => (
+                                <div
+                                  key={lecture._id || lecIdx}
+                                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-transparent
+                                    ${lecture.isPreviewFree
                                       ? 'hover:bg-white dark:hover:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer shadow-sm hover:shadow-md transition-all'
                                       : 'opacity-70 cursor-not-allowed'
-                                  }`}
-                                onClick={() => lecture.isPreviewFree && setPreviewLecture(lecture)}
-                              >
-                                <div className="flex items-center gap-3">
-                                  {lecture.isPreviewFree ? (
-                                    <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                      <FiPlayCircle className="w-4 h-4 fill-current" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                                      <FiLock className="w-4 h-4" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <span className="text-slate-900 dark:text-slate-200 font-medium block text-sm">
-                                      {lecture?.lectureTitle || 'Untitled Lecture'}
-                                    </span>
-                                    {lecture.isPreviewFree && (
-                                      <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                        Free Preview
-                                      </span>
+                                    }`}
+                                  onClick={() => lecture.isPreviewFree && setPreviewLecture(lecture)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    {lecture.isPreviewFree ? (
+                                      <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                        <FiPlayCircle className="w-4 h-4 fill-current" />
+                                      </div>
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                                        <FiLock className="w-4 h-4" />
+                                      </div>
                                     )}
+                                    <div>
+                                      <span className="text-slate-900 dark:text-slate-200 font-medium block text-sm">
+                                        {lecture.lectureTitle || 'Untitled Lecture'}
+                                      </span>
+                                      {lecture.isPreviewFree && (
+                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                          Free Preview
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-4 mt-2 sm:mt-0 text-slate-500 text-xs">
+                                    <span>{formatLectureDuration(lecture.duration)}</span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-4 mt-2 sm:mt-0 text-slate-500 text-xs">
-                                  <span>{lecture?.duration || '--'}</span>
-                                </div>
-                              </div>
-                              {lecture?.description && (
-                                <p className="text-sm text-slate-500 mt-2 pl-14">{lecture.description}</p>
+                              ))}
+                              {(!module.lectures || module.lectures.length === 0) && (
+                                <p className="text-sm text-slate-400 italic text-center py-2">No lectures in this module yet.</p>
                               )}
                             </div>
                           </motion.div>
@@ -461,9 +532,9 @@ function CourseContent() {
             {/* Description */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 font-display">Description</h2>
-              <div 
-                className="prose prose-slate dark:prose-invert max-w-none prose-headings:font-display prose-a:text-indigo-600 dark:prose-a:text-indigo-400 hover:prose-a:text-indigo-500"
-                dangerouslySetInnerHTML={{ __html: sanitizedDescription }} 
+              <div
+                className="course-description prose prose-slate dark:prose-invert max-w-none prose-headings:font-display prose-a:text-indigo-600 dark:prose-a:text-indigo-400 hover:prose-a:text-indigo-500"
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
               />
             </div>
 
@@ -480,7 +551,10 @@ function CourseContent() {
                     />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-1">{creator.name}</h3>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{creator.name}</h3>
+                      {getLevelBadge(creator.instructorLevel)}
+                    </div>
                     {creator.email && (
                       <p className="text-slate-500 text-sm mb-4">{creator.email}</p>
                     )}
@@ -513,12 +587,73 @@ function CourseContent() {
               )}
             </div>
 
+            {/* Student Feedback & Reviews */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 font-display">Student Feedback</h2>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="flex flex-col items-center justify-center p-6 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 min-w-[140px]">
+                  <span className="text-4xl font-bold text-slate-900 dark:text-white mb-1">
+                    {courseData.averageRating ? courseData.averageRating.toFixed(1) : "0.0"}
+                  </span>
+                  <div className="flex text-yellow-400 text-sm mb-1">
+                    <Rating rating={courseData.averageRating || 0} totalStars={5} readOnly={true} size="text-yellow-400" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Course Rating</span>
+                </div>
+
+                <div className="flex-1">
+                  {/* Simplified distribution bars could go here, for now just showing total reviews */}
+                  <p className="text-slate-600 dark:text-slate-300 font-medium">
+                    {reviews.length > 0
+                      ? `${reviews.length} Review${reviews.length > 1 ? 's' : ''}`
+                      : "No reviews yet"
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Reviews List */}
+              <div className="space-y-6">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <div key={review._id} className="border-b border-slate-100 dark:border-slate-800 pb-6 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-3 mb-3">
+                        <img
+                          src={review.user?.photoUrl || "https://github.com/shadcn.png"}
+                          alt={review.user?.name || "User"}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                        <div>
+                          <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                            {review.user?.name || "Student"}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <div className="flex text-yellow-400 text-xs">
+                              <Rating rating={review.rating} totalStars={5} readOnly={true} size="text-yellow-400" />
+                            </div>
+                            <span className="text-xs text-slate-400">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        {review.comment}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-500 italic text-sm">Be the first to rate this course!</p>
+                )}
+              </div>
+            </div>
+
           </div>
 
           {/* Right Column - Sidebar */}
           <div className="lg:w-1/3 relative">
             <div className="sticky top-24 lg:-mt-90 z-30">
-            <CourseSidebar
+              <CourseSidebar
                 courseData={courseData}
                 purchased={purchased}
                 courseId={courseId}

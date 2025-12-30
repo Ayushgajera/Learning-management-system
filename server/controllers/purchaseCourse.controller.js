@@ -75,7 +75,7 @@ export const verifyPayment = async (req, res) => {
         }
 
         // 🚀 Find the course with its instructor
-        const course = await Course.findById(courseId).populate("creator"); 
+        const course = await Course.findById(courseId).populate("creator");
         if (!course) return res.status(404).json({ error: "Course not found" });
 
         const instructorId = course.creator._id; // ✅ Extract instructor
@@ -151,7 +151,10 @@ export const getUserPurchases = async (req, res) => {
         // Find the course and check if purchased
         const course = await Course.findById(courseId)
             .populate({ path: 'creator' })
-            .populate({ path: "lectures" });
+            .populate({
+                path: "modules",
+                populate: { path: "lectures" }
+            });
 
         if (!course) {
             return res.status(404).json({ error: "Course not found" });
@@ -219,7 +222,7 @@ export const withdrawFromWallet = async (req, res) => {
             date: new Date().toISOString(),
             description: `Withdrawal of ${withdrawAmount}`,
         };
-    
+
 
         // Add the new transaction to the beginning of the array
         user.walletTransactions.unshift(newPayoutTransaction);

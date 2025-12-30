@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"; // Forced rebuild
 import {
   FiPlayCircle,
   FiCheckCircle,
@@ -18,7 +18,10 @@ import {
   FiSettings,
   FiMoreVertical,
   FiVideo,
-  FiCalendar
+  FiCalendar,
+  FiFileText,
+  FiImage,
+  FiFile
 } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -47,6 +50,8 @@ import {
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import CourseChat from './../chat/CourseChat';
+import Rating from '@/components/Rating';
+import { useAddRatingMutation } from '@/features/api/courseApi';
 
 // PDF styles for certificate
 const styles = StyleSheet.create({
@@ -217,6 +222,91 @@ const styles = StyleSheet.create({
   }
 });
 
+
+
+const RatingModal = ({ isOpen, onClose, courseId, isLoading }) => {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [addRating, { isLoading: isSubmitting }] = useAddRatingMutation();
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      toast.error("Please select a star rating");
+      return;
+    }
+    try {
+      await addRating({ courseId, rating, comment }).unwrap();
+      toast.success("Thank you for your rating!");
+      onClose();
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to submit rating");
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+        >
+          <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Rate this Course</h3>
+            <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition">
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-6">
+            <div className="mb-8 text-center">
+              <p className="text-slate-600 dark:text-slate-400 mb-4">How was your learning experience?</p>
+              <div className="flex justify-center">
+                <Rating
+                  rating={rating}
+                  onRate={setRating}
+                  size="text-4xl text-yellow-400"
+                />
+              </div>
+            </div>
+
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Tell us what you liked or what could be improved..."
+              className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 h-32 focus:ring-2 focus:ring-indigo-500 outline-none mb-6 text-slate-900 dark:text-white resize-none"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="flex-1 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? <FiRefreshCw className="animate-spin" /> : "Submit Review"}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const MyCertificate = ({
   name = "John Doe",
   course = "React Mastery Bootcamp",
@@ -228,24 +318,24 @@ const MyCertificate = ({
       <View style={styles.container}>
         <View style={styles.cornerTopLeft} />
         <View style={styles.cornerBottomRight} />
-        
+
         <View style={styles.innerContainer}>
           <Text style={styles.logo}>EduLearn</Text>
-          
+
           <Text style={styles.title}>Certificate of Completion</Text>
           <Text style={styles.subtitle}>Excellence in Education</Text>
-          
+
           <Text style={styles.presentedTo}>This certificate is proudly presented to</Text>
           <Text style={styles.studentName}>{name}</Text>
-          
+
           <Text style={styles.completionText}>for successfully completing the course</Text>
           <Text style={styles.courseTitle}>{course}</Text>
-          
+
           <View style={styles.sealContainer}>
-             <View style={styles.sealCircle}>
-                <Text style={styles.sealText}>Verified</Text>
-                <Text style={styles.sealText}>EduLearn</Text>
-             </View>
+            <View style={styles.sealCircle}>
+              <Text style={styles.sealText}>Verified</Text>
+              <Text style={styles.sealText}>EduLearn</Text>
+            </View>
           </View>
 
           <View style={styles.footer}>
@@ -259,7 +349,7 @@ const MyCertificate = ({
               <Text style={styles.signatureLabel}>Instructor Signature</Text>
             </View>
           </View>
-          
+
           <Text style={styles.idText}>Certificate ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</Text>
         </View>
       </View>
@@ -284,26 +374,47 @@ const MemoizedSidebarContent = React.memo(
     username,
     creatorName,
     courseTitle,
+    courseDetails, // Add courseDetails to destructured props so we can access modules
   }) => {
+    // Local state for sidebar accordion
+    const [openModules, setOpenModules] = useState({});
+
+    // Initialize all modules as open by default or just the first one
+    useEffect(() => {
+      if (courseDetails?.modules) {
+        const initialOpenState = {};
+        courseDetails.modules.forEach((mod, idx) => {
+          initialOpenState[mod._id] = true; // Open all by default for better visibility
+        });
+        setOpenModules(initialOpenState);
+      }
+    }, [courseDetails]);
+
+    const toggleModule = (moduleId) => {
+      setOpenModules(prev => ({
+        ...prev,
+        [moduleId]: !prev[moduleId]
+      }));
+    };
     const isBookmarked = useCallback(
       (lectureId) => bookmarkedLectures.includes(lectureId),
       [bookmarkedLectures]
     );
-    
+
     const progressPercentage = Math.round((watchedLectureIds.length / courseLectures.length) * 100) || 0;
 
     return (
       <div className="bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800">
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 font-display">Course Content</h2>
-          
+
           {/* Progress Bar */}
           <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
             <span>{progressPercentage}% Completed</span>
             <span>{watchedLectureIds.length}/{courseLectures.length} Lectures</span>
           </div>
           <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
@@ -312,83 +423,112 @@ const MemoizedSidebarContent = React.memo(
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-          {courseLectures.map((lecture, idx) => {
-            const isActive = selectedLecture && selectedLecture._id === lecture._id;
-            const isWatched = watchedLectureIds.includes(lecture._id);
-            const bookmarked = isBookmarked(lecture._id);
-
-            return (
-              <motion.button
-                key={lecture._id}
-                initial={false}
-                animate={{ backgroundColor: isActive ? "rgba(79, 70, 229, 0.05)" : "transparent" }}
-                onClick={() => {
-                  setSelectedLecture(lecture);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group border ${
-                  isActive 
-                    ? "border-indigo-200 dark:border-indigo-500/30" 
-                    : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                }`}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          {courseDetails?.modules?.map((module, moduleIdx) => (
+            <div key={module._id} className="border-b border-slate-200 dark:border-slate-800">
+              {/* Collapsible Module Header */}
+              <button
+                onClick={() => toggleModule(module._id)}
+                className="w-full bg-slate-50 dark:bg-slate-900/50 p-4 flex items-center justify-between font-semibold text-slate-800 dark:text-slate-200 text-sm sticky top-0 z-10 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <div className="flex-shrink-0 mt-0.5 relative">
-                   {isActive ? (
-                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                       <FiPlayCircle className="text-white w-4 h-4 fill-current" />
-                     </div>
-                   ) : isWatched ? (
-                     <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                       <FiCheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                     </div>
-                   ) : (
-                     <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
-                       {idx + 1}
-                     </div>
-                   )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold truncate transition-colors ${
-                    isActive ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
-                  }`}>
-                    {lecture?.lectureTitle}
-                  </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
-                      <FiVideo className="w-3 h-3" /> {lecture.duration || "10m"}
-                    </span>
-                    {bookmarked && (
-                      <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
-                        <FiBookmark className="w-3 h-3 fill-current" /> Saved
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <span>{module.moduleTitle}</span>
+                {openModules[module._id] ? (
+                  <FiChevronLeft className="rotate-90 transition-transform" />
+                ) : (
+                  <FiChevronLeft className="-rotate-90 transition-transform" />
+                )}
+              </button>
 
-                <button
-                  type="button"
-                  className={`p-2 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${
-                    bookmarked ? "text-amber-500 opacity-100" : "text-slate-400 hover:text-indigo-500"
-                  }`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleBookmark(lecture._id);
-                  }}
-                  title={bookmarked ? "Remove Bookmark" : "Bookmark"}
-                >
-                  <FiBookmark className={bookmarked ? "fill-current" : ""} />
-                </button>
-              </motion.button>
-            );
-          })}
+              {/* Collapsible Content */}
+              <AnimatePresence>
+                {openModules[module._id] && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="p-2 space-y-1">
+                      {module.lectures?.map((lecture, idx) => {
+                        const isActive = selectedLecture && selectedLecture._id === lecture._id;
+                        const isWatched = watchedLectureIds.includes(lecture._id);
+                        const bookmarked = isBookmarked(lecture._id);
+
+                        return (
+                          <motion.button
+                            key={lecture._id}
+                            initial={false}
+                            animate={{ backgroundColor: isActive ? "rgba(79, 70, 229, 0.05)" : "transparent" }}
+                            onClick={() => {
+                              setSelectedLecture(lecture);
+                              setSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group border ${isActive
+                              ? "border-indigo-200 dark:border-indigo-500/30"
+                              : "border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                              }`}
+                          >
+                            <div className="flex-shrink-0 mt-0.5 relative">
+                              {isActive ? (
+                                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                                  <FiPlayCircle className="text-white w-4 h-4 fill-current" />
+                                </div>
+                              ) : isWatched ? (
+                                <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                  <FiCheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-full border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:border-slate-300 dark:group-hover:border-slate-600 transition-colors">
+                                  {idx + 1}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-indigo-700 dark:text-indigo-400' : 'text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white'
+                                }`}>
+                                {lecture?.lectureTitle}
+                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <span className="text-xs text-slate-500 dark:text-slate-500 flex items-center gap-1">
+                                  <FiVideo className="w-3 h-3" /> {lecture.duration || "10m"}
+                                </span>
+                                {bookmarked && (
+                                  <span className="text-xs text-amber-500 flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
+                                    <FiBookmark className="w-3 h-3 fill-current" /> Saved
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              className={`p-2 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${bookmarked ? "text-amber-500 opacity-100" : "text-slate-400 hover:text-indigo-500"
+                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleBookmark(lecture._id);
+                              }}
+                              title={bookmarked ? "Remove Bookmark" : "Bookmark"}
+                            >
+                              <FiBookmark className={bookmarked ? "fill-current" : ""} />
+                            </button>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
         </div>
 
         <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
           <div className="flex flex-col gap-3 items-center">
             {completed ? (
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl text-center"
@@ -398,7 +538,7 @@ const MemoizedSidebarContent = React.memo(
                 </div>
                 <h3 className="font-bold text-emerald-800 dark:text-emerald-300 mb-1">Course Completed!</h3>
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 mb-3">You've mastered this course.</p>
-                
+
                 <PDFDownloadLink
                   document={
                     <MyCertificate
@@ -424,14 +564,13 @@ const MemoizedSidebarContent = React.memo(
                 <span className="font-mono font-bold">{progressPercentage}%</span>
               </div>
             )}
-            
+
             <button
               onClick={completed ? handleMarkInCompleted : handleMarkCompleted}
-              className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
-                completed
-                  ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
-                  : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-lg"
-              }`}
+              className={`w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all ${completed
+                ? "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 shadow-lg"
+                }`}
               disabled={markingCompleted || markingInCompleted}
             >
               {completed ? <><FiRefreshCw /> Mark Incomplete</> : <><FiCheckCircle /> Mark as Completed</>}
@@ -449,8 +588,6 @@ function EnrolledCourseLectures() {
   const videoRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const user = useSelector((state) => state.auth.user);
-  const [activeTab, setActiveTab] = useState("overview");
-
   const {
     data: courseData,
     error,
@@ -461,33 +598,39 @@ function EnrolledCourseLectures() {
   const [markCompleted, { isLoading: markingCompleted }] = useMarkAsCompletedMutation();
   const [markInCompleted, { isLoading: markingInCompleted }] = useMarkAsInCompletedMutation();
 
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [videoQuality, setVideoQuality] = useState("auto"); // Mock state for quality selector
+  const creatorName = courseData?.data?.courseDetails?.creator?.name || "Instructor";
+  const courseTitle = courseData?.data?.courseDetails?.courseTitle || "Course";
+  const username = user?.name || "Student";
+  const [selectedLecture, setSelectedLecture] = useState(null);
+  const [bookmarkedLectures, setBookmarkedLectures] = useState([]);
+  const [playbackRate, setPlaybackRate] = useState(1.0);
+  const [currentNote, setCurrentNote] = useState("");
+
   const courseDetails = courseData?.data?.courseDetails || {};
   const progress = courseData?.data?.progress || [];
   const completed = courseData?.data?.completed || false;
-  const courseLectures = Array.isArray(courseDetails.lectures)
-    ? courseDetails.lectures
-    : [];
 
-  const [bookmarkedLectures, setBookmarkedLectures] = useState([]);
-  const [selectedLecture, setSelectedLecture] = useState(null);
-  const [currentNote, setCurrentNote] = useState("");
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [videoQuality, setVideoQuality] = useState("auto");
+  // Calculate watched lecture IDs for quick lookup
+  const watchedLectureIds = useMemo(() => {
+    return progress.filter(p => p.viewed).map(p => p.lectureId);
+  }, [progress]);
 
-  // Memoize these values to avoid re-computation on every render
-  const watchedLectureIds = useMemo(
-    () => (Array.isArray(progress) ? progress.filter((lp) => lp.viewed).map((lp) => lp.lectureId) : []),
-    [progress]
-  );
-  const courseTitle = courseDetails.courseTitle || "Course Title";
-  const username = user?.name || user?.username || "Student";
-  const creatorName = courseDetails?.creator?.name || "Instructor";
+  // Calculate flattened lectures for easy navigation and initial selection
+  const courseLectures = useMemo(() => {
+    if (courseDetails?.modules) {
+      return courseDetails.modules.flatMap(m => m.lectures || []);
+    }
+    return Array.isArray(courseDetails.lectures) ? courseDetails.lectures : [];
+  }, [courseDetails]);
 
 
   // Effect to handle initial lecture selection and bookmarks
   useEffect(() => {
     setBookmarkedLectures(getBookmarkedLectures(courseId));
-    if (courseLectures.length > 0) {
+    if (courseLectures.length > 0 && !selectedLecture) { // Check if not already selected to avoid reset
       let lastWatched = getLastWatchedLecture(courseId);
       let initialLecture = courseLectures.find((l) => l._id === lastWatched);
       if (!initialLecture) {
@@ -495,7 +638,7 @@ function EnrolledCourseLectures() {
       }
       setSelectedLecture(initialLecture);
     }
-  }, [courseLectures.length, courseId, courseLectures]);
+  }, [courseLectures, courseId, selectedLecture]);
 
   // Effect to store the last watched lecture
   useEffect(() => {
@@ -545,6 +688,8 @@ function EnrolledCourseLectures() {
       await markCompleted(courseId).unwrap();
       refetch();
       toast.success("Course marked as completed!");
+      // Open rating modal on completion if not already rated (logic can be improved to check if user already rated)
+      setIsRatingModalOpen(true);
     } catch (err) {
       toast.error("Failed to mark course as completed.");
       console.error("Error marking course completed:", err);
@@ -644,6 +789,7 @@ function EnrolledCourseLectures() {
     creatorName,
     username,
     courseTitle,
+    courseDetails, // Pass the full courseDetails down
   };
 
   return (
@@ -663,6 +809,30 @@ function EnrolledCourseLectures() {
             <h1 className="text-lg font-bold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-md">
               {courseDetails.courseTitle}
             </h1>
+            {/* Rating Display in Header */}
+            <div className="hidden md:flex items-center gap-3">
+              {completed && (
+                <button
+                  onClick={() => setIsRatingModalOpen(true)}
+                  className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  Rate this Course
+                </button>
+              )}
+              {courseDetails && (
+                <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                  <div className="flex text-yellow-500 text-xs">
+                    <Rating rating={courseDetails.averageRating || 0} totalStars={1} readOnly={true} size="text-yellow-500 text-sm" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    {courseDetails.averageRating ? courseDetails.averageRating.toFixed(1) : "0.0"}
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    ({courseDetails.totalRatings || 0})
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -719,19 +889,20 @@ function EnrolledCourseLectures() {
           <div className="flex-1 bg-white dark:bg-slate-900">
             <div className="border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8">
               <div className="flex gap-6 overflow-x-auto no-scrollbar">
-                {['overview', 'notes', 'reviews'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
-                      activeTab === tab
+                <div className="flex gap-6 overflow-x-auto no-scrollbar">
+                  {['overview', 'resources', 'notes'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${activeTab === tab
                         ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
                         : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+                        }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -759,26 +930,24 @@ function EnrolledCourseLectures() {
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <button
                           onClick={() => toggleWatched(selectedLecture._id)}
-                          className={`p-2 rounded-lg border transition ${
-                            watchedLectureIds.includes(selectedLecture._id)
-                              ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
-                              : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
-                          }`}
+                          className={`p-2 rounded-lg border transition ${watchedLectureIds.includes(selectedLecture._id)
+                            ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
+                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                            }`}
                           title={watchedLectureIds.includes(selectedLecture._id) ? "Mark as Unwatched" : "Mark as Watched"}
                         >
                           {watchedLectureIds.includes(selectedLecture._id) ? <FiCheckCircle className="w-5 h-5" /> : <FiCheckCircle className="w-5 h-5 opacity-50" />}
                         </button>
                         <button
                           onClick={() => handleToggleBookmark(selectedLecture._id)}
-                          className={`p-2 rounded-lg border transition ${
-                            bookmarkedLectures.includes(selectedLecture._id)
-                              ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400"
-                              : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
-                          }`}
+                          className={`p-2 rounded-lg border transition ${bookmarkedLectures.includes(selectedLecture._id)
+                            ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400"
+                            : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                            }`}
                           title="Bookmark Lecture"
                         >
                           <FiBookmark className={`w-5 h-5 ${bookmarkedLectures.includes(selectedLecture._id) ? "fill-current" : ""}`} />
@@ -798,22 +967,20 @@ function EnrolledCourseLectures() {
                       <button
                         onClick={goToPrev}
                         disabled={currentIdx === 0}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-                          currentIdx === 0
-                            ? "text-slate-400 cursor-not-allowed"
-                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${currentIdx === 0
+                          ? "text-slate-400 cursor-not-allowed"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          }`}
                       >
                         <FiChevronLeft /> Previous Lecture
                       </button>
                       <button
                         onClick={goToNext}
                         disabled={currentIdx === courseLectures.length - 1}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-emerald-500/20 ${
-                          currentIdx === courseLectures.length - 1
-                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
-                            : "bg-emerald-600 text-white hover:bg-emerald-700"
-                        }`}
+                        className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition shadow-lg shadow-emerald-500/20 ${currentIdx === courseLectures.length - 1
+                          ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed shadow-none"
+                          : "bg-emerald-600 text-white hover:bg-emerald-700"
+                          }`}
                       >
                         Next Lecture <FiChevronRight />
                       </button>
@@ -860,37 +1027,97 @@ function EnrolledCourseLectures() {
                     </div>
                   </motion.div>
                 )}
-
-                {activeTab === 'reviews' && (
+                {activeTab === 'resources' && (
                   <motion.div
-                    key="reviews"
+                    key="resources"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="text-center py-12"
+                    className="space-y-6"
                   >
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FiMessageSquare className="w-8 h-8 text-slate-400" />
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/10 border border-indigo-100 dark:border-indigo-800/30 rounded-xl p-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                      <div className="w-12 h-12 rounded-full bg-white dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-800">
+                        <FiDownload className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-lg font-bold text-slate-800 dark:text-white">Downloadable Resources</h4>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                          Access supplementary materials, source code, and assets for this lecture.
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">Course Reviews</h3>
-                    <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                      Reviews are not available for individual lectures. You can view course-wide reviews on the course details page.
-                    </p>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {selectedLecture?.resources && selectedLecture.resources.length > 0 ? (
+                        selectedLecture.resources.map((resource, idx) => {
+                          const downloadUrl = `http://localhost:8000/api/v1/resource/download/${resource._id}?t=${Date.now()}`;
+
+                          return (
+                            <div key={resource._id || idx} className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
+                              <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-xl shadow-sm ${resource.fileType === 'PDF' ? 'bg-red-50 text-red-500 dark:bg-red-900/20' :
+                                  resource.fileType === 'IMG' ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/20' :
+                                    'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                  }`}>
+                                  {resource.fileType === 'PDF' ? <FiFileText /> : resource.fileType === 'IMG' ? <FiImage /> : <FiFile />}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-slate-900 dark:text-white text-base group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    {resource.title}
+                                  </h4>
+                                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                    <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">
+                                      {resource.fileType || 'FILE'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <a
+                                href={downloadUrl}
+                                download
+                                className="w-full sm:w-auto px-5 py-2.5 bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 transition-all flex items-center justify-center gap-2 group/btn cursor-pointer"
+                              >
+                                <span className="group-hover/btn:-translate-y-0.5 transition-transform"><FiDownload /></span>
+                                Download
+                              </a>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-16 px-4 bg-slate-50 dark:bg-slate-800/50 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-center">
+                          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-slate-600">
+                            <FiDownload className="w-8 h-8" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No resources available</h3>
+                          <p className="text-slate-500 dark:text-slate-500 max-w-sm mt-2 text-sm">
+                            The instructor hasn't uploaded any supplementary materials for this particular lecture yet.
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
+
+                {/* Rating Modal */}
               </AnimatePresence>
             </div>
           </div>
         </main>
+        < RatingModal
+          isOpen={isRatingModalOpen}
+          onClose={() => setIsRatingModalOpen(false)
+          }
+          courseId={courseId}
+        />
 
         {/* Sidebar (Desktop) */}
-        <aside className="hidden lg:block w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-[calc(100vh-64px)] sticky top-16 overflow-hidden">
+        < aside className="hidden lg:block w-96 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-[calc(100vh-64px)] sticky top-16 overflow-hidden" >
           <MemoizedSidebarContent {...sidebarProps} />
-        </aside>
-      </div>
+        </aside >
+      </div >
 
       {/* Mobile Sidebar Drawer */}
-      <AnimatePresence>
+      < AnimatePresence >
         {sidebarOpen && (
           <>
             <motion.div
@@ -922,16 +1149,16 @@ function EnrolledCourseLectures() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence >
 
       {/* Floating Chat Button (Mobile) */}
-      <button
+      < button
         onClick={() => navigate(`/chat/${courseId}`)}
         className="fixed right-4 bottom-4 z-30 lg:hidden p-4 rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition"
       >
         <FiMessageSquare className="w-6 h-6" />
-      </button>
-    </div>
+      </button >
+    </div >
   );
 }
 

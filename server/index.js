@@ -4,10 +4,12 @@ import connectDB from "./db/db.js";
 import userRouter from "./routes/user.routes.js";
 import courseRouter from "./routes/course.routes.js";
 import aiRoutes from "./routes/aiRoutes.routes.js";
-import paymentRoutes from "./routes/paymentRoutes.routes.js";   
+import paymentRoutes from "./routes/paymentRoutes.routes.js";
 import mediaroute from "./routes/media.routes.js";
 import CourseProgressRoute from "./routes/courseProgress.routes.js";
 import userManagementRoutes from "./routes/userManagement.routes.js";
+import moduleRouter from "./routes/module.routes.js";
+import resourceRouter from "./routes/resource.routes.js";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -15,17 +17,17 @@ import http from 'http';
 import { Server } from 'socket.io';
 
 // Models
-import  Message  from "./models/ChatMessage.js";    
+import Message from "./models/ChatMessage.js";
 import { Course } from "./models/course.model.js";
 import { User } from "./models/user.model.js";
 
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app); 
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-  origin: ["http://localhost:5173", "http://localhost:5174"], // frontend dev URLs (vite may use 5173 or 5174)
+    origin: ["http://localhost:5173", "http://localhost:5174"], // frontend dev URLs (vite may use 5173 or 5174)
     credentials: true
   }
 });
@@ -91,8 +93,8 @@ io.on("connection", (socket) => {
       // broadcast current online users for that course
       const socketsInRoom = await io.in(courseId).fetchSockets();
       const users = socketsInRoom.map((s) => s.userInfo).filter(Boolean);
-  console.log(`Broadcasting online_users for course ${courseId}:`, users);
-  io.to(courseId).emit("online_users", users);
+      console.log(`Broadcasting online_users for course ${courseId}:`, users);
+      io.to(courseId).emit("online_users", users);
 
     } catch (err) {
       console.error("Error joining chat:", err);
@@ -157,8 +159,8 @@ io.on("connection", (socket) => {
           // broadcast updated online users for that course
           const socketsInRoom = await io.in(courseId).fetchSockets();
           const users = socketsInRoom.map((s) => s.userInfo).filter(Boolean);
-    console.log(`Broadcasting online_users for course ${courseId}:`, users);
-    io.to(courseId).emit("online_users", users);
+          console.log(`Broadcasting online_users for course ${courseId}:`, users);
+          io.to(courseId).emit("online_users", users);
         } catch (err) {
           console.error('Error leaving course chat', err);
         }
@@ -294,6 +296,8 @@ app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/progress", CourseProgressRoute);
 app.use("/api/v1/userManagement", userManagementRoutes);
+app.use("/api/v1/module", moduleRouter);
+app.use("/api/v1/resource", resourceRouter);
 
 // Start server
 const PORT = process.env.PORT || 8000;

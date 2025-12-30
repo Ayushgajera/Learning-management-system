@@ -10,6 +10,7 @@ import {
   FiDollarSign,
   FiCreditCard,
   FiChevronRight,
+  FiAward
 } from 'react-icons/fi';
 
 function Sidebar() {
@@ -64,7 +65,14 @@ function Sidebar() {
       description: 'Payout hub',
       icon: <FiCreditCard className="h-5 w-5" />,
     },
+    {
+      path: '/admin/reputation',
+      name: 'My Reputation',
+      description: 'Levels & Score',
+      icon: <FiAward className="h-5 w-5" />,
+    },
   ];
+
 
   const isActivePath = (path) => location.pathname.startsWith(path);
 
@@ -73,7 +81,7 @@ function Sidebar() {
     open: { x: 0 },
     closed: { x: "-100%" }
   };
-  
+
   // Backdrop animation ke liye variants
   const backdropVariants = {
     open: { opacity: 1 },
@@ -103,18 +111,16 @@ function Sidebar() {
               <motion.div key={item.path} whileHover={{ x: 4 }}>
                 <Link
                   to={item.path}
-                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all duration-200 ${
-                    active
-                      ? 'border-transparent bg-gradient-to-r from-indigo-500/90 via-violet-500/80 to-sky-400/80 text-white shadow-lg shadow-indigo-500/30'
-                      : 'border-gray-200/60 bg-white/70 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-white/70'
-                  }`}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all duration-200 ${active
+                    ? 'border-transparent bg-gradient-to-r from-indigo-500/90 via-violet-500/80 to-sky-400/80 text-white shadow-lg shadow-indigo-500/30'
+                    : 'border-gray-200/60 bg-white/70 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-white/70'
+                    }`}
                 >
                   <span
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-                      active
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800/80 dark:text-white/70'
-                    }`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl ${active
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800/80 dark:text-white/70'
+                      }`}
                   >
                     {item.icon}
                   </span>
@@ -191,11 +197,10 @@ function Sidebar() {
                       key={item.path}
                       to={item.path}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
-                        active
-                          ? 'border-transparent bg-gradient-to-r from-indigo-500/90 via-violet-500/80 to-sky-400/80 text-white shadow-lg shadow-indigo-500/30'
-                          : 'border-gray-200/60 bg-white/70 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-white/70'
-                      }`}
+                      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${active
+                        ? 'border-transparent bg-gradient-to-r from-indigo-500/90 via-violet-500/80 to-sky-400/80 text-white shadow-lg shadow-indigo-500/30'
+                        : 'border-gray-200/60 bg-white/70 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-white/70'
+                        }`}
                     >
                       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800/80 dark:text-white/70">
                         {item.icon}
