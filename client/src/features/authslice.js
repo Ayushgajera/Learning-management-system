@@ -9,9 +9,11 @@ const initialState = {
     loading: false
 };
 
+import config from '../../config/index';
+
 // 🔹 Async thunk to fetch user
 export const fetchUser = createAsyncThunk("user/fetchUser", async () => {
-    const res = await axios.get("http://localhost:8000/api/v1/user/me", {
+    const res = await axios.get(`${config.API_BASE_URL}/api/v1/user/me`, {
         withCredentials: true
     });
     return res.data.user;

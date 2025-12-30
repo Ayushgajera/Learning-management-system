@@ -2,7 +2,9 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 // import { userLoggedIn, userLoggedOut } from '../authslice';
 
 
-const USER_API = 'http://localhost:8000/api/v1/course';
+import config from '../../config/index';
+
+const USER_API = `${config.API_BASE_URL}/api/v1/course`;
 
 
 export const courseApi = createApi({

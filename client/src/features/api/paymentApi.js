@@ -1,20 +1,22 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { userLoggedIn, userLoggedOut } from '../authslice';
 
-const USER_API = 'http://localhost:8000/api/v1/payment';
+import config from '../../config/index';
+
+const USER_API = `${config.API_BASE_URL}/api/v1/payment`;
 
 
 export const paymentApi = createApi({
     reducerPath: 'paymentApi',
     baseQuery: fetchBaseQuery({
-        baseUrl:USER_API,
+        baseUrl: USER_API,
         credentials: 'include',
         prepareHeaders: (headers) => {
             return headers;
 
-          } 
+        }
     }),
-    endpoints:(builder)=>({
+    endpoints: (builder) => ({
         createPayment: builder.mutation({
             query: (paymentData) => ({
                 url: "create-order",
@@ -45,4 +47,4 @@ export const paymentApi = createApi({
     })
 })
 //build in hooks created by rtk query
-export const {useGetPurchaseCourseQuery,useCreatePaymentMutation,useVerifyPaymentMutation,useWithdrawFromWalletMutation} = paymentApi;
+export const { useGetPurchaseCourseQuery, useCreatePaymentMutation, useVerifyPaymentMutation, useWithdrawFromWalletMutation } = paymentApi;

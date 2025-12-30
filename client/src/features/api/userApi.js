@@ -1,7 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
+import config from '../../config/index';
+
 // Replace with your actual backend URL
-const baseApiUrl = 'http://localhost:8000/api/v1/userManagement/';
+const baseApiUrl = `${config.API_BASE_URL}/api/v1/userManagement/`;
 
 export const userApi = createApi({
   reducerPath: 'userApi',

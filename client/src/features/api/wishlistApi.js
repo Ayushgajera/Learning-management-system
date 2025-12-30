@@ -1,6 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const USER_API = 'http://localhost:8000/api/v1/user';
+import config from '../../config/index';
+
+const USER_API = `${config.API_BASE_URL}/api/v1/user`;
 
 export const wishlistApi = createApi({
   reducerPath: 'wishlistApi',
