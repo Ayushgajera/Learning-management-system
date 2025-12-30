@@ -25,9 +25,16 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://learngpt.vercel.app",
+  process.env.CLIENT_URL
+].filter(Boolean); // remove undefined if CLIENT_URL is not set
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"], // frontend dev URLs (vite may use 5173 or 5174)
+    origin: allowedOrigins,
     credentials: true
   }
 });
@@ -41,7 +48,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: allowedOrigins,
   credentials: true,
 }));
 
