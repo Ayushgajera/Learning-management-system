@@ -128,9 +128,9 @@ const FormSelect = ({ label, icon: Icon, options, error, value, onChange }) => (
             <FiChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-500 transition-transform group-focus-within:rotate-180 duration-300" />
           </span>
         </Listbox.Button>
-        
+
         <AnimatePresence>
-          <Listbox.Options 
+          <Listbox.Options
             as={motion.div}
             initial={{ opacity: 0, y: -10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -147,8 +147,7 @@ const FormSelect = ({ label, icon: Icon, options, error, value, onChange }) => (
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0, transition: { delay: index * 0.05 } }}
                 className={({ active, selected }) =>
-                  `cursor-pointer select-none py-3 pl-12 pr-4 transition-colors duration-200 ${
-                    active ? "bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : 
+                  `cursor-pointer select-none py-3 pl-12 pr-4 transition-colors duration-200 ${active ? "bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" :
                     "text-gray-700 dark:text-gray-200"
                   } ${selected ? "bg-blue-100/50 dark:bg-blue-800/30" : ""}`
                 }
@@ -227,11 +226,11 @@ function AddCourse() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 
                     dark:from-gray-900 dark:via-blue-900/20 dark:to-purple-900/20 
                     p-4 sm:p-6 lg:p-8 transition-colors duration-300">
-      
+
       {/* Animated Background Elements */}
       <div className="fixed inset-0  pointer-events-none">
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.1, 1],
             rotate: [0, 5, 0],
             opacity: [0.3, 0.5, 0.3]
@@ -240,7 +239,7 @@ function AddCourse() {
           className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl"
         />
         <motion.div
-          animate={{ 
+          animate={{
             scale: [1, 1.2, 1],
             rotate: [0, -5, 0],
             opacity: [0.2, 0.4, 0.2]
@@ -340,9 +339,8 @@ function AddCourse() {
                   {CREATION_STAGES.map((stage) => (
                     <div key={stage.title} className="flex items-start gap-3">
                       <div
-                        className={`mt-1 h-2.5 w-2.5 rounded-full ${
-                          stage.status === "current" ? "bg-blue-500 shadow-lg shadow-blue-500/40" : "bg-gray-300 dark:bg-gray-600"
-                        }`}
+                        className={`mt-1 h-2.5 w-2.5 rounded-full ${stage.status === "current" ? "bg-blue-500 shadow-lg shadow-blue-500/40" : "bg-gray-300 dark:bg-gray-600"
+                          }`}
                       />
                       <div>
                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{stage.title}</p>
@@ -372,7 +370,7 @@ function AddCourse() {
             <AnimatePresence>
               {apiError && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: -20 }} 
+                  initial={{ opacity: 0, scale: 0.9, y: -20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: -20 }}
                   className="flex items-start p-4 bg-rose-50/80 dark:bg-rose-900/30 backdrop-blur-md 
@@ -446,14 +444,14 @@ function AddCourse() {
             </div>
 
             {/* Submit Button */}
-            <motion.div 
+            <motion.div
               className="pt-6 flex justify-center"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
               <motion.button
-                type="submit" 
+                type="submit"
                 disabled={isLoading}
                 className={`group relative px-8 py-4 rounded-2xl font-semibold text-white
                   bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-size-200 bg-pos-0
@@ -487,7 +485,7 @@ function AddCourse() {
                     </>
                   )}
                 </span>
-                
+
                 {/* Button Glow Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 
                                opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl" />
