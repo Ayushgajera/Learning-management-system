@@ -1,6 +1,7 @@
 import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { REHYDRATE } from "redux-persist";
+import config from '../config/index';
 
 const initialState = {
     user: null,
@@ -9,7 +10,7 @@ const initialState = {
     loading: false
 };
 
-import config from '../../config/index';
+
 
 // 🔹 Async thunk to fetch user
 export const fetchUser = createAsyncThunk("user/fetchUser", async () => {

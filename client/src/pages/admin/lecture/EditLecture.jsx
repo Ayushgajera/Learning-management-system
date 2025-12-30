@@ -38,7 +38,7 @@ const EditLecture = () => {
     videoUrl: "",
     videoFile: null,
     secure_url: "",
-    secure_url: "",
+
     public_id: "",
     duration: 0
   });
