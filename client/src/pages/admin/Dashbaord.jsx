@@ -11,10 +11,13 @@ import {
   FiTrendingUp,
   FiShield,
 } from 'react-icons/fi';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useGetAllCoursesQuery } from '@/features/api/courseApi';
 import { useLoaduserQuery } from '@/features/api/authApi';
 
 function Dashboard() {
+  const navigate = useNavigate();
   // -- Data state --
   const [stats, setStats] = useState({
     totalCourses: 0,
@@ -303,6 +306,7 @@ function Dashboard() {
                 Live metrics
               </motion.button>
               <motion.button
+                onClick={() => navigate('/admin/courses/create')}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30"
