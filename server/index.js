@@ -305,6 +305,14 @@ app.use("/api/v1/progress", CourseProgressRoute);
 app.use("/api/v1/userManagement", userManagementRoutes);
 app.use("/api/v1/module", moduleRouter);
 app.use("/api/v1/resource", resourceRouter);
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    message: "Server is alive 🚀",
+    time: new Date().toISOString(),
+  });
+});
+
 
 // Start server
 const PORT = process.env.PORT || 8000;
