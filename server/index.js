@@ -10,6 +10,8 @@ import CourseProgressRoute from "./routes/courseProgress.routes.js";
 import userManagementRoutes from "./routes/userManagement.routes.js";
 import moduleRouter from "./routes/module.routes.js";
 import resourceRouter from "./routes/resource.routes.js";
+import adminRouter from "./routes/admin.routes.js";
+import liveSessionRouter from "./routes/liveSession.routes.js";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -20,6 +22,8 @@ import { Server } from 'socket.io';
 import Message from "./models/ChatMessage.js";
 import { Course } from "./models/course.model.js";
 import { User } from "./models/user.model.js";
+import { LiveSession } from "./models/liveSession.model.js";
+import LiveChatMessage from "./models/liveChatMessage.model.js";
 
 dotenv.config();
 
@@ -274,19 +278,382 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ============ LIVE SESSION EVENTS ============
+
+  // Helper: build enriched participant list from sockets in a room
+  async function buildParticipantList(roomName) {
+    const socketsInRoom = await io.in(roomName).fetchSockets();
+    return socketsInRoom.map(s => ({
+      userId: s.liveUserId,
+      isInstructor: s.isLiveInstructor || false,
+      name: s.liveUserName || 'User',
+      photoUrl: s.livePhotoUrl || '',
+      hasVideo: s.liveHasVideo || false,
+      hasAudio: s.liveHasAudio || false,
+      handRaised: s.liveHandRaised || false,
+    })).filter(p => p.userId);
+  }
+
+  // Join live session room
+  socket.on("join_live_session", async ({ sessionId, userId }) => {
+    try {
+      const session = await LiveSession.findById(sessionId).populate('courseId');
+      if (!session || session.status !== 'live') {
+        socket.emit("live_error", { message: "Session not found or not live." });
+        return;
+      }
+
+      const course = session.courseId;
+      const isInstructor = String(course.creator) === String(userId);
+      const isStudent = course.enrolledStudents.some(
+        (sid) => String(sid) === String(userId)
+      );
+
+      if (!isInstructor && !isStudent) {
+        socket.emit("live_error", { message: "Access denied." });
+        return;
+      }
+
+      // Fetch user info for display
+      let userDoc;
+      try {
+        userDoc = await User.findById(userId).select("name photoUrl");
+      } catch (e) { /* ignore */ }
+
+      const roomName = `live_${session.roomId}`;
+      socket.join(roomName);
+      socket.liveRoom = roomName;
+      socket.liveSessionId = sessionId;
+      socket.liveUserId = String(userId);
+      socket.isLiveInstructor = isInstructor;
+      socket.liveMediaReady = false;
+      socket.liveUserName = userDoc?.name || 'User';
+      socket.livePhotoUrl = userDoc?.photoUrl || '';
+      socket.liveHasVideo = false;
+      socket.liveHasAudio = false;
+      socket.liveHandRaised = false;
+
+      // Record participant in DB
+      if (!session.participants.some(p => String(p.userId) === String(userId))) {
+        session.participants.push({ userId, joinedAt: new Date() });
+        await session.save();
+      }
+
+      // Broadcast enriched participant list
+      const participantList = await buildParticipantList(roomName);
+      io.to(roomName).emit("live_participants", participantList);
+
+      // Notify late-joining participant about ALL media-ready peers (not just instructor)
+      const socketsInRoom = await io.in(roomName).fetchSockets();
+      const mediaReadySockets = socketsInRoom.filter(
+        s => s.liveMediaReady && String(s.liveUserId) !== String(userId)
+      );
+      mediaReadySockets.forEach(readySocket => {
+        socket.emit("live_peer_media_ready", {
+          userId: readySocket.liveUserId,
+          name: readySocket.liveUserName,
+          hasVideo: readySocket.liveHasVideo,
+          hasAudio: readySocket.liveHasAudio,
+          isInstructor: readySocket.isLiveInstructor,
+        });
+      });
+
+      // Send chat history
+      const chatHistory = await LiveChatMessage.find({ sessionId })
+        .populate('userId', 'name photoUrl')
+        .sort({ timestamp: 1 })
+        .limit(200);
+      socket.emit("live_chat_history", chatHistory);
+
+      console.log(`[LIVE] ${socket.liveUserName} (${userId}) joined session ${sessionId} (${isInstructor ? 'instructor' : 'student'})`);
+    } catch (err) {
+      console.error("Error joining live session:", err);
+      socket.emit("live_error", { message: "Failed to join session." });
+    }
+  });
+
+  // Leave live session
+  socket.on("leave_live_session", async ({ sessionId, userId }) => {
+    try {
+      const session = await LiveSession.findById(sessionId);
+      if (session) {
+        const participant = session.participants.find(
+          p => String(p.userId) === String(userId) && !p.leftAt
+        );
+        if (participant) {
+          participant.leftAt = new Date();
+          await session.save();
+        }
+
+        const roomName = `live_${session.roomId}`;
+
+        // Notify others to tear down peers if this user had media
+        if (socket.liveMediaReady) {
+          socket.to(roomName).emit("live_peer_media_stopped", {
+            userId: socket.liveUserId,
+          });
+        }
+
+        socket.leave(roomName);
+        socket.liveRoom = null;
+        socket.liveSessionId = null;
+        socket.liveMediaReady = false;
+        socket.liveHasVideo = false;
+        socket.liveHasAudio = false;
+        socket.liveHandRaised = false;
+
+        const participantList = await buildParticipantList(roomName);
+        io.to(roomName).emit("live_participants", participantList);
+      }
+    } catch (err) {
+      console.error("Error leaving live session:", err);
+    }
+  });
+
+  // WebRTC Signaling: Offer
+  socket.on("live_offer", ({ targetUserId, offer, sessionRoomId }) => {
+    const roomName = `live_${sessionRoomId}`;
+    const fromId = socket.liveUserId;
+    io.in(roomName).fetchSockets().then(sockets => {
+      const targetSocket = sockets.find(s => String(s.liveUserId) === String(targetUserId));
+      if (targetSocket) {
+        targetSocket.emit("live_offer", {
+          offer,
+          fromUserId: fromId,
+          isInstructor: socket.isLiveInstructor,
+        });
+      }
+    });
+  });
+
+  // WebRTC Signaling: Answer
+  socket.on("live_answer", ({ targetUserId, answer, sessionRoomId }) => {
+    const roomName = `live_${sessionRoomId}`;
+    const fromId = socket.liveUserId;
+    io.in(roomName).fetchSockets().then(sockets => {
+      const targetSocket = sockets.find(s => String(s.liveUserId) === String(targetUserId));
+      if (targetSocket) {
+        targetSocket.emit("live_answer", {
+          answer,
+          fromUserId: fromId,
+        });
+      }
+    });
+  });
+
+  // WebRTC Signaling: ICE Candidate
+  socket.on("live_ice_candidate", ({ targetUserId, candidate, sessionRoomId }) => {
+    const roomName = `live_${sessionRoomId}`;
+    io.in(roomName).fetchSockets().then(sockets => {
+      const targetSocket = sockets.find(s => String(s.liveUserId) === String(targetUserId));
+      if (targetSocket) {
+        targetSocket.emit("live_ice_candidate", {
+          candidate,
+          fromUserId: socket.liveUserId,
+        });
+      }
+    });
+  });
+
+  // Instructor signals media readiness
+  socket.on("live_instructor_ready", async ({ sessionRoomId }) => {
+    socket.liveMediaReady = true;
+    socket.liveHasVideo = true;
+    socket.liveHasAudio = true;
+    const roomName = `live_${sessionRoomId}`;
+    console.log(`[LIVE] Instructor ${socket.liveUserName} media ready`);
+    socket.to(roomName).emit("live_peer_media_ready", {
+      userId: socket.liveUserId,
+      name: socket.liveUserName,
+      hasVideo: true,
+      hasAudio: true,
+      isInstructor: true,
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Student signals media readiness (camera/mic turned on)
+  socket.on("live_student_media_ready", async ({ sessionRoomId, hasVideo, hasAudio }) => {
+    socket.liveMediaReady = true;
+    socket.liveHasVideo = hasVideo;
+    socket.liveHasAudio = hasAudio;
+    const roomName = `live_${sessionRoomId}`;
+    console.log(`[LIVE] Student ${socket.liveUserName} media ready (video:${hasVideo} audio:${hasAudio})`);
+    socket.to(roomName).emit("live_peer_media_ready", {
+      userId: socket.liveUserId,
+      name: socket.liveUserName,
+      hasVideo,
+      hasAudio,
+      isInstructor: false,
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Student stopped all media (camera + mic off)
+  socket.on("live_student_media_stopped", async ({ sessionRoomId }) => {
+    socket.liveMediaReady = false;
+    socket.liveHasVideo = false;
+    socket.liveHasAudio = false;
+    const roomName = `live_${sessionRoomId}`;
+    console.log(`[LIVE] Student ${socket.liveUserName} stopped media`);
+    socket.to(roomName).emit("live_peer_media_stopped", {
+      userId: socket.liveUserId,
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Media state change (toggle without creating/destroying peers)
+  socket.on("live_media_state_changed", async ({ sessionRoomId, hasVideo, hasAudio }) => {
+    socket.liveHasVideo = hasVideo;
+    socket.liveHasAudio = hasAudio;
+    const roomName = `live_${sessionRoomId}`;
+    io.to(roomName).emit("live_media_state_update", {
+      userId: socket.liveUserId,
+      hasVideo,
+      hasAudio,
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Peer connection request relay (generic — works for instructor AND students)
+  socket.on("live_request_connection", ({ targetUserId, sessionRoomId }) => {
+    const roomName = `live_${sessionRoomId}`;
+    const fromId = socket.liveUserId;
+    io.in(roomName).fetchSockets().then(sockets => {
+      const targetSocket = sockets.find(s => String(s.liveUserId) === String(targetUserId));
+      if (targetSocket) {
+        targetSocket.emit("live_request_connection", { fromUserId: fromId });
+      }
+    });
+  });
+
+  // Raise hand
+  socket.on("live_raise_hand", async ({ sessionRoomId }) => {
+    socket.liveHandRaised = true;
+    const roomName = `live_${sessionRoomId}`;
+    io.to(roomName).emit("live_hand_raised", {
+      userId: socket.liveUserId,
+      name: socket.liveUserName,
+      timestamp: Date.now(),
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Lower hand
+  socket.on("live_lower_hand", async ({ sessionRoomId }) => {
+    socket.liveHandRaised = false;
+    const roomName = `live_${sessionRoomId}`;
+    io.to(roomName).emit("live_hand_lowered", {
+      userId: socket.liveUserId,
+    });
+    const participantList = await buildParticipantList(roomName);
+    io.to(roomName).emit("live_participants", participantList);
+  });
+
+  // Emoji reaction
+  socket.on("live_reaction", ({ sessionRoomId, emoji }) => {
+    const roomName = `live_${sessionRoomId}`;
+    io.to(roomName).emit("live_reaction", {
+      userId: socket.liveUserId,
+      name: socket.liveUserName,
+      emoji,
+      id: `${socket.liveUserId}-${Date.now()}`,
+    });
+  });
+
+  // Instructor: mute all students
+  socket.on("live_mute_all", ({ sessionRoomId }) => {
+    if (!socket.isLiveInstructor) return;
+    const roomName = `live_${sessionRoomId}`;
+    console.log(`[LIVE] Instructor muted all students`);
+    socket.to(roomName).emit("live_force_mute");
+  });
+
+  // Instructor: remove a participant
+  socket.on("live_remove_participant", async ({ sessionRoomId, targetUserId }) => {
+    if (!socket.isLiveInstructor) return;
+    const roomName = `live_${sessionRoomId}`;
+    console.log(`[LIVE] Instructor removing participant ${targetUserId}`);
+    const socketsInRoom = await io.in(roomName).fetchSockets();
+    const target = socketsInRoom.find(s => String(s.liveUserId) === String(targetUserId));
+    if (target) {
+      // Notify the user they're being removed
+      target.emit("live_removed_from_session");
+      // Notify others to tear down peers
+      if (target.liveMediaReady) {
+        socket.to(roomName).emit("live_peer_media_stopped", {
+          userId: target.liveUserId,
+        });
+      }
+      target.leave(roomName);
+      target.liveRoom = null;
+      target.liveSessionId = null;
+      target.liveMediaReady = false;
+      // Update participant list
+      const participantList = await buildParticipantList(roomName);
+      io.to(roomName).emit("live_participants", participantList);
+    }
+  });
+
+  // Screen share state change
+  socket.on("live_screen_share", ({ sessionRoomId, isSharing }) => {
+    const roomName = `live_${sessionRoomId}`;
+    io.to(roomName).emit("live_screen_share_status", {
+      userId: socket.liveUserId,
+      isSharing,
+    });
+  });
+
+  // Live session chat message
+  socket.on("live_chat_message", async ({ sessionId, userId, text }) => {
+    try {
+      const newMsg = await LiveChatMessage.create({ sessionId, userId, text });
+      const populated = await newMsg.populate('userId', 'name photoUrl');
+
+      const session = await LiveSession.findById(sessionId);
+      const roomName = `live_${session.roomId}`;
+      io.to(roomName).emit("live_chat_message", populated);
+    } catch (err) {
+      console.error("Error sending live chat:", err);
+    }
+  });
+
+  // Live session typing indicator
+  socket.on("live_typing", ({ sessionRoomId, userId, userName, isTyping }) => {
+    const roomName = `live_${sessionRoomId}`;
+    socket.to(roomName).emit("live_user_typing", { userId, userName, isTyping });
+  });
+
+  // ============ END LIVE SESSION EVENTS ============
+
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
-    // When a socket disconnects, update online users for each joined course
     (async () => {
       try {
+        // Update online users for each joined course chat
         for (const courseId of socket.joinedCourses) {
           const socketsInRoom = await io.in(courseId).fetchSockets();
           const users = socketsInRoom.map((s) => s.userInfo).filter(Boolean);
-          console.log(`Broadcasting online_users for course ${courseId} on disconnect:`, users);
           io.to(courseId).emit("online_users", users);
         }
+        // Update live session participant list if in a live room
+        if (socket.liveRoom) {
+          // Notify others to tear down peers for this disconnected user
+          if (socket.liveMediaReady) {
+            io.to(socket.liveRoom).emit("live_peer_media_stopped", {
+              userId: socket.liveUserId,
+            });
+          }
+          const participantList = await buildParticipantList(socket.liveRoom);
+          io.to(socket.liveRoom).emit("live_participants", participantList);
+        }
       } catch (err) {
-        console.error("Error updating online users on disconnect:", err);
+        console.error("Error on disconnect cleanup:", err);
       }
     })();
   });
@@ -305,6 +672,8 @@ app.use("/api/v1/progress", CourseProgressRoute);
 app.use("/api/v1/userManagement", userManagementRoutes);
 app.use("/api/v1/module", moduleRouter);
 app.use("/api/v1/resource", resourceRouter);
+app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/live-sessions", liveSessionRouter);
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",

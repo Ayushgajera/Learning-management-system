@@ -6,6 +6,27 @@ import { deleteMedia, uploadMedia } from "../utils/cloudinary.js";
 import { calculateInstructorReputation } from "../utils/reputation.js";
 
 
+const normalizeRoleModel = (user) => {
+    if (!user) return;
+    const currentRole = user.activeRole || user.role || 'student';
+
+    if (!Array.isArray(user.roles) || user.roles.length === 0) {
+        user.roles = [currentRole];
+    }
+    // Only force-add 'student' for non-admin users
+    if (!user.roles.includes('admin') && !user.roles.includes('student')) {
+        user.roles = [...new Set([...user.roles, 'student'])];
+    }
+
+    user.activeRole = currentRole;
+    user.role = currentRole;
+
+    // Treat legacy onboarded flag as onboarding completion.
+    if (user.onboardedAsInstructor && !user.instructorOnboardingCompleted) {
+        user.instructorOnboardingCompleted = true;
+    }
+};
+
 
 
 export const register = async (req, res) => {
@@ -189,18 +210,51 @@ export const setInstructorOnboarded = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        user.onboardedAsInstructor = true;
-        user.instructorOnboardingAnswers = answers;
+        normalizeRoleModel(user);
 
-        // 🔥 Promote to instructor role
-        user.role = 'instructor';
+        // If already approved instructor, just switch role
+        const alreadyApproved = user.instructorApplicationStatus === 'approved' && user.roles?.includes('instructor');
+
+        if (alreadyApproved) {
+            user.activeRole = 'instructor';
+            user.role = 'instructor';
+            await user.save();
+
+            const sanitizedUser = user.toObject();
+            delete sanitizedUser.password;
+            return res.json({ success: true, user: sanitizedUser, switchedOnly: true });
+        }
+
+        // If application is pending, tell user to wait
+        if (user.instructorApplicationStatus === 'pending') {
+            return res.status(400).json({
+                success: false,
+                message: "Your instructor application is pending admin approval.",
+                applicationStatus: 'pending'
+            });
+        }
+
+        // First-time application or re-application after rejection
+        if (!Array.isArray(answers) || answers.length === 0) {
+            return res.status(400).json({ message: "Onboarding answers are required" });
+        }
+
+        user.instructorOnboardingAnswers = answers;
+        user.instructorApplicationStatus = 'pending';
+        user.instructorApplicationDate = new Date();
+        user.instructorRejectionReason = '';
 
         await user.save();
 
         const sanitizedUser = user.toObject();
         delete sanitizedUser.password;
 
-        res.json({ success: true, user: sanitizedUser });
+        res.json({
+            success: true,
+            message: "Your application has been submitted and is pending admin approval.",
+            applicationStatus: 'pending',
+            user: sanitizedUser
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Failed to save onboarding answers" });
@@ -213,7 +267,19 @@ export const getInstructorOnboarded = async (req, res) => {
         const userId = req.id;
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
-        res.json({ onboarded: !!user.onboardedAsInstructor });
+        normalizeRoleModel(user);
+
+        const applicationStatus = user.instructorApplicationStatus || 'none';
+        const onboarded = applicationStatus === 'approved' && user.roles?.includes('instructor');
+
+        res.json({
+            onboarded,
+            applicationStatus,
+            rejectionReason: user.instructorRejectionReason || '',
+            instructorOnboardingCompleted: !!user.instructorOnboardingCompleted,
+            roles: user.roles,
+            activeRole: user.activeRole,
+        });
     } catch (err) {
         res.status(500).json({ message: "Failed to fetch onboarding status" });
     }
@@ -225,14 +291,19 @@ export const revertToStudent = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        // Revert role
+        // Switch UI context only. Do NOT wipe onboarding or instructor capability.
+        normalizeRoleModel(user);
+        user.activeRole = 'student';
         user.role = 'student';
-        user.onboardedAsInstructor = false;
-        user.instructorOnboardingAnswers = [];
 
         await user.save();
 
-        res.json({ success: true, role: user.role });
+        res.json({
+            success: true,
+            role: user.role,
+            activeRole: user.activeRole,
+            roles: user.roles,
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Failed to revert to student role" });
@@ -366,6 +437,70 @@ export const removeFromWishlist = async (req, res) => {
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: 'Failed to update wishlist' });
+    }
+};
+
+export const getInstructors = async (req, res) => {
+    try {
+        // Fetch instructors based on permanent capability, not activeRole.
+        // Treat missing `instructorProfile.approved` (older docs) as approved to avoid breaking existing data.
+        const instructors = await User.find({
+            $and: [
+                {
+                    $or: [
+                        { roles: 'instructor' },
+                        { instructorOnboardingCompleted: true },
+                        { onboardedAsInstructor: true },
+                    ],
+                },
+                {
+                    $or: [
+                        { 'instructorProfile.approved': true },
+                        { 'instructorProfile.approved': { $exists: false } },
+                    ],
+                },
+            ],
+        })
+            .select('name photoUrl instructorLevel reputationScore reputationMetrics createdAt instructorProfile')
+            .lean();
+
+        // For each instructor, get their course stats
+        const instructorsWithStats = await Promise.all(
+            instructors.map(async (instructor) => {
+                const courses = await Course.find({ creator: instructor._id, ispublished: true })
+                    .select('courseTitle enrolledStudents averageRating category')
+                    .lean();
+
+                const totalStudents = courses.reduce((sum, c) => sum + (c.enrolledStudents?.length || 0), 0);
+                const avgRating = courses.length > 0
+                    ? courses.reduce((sum, c) => sum + (c.averageRating || 0), 0) / courses.length
+                    : 0;
+                const categories = [...new Set(courses.map(c => c.category).filter(Boolean))];
+
+                return {
+                    _id: instructor._id,
+                    name: instructor.name,
+                    photoUrl: instructor.photoUrl,
+                    instructorLevel: instructor.instructorLevel,
+                    reputationScore: instructor.reputationScore,
+                    totalCourses: courses.length,
+                    totalStudents,
+                    avgRating: Math.round(avgRating * 10) / 10,
+                    categories,
+                };
+            })
+        );
+
+        // Sort by reputation score descending, then by total students
+        instructorsWithStats.sort((a, b) => b.reputationScore - a.reputationScore || b.totalStudents - a.totalStudents);
+
+        return res.status(200).json({
+            success: true,
+            instructors: instructorsWithStats,
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Failed to fetch instructors' });
     }
 };
 

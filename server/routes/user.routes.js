@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent, getWishlistCourses, addToWishlist, removeFromWishlist, getInstructorReputation } from '../controllers/user.controller.js';
+import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent, getWishlistCourses, addToWishlist, removeFromWishlist, getInstructorReputation, getInstructors } from '../controllers/user.controller.js';
 import isAuthenticated from '../middleware/isAuthenticated.js';
 import upload from '../utils/multer.js';
 import { authorizeRoles } from '../middleware/authorizeRoles.js'
@@ -15,6 +15,7 @@ router.route("/login").post(login);
 router.route("/logout").get(isAuthenticated, logout);
 router.route("/profile").get(isAuthenticated, getUserProfile);
 router.route("/profile/update").put(isAuthenticated, upload.single('profilephoto'), updateUserProfile);
+router.get('/instructors', getInstructors);
 router.post('/instructor-onboard', isAuthenticated, setInstructorOnboarded);
 router.get('/instructor-onboard', isAuthenticated, getInstructorOnboarded);
 router.patch('/become-student', isAuthenticated, revertToStudent);
@@ -23,6 +24,17 @@ router.get("/me", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Keep client compatibility: `user.role` represents the active role.
+    if (user.activeRole) {
+      user.role = user.activeRole;
+    } else if (user.role && !user.activeRole) {
+      user.activeRole = user.role;
+    }
+
+    if (!Array.isArray(user.roles) || user.roles.length === 0) {
+      user.roles = [user.activeRole || user.role].filter(Boolean);
+    }
 
     res.json({ user });
   } catch (err) {
