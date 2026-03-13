@@ -3,10 +3,10 @@ import HeroSection from "./pages/student/herosection"
 import ProfilePage from "./pages/student/profilepage"
 import MainLayout from "./layout/MainLayout"
 import { createBrowserRouter } from "react-router-dom"
-import { RouterProvider, useNavigate } from "react-router"
+import { RouterProvider } from "react-router-dom"
 import MyLearning from "./pages/student/MyLearning"
 import AdminLayout from "./pages/admin/AdminLayout"
-import Dashboard from "./pages/admin/Dashbaord"
+import Dashboard from "./pages/admin/Dashboard"
 import CourseTable from "./pages/admin/course/CourseTable"
 import AddCourse from "./pages/admin/course/AddCourse"
 import EditCourse from "./pages/admin/course/EditCourse"
@@ -29,6 +29,22 @@ import Wallet from "./pages/admin/Wallet"
 import ChatPage from "./pages/student/ChatPage"
 import CourseChat from "./pages/chat/CourseChat"
 import Reputation from "./pages/admin/Reputation"
+
+// Super Admin Pages
+import SuperAdminLayout from "./pages/superadmin/SuperAdminLayout"
+import SADashboard from "./pages/superadmin/SADashboard"
+import SAUsers from "./pages/superadmin/SAUsers"
+import SACourses from "./pages/superadmin/SACourses"
+import SARevenue from "./pages/superadmin/SARevenue"
+import SAPurchases from "./pages/superadmin/SAPurchases"
+import SASettings from "./pages/superadmin/SASettings"
+import SAApprovals from "./pages/superadmin/SAApprovals"
+
+// Live Session Pages
+import ScheduleLiveSession from "./pages/admin/live/ScheduleLiveSession"
+import InstructorLiveSessions from "./pages/admin/live/InstructorLiveSessions"
+import LiveSessionCalendar from "./pages/student/LiveSessionCalendar"
+import LiveSessionRoom from "./pages/live/LiveSessionRoom"
 
 const appRouter = createBrowserRouter([
   {
@@ -66,6 +82,10 @@ const appRouter = createBrowserRouter([
       {
         path: "/courses",
         element: <ExplorePage />
+      },
+      {
+        path: "/live-sessions",
+        element: <RoleRoute allowedRole="student"><LiveSessionCalendar /></RoleRoute>
       },
 
 
@@ -115,9 +135,53 @@ const appRouter = createBrowserRouter([
           {
             path: "reputation",
             element: <RoleRoute allowedRole="instructor"><Reputation /></RoleRoute>
+          },
+          {
+            path: "live-sessions",
+            element: <RoleRoute allowedRole="instructor"><InstructorLiveSessions /></RoleRoute>
+          },
+          {
+            path: "live-sessions/schedule",
+            element: <RoleRoute allowedRole="instructor"><ScheduleLiveSession /></RoleRoute>
           }
         ]
 
+      },
+
+      // Super Admin Routes
+      {
+        path: "superadmin",
+        element: <RoleRoute allowedRole="admin"><SuperAdminLayout /></RoleRoute>,
+        children: [
+          {
+            path: "dashboard",
+            element: <SADashboard />
+          },
+          {
+            path: "approvals",
+            element: <SAApprovals />
+          },
+          {
+            path: "users",
+            element: <SAUsers />
+          },
+          {
+            path: "courses",
+            element: <SACourses />
+          },
+          {
+            path: "revenue",
+            element: <SARevenue />
+          },
+          {
+            path: "purchases",
+            element: <SAPurchases />
+          },
+          {
+            path: "settings",
+            element: <SASettings />
+          }
+        ]
       }
 
     ],
@@ -143,6 +207,10 @@ const appRouter = createBrowserRouter([
   {
     path: "/certificate",
     element: <CertificateDemo />
+  },
+  {
+    path: "/live-session/:sessionId",
+    element: <LiveSessionRoom />
   }
 
 ]);

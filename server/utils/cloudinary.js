@@ -19,6 +19,19 @@ export const uploadMedia = async (file, options = {}) => {
 
     }
 }
+export const uploadLargeMedia = async (file, options = {}) => {
+    try {
+        const uploadResponse = await cloudinary.uploader.upload_large(file, {
+            resource_type: "video",
+            chunk_size: 6000000,
+            ...options
+        });
+        return uploadResponse;
+    } catch (error) {
+        console.error("Error uploading large media to Cloudinary:", error);
+        throw new Error("Failed to upload large media");
+    }
+}
 export const deleteMedia = async (publicId) => {
     try {
         await cloudinary.uploader.destroy(publicId);

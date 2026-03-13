@@ -12,4 +12,7 @@ export default defineConfig({
       "@": path.resolve(process.cwd(), "./src"), // eslint-disable-line no-undef
     },
   },
+  define: {
+    global: "globalThis",
+  },
 })

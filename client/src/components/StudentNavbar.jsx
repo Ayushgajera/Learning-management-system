@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiBell, FiLogOut, FiSettings, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome } from 'react-icons/fi';
+import { FiBookOpen, FiBell, FiLogOut, FiSettings, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome, FiVideo } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { userLoggedOut } from "@/features/authslice";
@@ -22,6 +22,7 @@ function throttle(func, limit) {
 const primaryNavLinks = [
   { to: "/courses", label: "Courses", icon: FiBookOpen },
   { to: "/my-courses", label: "My Learning", icon: FiBook },
+  { to: "/live-sessions", label: "Live Sessions", icon: FiVideo },
 ];
 
 const menuItems = [
@@ -63,6 +64,11 @@ function StudentNavbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [dropdownRef]);
 
+  // Detect homepage for hero overlay text treatment
+  const isHomepage = location.pathname === '/';
+  // When on homepage hero (not scrolled), text needs to be light on the dark cinematic bg
+  const onDarkHero = isHomepage && !isScrolled && !isMenuOpen;
+
   // Handle navbar background on scroll
   useEffect(() => {
     const handleScroll = throttle(() => {
@@ -92,24 +98,24 @@ function StudentNavbar() {
       return (
         <div className="hidden md:flex items-center space-x-4">
           {/* Notification Bell */}
-          <button className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors duration-200">
+          <button className={`relative p-2 transition-colors duration-200 ${onDarkHero ? 'text-white/80 hover:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-500 dark:hover:text-indigo-400'}`}>
             <FiBell className="h-6 w-6" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white dark:border-slate-900"></span>
+            <span className={`absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 ${onDarkHero ? 'border-transparent' : 'border border-white dark:border-slate-900'}`}></span>
           </button>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-              className="flex items-center space-x-3 p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-200"
+              className={`flex items-center space-x-3 p-1.5 rounded-full transition-all duration-200 ${onDarkHero ? 'hover:bg-white/10' : 'hover:bg-gray-100 dark:hover:bg-slate-800'}`}
             >
               <img
-                className="h-10 w-10 rounded-full object-cover ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900"
+                className={`h-10 w-10 rounded-full object-cover ring-2 ring-indigo-500 ring-offset-2 ${onDarkHero ? 'ring-offset-transparent' : 'ring-offset-white dark:ring-offset-slate-900'}`}
                 src={userData?.photoUrl || "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=1480&auto=format&fit=crop"}
                 alt={userData?.name || "User"}
               />
               <div className="hidden lg:flex flex-col items-start">
-                <span className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">{userData?.name || 'User'}</span>
+                <span className={`text-sm font-semibold leading-tight ${onDarkHero ? 'text-white' : 'text-gray-800 dark:text-white'}`}>{userData?.name || 'User'}</span>
                 <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400 capitalize">{userData?.role || 'Student'}</span>
               </div>
             </button>
@@ -174,13 +180,13 @@ function StudentNavbar() {
       <div className="hidden md:flex items-center space-x-3">
         <Link
           to="/login"
-          className="px-6 py-2 rounded-full font-semibold border border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white/70 transition-all duration-200"
+          className={`px-6 py-2 rounded-full font-semibold border transition-all duration-200 ${onDarkHero ? 'border-white/30 text-white hover:bg-white/10 hover:border-white/50' : 'border-slate-200 text-slate-700 hover:border-indigo-300 hover:text-indigo-600 hover:bg-white/70'}`}
         >
           Login
         </Link>
         <Link
           to="/register"
-          className="px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-200"
+          className="px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 transition-all duration-200"
         >
           Sign Up
         </Link>
@@ -190,13 +196,13 @@ function StudentNavbar() {
 
   return (
     <nav
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500
+      className={`fixed inset-x-0 top-0 z-50 transition-all duration-700
       ${isScrolled || isMenuOpen
-          ? 'backdrop-blur-2xl bg-white/80 dark:bg-slate-950/70 border-b border-white/30 dark:border-white/10 shadow-[0_25px_65px_-40px_rgba(15,23,42,0.85)]'
-          : 'bg-transparent'} text-slate-900 dark:text-slate-100`}
+          ? 'backdrop-blur-2xl bg-white/80 dark:bg-slate-950/70 border-b border-slate-200/30 dark:border-slate-800/30 shadow-[0_25px_65px_-40px_rgba(15,23,42,0.85)]'
+          : 'bg-transparent'} ${onDarkHero ? 'text-white' : 'text-slate-900 dark:text-slate-100'}`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="mx-auto flex h-16 w-full max-w-[1380px] items-center justify-between gap-4">
+        <div className="mx-auto flex h-[72px] w-full max-w-[1380px] items-center justify-between gap-4">
           {/* Logo and Main Nav */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
@@ -211,7 +217,7 @@ function StudentNavbar() {
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center ml-8 space-x-6 text-slate-700 dark:text-slate-200">
+            <div className={`hidden md:flex items-center ml-8 space-x-6 ${onDarkHero ? 'text-white/80' : 'text-slate-700 dark:text-slate-200'}`}>
               {primaryNavLinks.map(({ to, label, icon: Icon }) => (
                 <RouterNavLink
                   key={to}
@@ -220,7 +226,9 @@ function StudentNavbar() {
                   flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors duration-200
                   ${isActive
                       ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-300'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
+                      : onDarkHero
+                        ? 'text-white/80 hover:text-white hover:bg-white/10'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-indigo-500 dark:hover:text-indigo-200 hover:bg-slate-100/70 dark:hover:bg-slate-800/60'}
                 `}
                 >
                   <Icon className="h-5 w-5" />
@@ -237,10 +245,10 @@ function StudentNavbar() {
             <div className="hidden md:flex items-center mr-2">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full text-slate-600 dark:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/80 transition-colors"
+                className={`p-2 rounded-full transition-colors ${onDarkHero ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-slate-600 dark:text-slate-100 hover:bg-slate-100/70 dark:hover:bg-slate-800/80'}`}
                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               >
-                {theme === 'light' ? <FiMoon className="h-6 w-6 text-gray-800 transition-transform duration-300 transform rotate-0" /> : <FiSun className="h-6 w-6 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
+                {theme === 'light' ? <FiMoon className={`h-6 w-6 transition-transform duration-300 transform rotate-0 ${onDarkHero ? 'text-white' : 'text-gray-800'}`} /> : <FiSun className="h-6 w-6 text-yellow-400 transition-transform duration-300 transform rotate-180" />}
               </button>
             </div>
 
@@ -248,7 +256,7 @@ function StudentNavbar() {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none"
+                className={`p-2 rounded-lg focus:outline-none ${onDarkHero ? 'text-white/80 hover:text-white hover:bg-white/10' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-slate-800'}`}
               >
                 <svg className={`h-6 w-6 transition-transform ${isMenuOpen ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -323,7 +331,7 @@ function StudentNavbar() {
                     <Link to="/login" className="w-full block text-center bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 px-4 py-2 rounded-lg">
                       <span>Login</span>
                     </Link>
-                    <Link to="/register" className="w-full block text-center bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-400 text-white hover:shadow-lg hover:shadow-indigo-500/30 px-4 py-2 rounded-lg font-semibold transition-all">
+                    <Link to="/register" className="w-full block text-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-lg hover:shadow-indigo-500/30 px-4 py-2 rounded-lg font-semibold transition-all">
                       <span>Sign Up</span>
                     </Link>
                   </>

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiUsers, FiDollarSign, FiPlusCircle, FiHome, FiBarChart2, FiTrendingUp, FiCreditCard } from 'react-icons/fi';
+import { FiBookOpen, FiGrid, FiBell, FiLogOut, FiSettings, FiChevronsDown, FiMoon, FiSun, FiBook, FiAward, FiUsers, FiDollarSign, FiPlusCircle, FiHome, FiBarChart2, FiTrendingUp, FiCreditCard, FiUser, FiVideo } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchUser, userLoggedOut } from "@/features/authslice";
 import axios from 'axios';
 import { ThemeContext } from '@/extensions/ThemeProvider';
+import config from '@/config/index';
 
 // Utility function to throttle event handling
 function throttle(func, limit) {
@@ -26,6 +27,11 @@ const menuItems = [
     to: "/admin/dashboard",
     icon: <FiHome className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "Dashboard",
+  },
+  {
+    to: "/profile",
+    icon: <FiUser className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
+    label: "Profile",
   },
   {
     to: "/admin/courses",
@@ -49,6 +55,11 @@ const menuItems = [
     icon: <FiCreditCard className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
     label: "wallet",
   },
+  {
+    to: "/admin/live-sessions",
+    icon: <FiVideo className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />,
+    label: "Live Sessions",
+  },
 ];
 
 function AdminNavbar() {
@@ -71,7 +82,7 @@ function AdminNavbar() {
     try {
       setLoading(true);
       await axios.patch(
-        'https://learning-management-system-20d6.onrender.com/api/v1/user/become-student',
+        `${config.API_BASE_URL}/api/v1/user/become-student`,
         {},
         { withCredentials: true }
       );

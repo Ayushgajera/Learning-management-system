@@ -1,8 +1,13 @@
 import jwt from "jsonwebtoken"
 
 export const generateToken = async (res, user, message) => {
-    console.log(user)
-    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.SECRET_KEY, { expiresIn: "7d" });
+    const effectiveRole = user?.activeRole || user?.role;
+    const token = jwt.sign({ userId: user._id, role: effectiveRole }, process.env.SECRET_KEY, { expiresIn: "7d" });
+
+    const safeUser = user?.toObject ? user.toObject() : user;
+    if (safeUser && typeof safeUser === 'object') {
+        delete safeUser.password;
+    }
     res.status(200)
         .cookie("token", token, {
             httpOnly: true,
@@ -12,6 +17,6 @@ export const generateToken = async (res, user, message) => {
         }).json({
             success: true,
             message,
-            user
+            user: safeUser
         });
 }

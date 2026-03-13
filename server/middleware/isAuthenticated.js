@@ -28,7 +28,8 @@ const isAuthenticated = async(req, res, next) => {
             });
         }
         req.id = decoded.userId;
-        req.role = user.role;
+        req.role = user.activeRole || user.role;
+        req.roles = Array.isArray(user.roles) && user.roles.length ? user.roles : [user.role].filter(Boolean);
        
         next();
 

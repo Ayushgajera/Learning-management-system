@@ -3,6 +3,7 @@ import Course from './Course';
 import { useLoaduserQuery } from '@/features/api/authApi';
 import { motion } from 'framer-motion';
 import { FiBookOpen, FiCheckCircle, FiClock, FiPlayCircle } from 'react-icons/fi';
+import config from '@/config/index';
 
 const TABS = [
   { key: 'all', label: 'All Courses', icon: FiBookOpen },
@@ -38,14 +39,14 @@ function MyLearning() {
           enrolledCourseIds.map(async (courseId) => {
             try {
               // Fetch course details
-              const courseRes = await fetch(`https://learning-management-system-20d6.onrender.com/api/v1/course/${courseId}`, { credentials: 'include' });
+              const courseRes = await fetch(`${config.API_BASE_URL}/api/v1/course/${courseId}`, { credentials: 'include' });
               if (!courseRes.ok) throw new Error('Failed to fetch course');
               const courseData = await courseRes.json();
               const course = courseData.course;
               if (!course) throw new Error('Course not found');
 
               // Fetch progress
-              const progressRes = await fetch(`https://learning-management-system-20d6.onrender.com/api/v1/progress/${courseId}`, { credentials: 'include' });
+              const progressRes = await fetch(`${config.API_BASE_URL}/api/v1/progress/${courseId}`, { credentials: 'include' });
               if (!progressRes.ok) throw new Error('Failed to fetch progress');
               const progressData = await progressRes.json();
               const progress = progressData.data;

@@ -52,6 +52,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CourseChat from './../chat/CourseChat';
 import Rating from '@/components/Rating';
 import { useAddRatingMutation } from '@/features/api/courseApi';
+import config from '@/config/index';
 
 // PDF styles for certificate
 const styles = StyleSheet.create({
@@ -1050,7 +1051,7 @@ function EnrolledCourseLectures() {
                     <div className="grid grid-cols-1 gap-4">
                       {selectedLecture?.resources && selectedLecture.resources.length > 0 ? (
                         selectedLecture.resources.map((resource, idx) => {
-                          const downloadUrl = `https://learning-management-system-20d6.onrender.com/api/v1/resource/download/${resource._id}?t=${Date.now()}`;
+                          const downloadUrl = `${config.API_BASE_URL}/api/v1/resource/download/${resource._id}?t=${Date.now()}`;
 
                           return (
                             <div key={resource._id || idx} className="group flex flex-col sm:flex-row items-start sm:items-center justify-between p-5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">

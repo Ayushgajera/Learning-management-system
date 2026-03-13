@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { motion, AnimatePresence } from "framer-motion";
+import config from '@/config/index';
 
 const CourseChat = () => {
   const { courseId } = useParams();
@@ -85,7 +86,7 @@ const CourseChat = () => {
   useEffect(() => {
     const fetchPrefs = async () => {
       try {
-        const res = await fetch('https://learning-management-system-20d6.onrender.com/api/v1/user/notifications', { credentials: 'include' });
+        const res = await fetch(`${config.API_BASE_URL}/api/v1/user/notifications`, { credentials: 'include' });
         if (!res.ok) return;
         const data = await res.json();
         if (data && data.notificationPreferences) setNotificationPrefs(data.notificationPreferences);
@@ -253,7 +254,7 @@ const CourseChat = () => {
     formData.append("file", selectedFile);
     formData.append("courseId", courseId);
     try {
-      const response = await fetch("https://learning-management-system-20d6.onrender.com/api/v1/media/upload-file", { // Assuming generic upload endpoint or chat specific
+      const response = await fetch(`${config.API_BASE_URL}/api/v1/media/upload-file`, { // Assuming generic upload endpoint or chat specific
         // fallback to previous implementation's endpoint if known, otherwise use a placeholder or known route
         // Previously: /api/upload - let's stick to the previous code's logic but ensure URL is correct
         // The previous code had: fetch("/api/upload", ...). I will keep it relative if proxy is set or absolute.
@@ -281,7 +282,7 @@ const CourseChat = () => {
     formDataUpload.append("file", selectedFile);
     try {
       // Use the same endpoint as before. If it fails, user will report.
-      const res = await fetch('https://learning-management-system-20d6.onrender.com/api/v1/media/upload', {
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/media/upload`, {
         method: 'POST',
         body: formDataUpload
       });
@@ -303,7 +304,7 @@ const CourseChat = () => {
     formData.append("file", file);
     try {
       // Just using the same relative path the old file had, hoping proxy works, or using the full URL
-      const res = await fetch("https://learning-management-system-20d6.onrender.com/api/v1/media/upload-video", { // Using media route usually
+      const res = await fetch(`${config.API_BASE_URL}/api/v1/media/upload-video`, { // Using media route usually
         method: "POST", body: formData
       });
       const data = await res.json();

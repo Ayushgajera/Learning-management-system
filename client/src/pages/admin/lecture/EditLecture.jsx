@@ -17,8 +17,9 @@ import { toast } from "sonner";
 import { useEditLectureMutation, useGetLectureByIdQuery, useCreateResourceMutation, useDeleteResourceMutation } from "@/features/api/courseApi";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiFile, FiDownload, FiLoader } from "react-icons/fi";
+import config from '@/config/index';
 
-const MEDIA_API = "https://learning-management-system-20d6.onrender.com/api/v1/media";
+const MEDIA_API = `${config.API_BASE_URL}/api/v1/media`;
 
 const uploadTips = [
   "Aim for 1080p MP4/H.264 for best balance of clarity and size.",

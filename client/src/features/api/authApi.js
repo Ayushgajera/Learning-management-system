@@ -95,7 +95,38 @@ export const authApi = createApi({
 
         }),
 
+        getInstructors: builder.query({
+            query: () => ({
+                url: "instructors",
+                method: 'GET'
+            }),
+        }),
+
+        getNotificationPreferences: builder.query({
+            query: () => ({
+                url: "notifications",
+                method: "GET",
+            }),
+        }),
+
+        updateNotificationPreferences: builder.mutation({
+            query: (body) => ({
+                url: "notifications",
+                method: "PUT",
+                body,
+            }),
+        }),
+
     })
 })
 //build in hooks created by rtk query   
-export const { useRegisterUserMutation, useLoginUserMutation, useLoaduserQuery, useLogoutUserMutation, useUpdatedUserMutation } = authApi;
+export const {
+    useRegisterUserMutation,
+    useLoginUserMutation,
+    useLoaduserQuery,
+    useLogoutUserMutation,
+    useUpdatedUserMutation,
+    useGetInstructorsQuery,
+    useGetNotificationPreferencesQuery,
+    useUpdateNotificationPreferencesMutation,
+} = authApi;

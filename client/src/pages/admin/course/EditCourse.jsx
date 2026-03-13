@@ -19,6 +19,7 @@ import RichTextEditor from '@/extensions/RichTextEditor';
 
 import axios from 'axios';
 import { ThemeContext } from '@/extensions/ThemeProvider';
+import config from '@/config/index';
 
 
 // Futuristic Form Input Component
@@ -288,7 +289,7 @@ function EditCourse() {
         }
         setIsDescriptionLoading(true);
         try {
-            const response = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/ai/description", {
+            const response = await axios.post(`${config.API_BASE_URL}/api/v1/ai/description`, {
                 courseTitle: formData.courseTitle,
             });
             const description = response.data?.description;
@@ -313,7 +314,7 @@ function EditCourse() {
         }
         setIsSubtitleLoading(true);
         try {
-            const response = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/ai/subtitle", {
+            const response = await axios.post(`${config.API_BASE_URL}/api/v1/ai/subtitle`, {
                 courseTitle: formData.courseTitle,
             });
             const subtitle = response.data?.subtitle;
@@ -772,7 +773,7 @@ function EditCourse() {
                                             {/* Description with AI Generation */}
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <label className="block text-sm font-semibold text-gray-700">
+                                                    <label className="block text-sm font-semibold">
                                                         Course Description
                                                     </label>
                                                     <motion.button

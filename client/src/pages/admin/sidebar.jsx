@@ -10,7 +10,9 @@ import {
   FiDollarSign,
   FiCreditCard,
   FiChevronRight,
-  FiAward
+  FiAward,
+  FiUser,
+  FiVideo
 } from 'react-icons/fi';
 
 function Sidebar() {
@@ -42,6 +44,12 @@ function Sidebar() {
       icon: <FiHome className="h-5 w-5" />,
     },
     {
+      path: '/profile',
+      name: 'Profile',
+      description: 'Account & settings',
+      icon: <FiUser className="h-5 w-5" />,
+    },
+    {
       path: '/admin/courses',
       name: 'Courses',
       description: 'Catalog & drafts',
@@ -70,6 +78,12 @@ function Sidebar() {
       name: 'My Reputation',
       description: 'Levels & Score',
       icon: <FiAward className="h-5 w-5" />,
+    },
+    {
+      path: '/admin/live-sessions',
+      name: 'Live Sessions',
+      description: 'Schedule & broadcast',
+      icon: <FiVideo className="h-5 w-5" />,
     },
   ];
 

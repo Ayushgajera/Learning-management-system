@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import config from '@/config/index';
 
 const BuyCourseButton = ({ courseId, amount = 499, refetch }) => {
   const [loading, setLoading] = useState(false);
@@ -42,7 +43,7 @@ const BuyCourseButton = ({ courseId, amount = 499, refetch }) => {
 
     try {
       // Step 1️⃣: Create order from backend
-      const { data: orderData } = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/payment/create-order", {
+      const { data: orderData } = await axios.post(`${config.API_BASE_URL}/api/v1/payment/create-order`, {
         amount,
       }, { withCredentials: true });
 
@@ -56,7 +57,7 @@ const BuyCourseButton = ({ courseId, amount = 499, refetch }) => {
         order_id: orderData.orderId || orderData.id,
         handler: async function (response) {
           try {
-            const { data: verifyRes } = await axios.post("https://learning-management-system-20d6.onrender.com/api/v1/payment/verify", {
+            const { data: verifyRes } = await axios.post(`${config.API_BASE_URL}/api/v1/payment/verify`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

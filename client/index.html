@@ -14,6 +14,12 @@
 </head>
 
 <body>
+  <script>
+    // Polyfill for Node.js globals required by simple-peer
+    window.global = window.global || window;
+    window.process = window.process || { env: {}, version: '', platform: 'browser', nextTick: function(fn) { setTimeout(fn, 0); } };
+    window.Buffer = window.Buffer || { isBuffer: function() { return false; } };
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

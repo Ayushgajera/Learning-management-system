@@ -106,19 +106,19 @@ const Course = ({ course }) => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      whileHover={{ y: -8 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      whileHover={{ y: -6, scale: 1.02 }}
+      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
       className="h-full "
     >
       <Link
         to={`/course/${course._id}`}
-        className="block h-full relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-2xl"
+        className="block h-full relative group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-3xl"
       >
         <div
-          className={`relative h-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col
-            ${isPurchased 
-              ? 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] hover:border-emerald-500/50' 
-              : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:border-indigo-500/30'
+          className={`relative h-full bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border transition-all duration-500 flex flex-col
+            ${isPurchased
+              ? 'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.25)] hover:border-emerald-500/50'
+              : 'border-slate-200/60 dark:border-slate-800/60 shadow-sm hover:shadow-[0_25px_60px_-15px_rgba(99,102,241,0.18)] hover:border-indigo-500/30'
             }
           `}
         >
@@ -242,7 +242,7 @@ const Course = ({ course }) => {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 flex items-center gap-2 transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/15 flex items-center gap-2 transition-all duration-300 ${
                     isPurchased
                       ? 'bg-emerald-500 text-white hover:bg-emerald-600'
                       : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-700 hover:to-violet-700'

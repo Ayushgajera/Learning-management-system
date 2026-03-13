@@ -43,6 +43,11 @@
 
   --radius: 0.75rem;
 
+  /* Premium surface tokens */
+  --premium-glow: oklch(0.55 0.25 270 / 0.15);
+  --surface-elevated: oklch(1 0 0);
+  --surface-subtle: oklch(0.98 0.005 260);
+
   --sidebar: oklch(0.98 0 0);
   --sidebar-foreground: oklch(0.13 0.02 260);
   --sidebar-primary: oklch(0.45 0.25 270);
@@ -95,6 +100,11 @@
   --sidebar-accent: oklch(0.20 0.03 260);
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(0.20 0.03 260);
+  /* Premium surface tokens */
+  --premium-glow: oklch(0.65 0.25 270 / 0.1);
+  --surface-elevated: oklch(0.14 0.02 260);
+  --surface-subtle: oklch(0.12 0.02 260);
+
   --sidebar-ring: oklch(0.65 0.25 270);
 }
 
@@ -174,16 +184,6 @@
 
 
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    font-family: var(--font-lms);
-    @apply bg-background text-foreground antialiased;
-  }
-}
 
 /* Add to your global.css or index.css */
 .mobile-nav-link {
@@ -362,4 +362,54 @@
   /* IE and Edge */
   scrollbar-width: none;
   /* Firefox */
+}
+
+/* ──────────────────────────────────────
+   Premium Homepage Utilities
+   ────────────────────────────────────── */
+
+/* Balanced text wrapping for headlines */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Shimmer skeleton loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+    oklch(0.92 0.01 260) 25%,
+    oklch(0.96 0.01 260) 50%,
+    oklch(0.92 0.01 260) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg,
+    oklch(0.20 0.03 260) 25%,
+    oklch(0.25 0.03 260) 50%,
+    oklch(0.20 0.03 260) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Section divider gradient line */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, oklch(0.55 0.25 270 / 0.2), transparent);
+}
+
+/* Hide scrollbar for horizontal scroll sections */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Refined text selection */
+::selection {
+  background: oklch(0.45 0.25 270 / 0.2);
 }

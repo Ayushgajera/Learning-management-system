@@ -15,38 +15,13 @@ import {
   FiFilter,
   FiLayers,
   FiClock,
+  FiGrid,
+  FiList,
+  FiMoreVertical
 } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useGetAllCoursesQuery, useRemoveCourseMutation } from '@/features/api/courseApi';
 import { toast } from 'sonner';
-
-const AccentSVG = ({ className = '' }) => (
-  <svg
-    className={`w-20 h-20 opacity-40 ${className}`}
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    aria-hidden
-  >
-    <defs>
-      <linearGradient id="g1" x1="0" x2="1">
-        <stop offset="0%" stopColor="#34d399" />
-        <stop offset="100%" stopColor="#60a5fa" />
-      </linearGradient>
-    </defs>
-    <circle cx="50" cy="50" r="40" stroke="url(#g1)" strokeWidth="2" />
-    <motion.circle
-      cx="50"
-      cy="50"
-      r="20"
-      stroke="url(#g1)"
-      strokeWidth="1.5"
-      initial={{ r: 16, opacity: 0.6 }}
-      animate={{ r: 22, opacity: 0.2 }}
-      transition={{ repeat: Infinity, repeatType: 'reverse', duration: 3 }}
-    />
-  </svg>
-);
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-US', {
@@ -89,7 +64,9 @@ function CourseTable() {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
   const [removeCourse, { isLoading: removeCourseLoading }] = useRemoveCourseMutation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     refetch();
@@ -111,21 +88,8 @@ function CourseTable() {
     const publishedCourses = courses.filter((course) => course.ispublished).length;
     const draftCourses = totalCourses - publishedCourses;
     const totalStudents = courses.reduce((sum, course) => sum + getEnrolledStudentsCount(course), 0);
-    const totalRevenue = courses.reduce(
-      (sum, course) => sum + (Number(course.coursePrice) || 0) * getEnrolledStudentsCount(course),
-      0
-    );
-    const averageRating =
-      totalCourses > 0
-        ? Number(
-            (
-              courses.reduce((sum, course) => sum + Number(course.rating || course.averageRating || 0), 0) /
-              totalCourses
-            ).toFixed(1)
-          )
-        : 0;
 
-    return { totalCourses, publishedCourses, draftCourses, totalStudents, totalRevenue, averageRating };
+    return { totalCourses, publishedCourses, draftCourses, totalStudents };
   }, [courses]);
 
   const filteredCourses = useMemo(() => {
@@ -134,8 +98,8 @@ function CourseTable() {
         statusFilter === 'all'
           ? true
           : statusFilter === 'published'
-          ? course.ispublished
-          : !course.ispublished;
+            ? course.ispublished
+            : !course.ispublished;
 
       const text = `${course.courseTitle || ''} ${course.subTitle || ''} ${course.category || ''}`.toLowerCase();
       const matchesSearch = text.includes(searchTerm.toLowerCase());
@@ -154,15 +118,10 @@ function CourseTable() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-        <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
-          <div className="h-10 w-2/5 rounded-2xl bg-white/70 dark:bg-slate-900/50" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[...Array(4)].map((_, index) => (
-              <div key={`s-${index}`} className="h-28 rounded-3xl border border-white/40 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50" />
-            ))}
-          </div>
-          <div className="h-80 rounded-3xl border border-white/40 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50" />
+      <div className="min-h-screen bg-white dark:bg-slate-950 p-6 flex justify-center items-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <p className="text-slate-500 animate-pulse">Loading course data...</p>
         </div>
       </div>
     );
@@ -170,350 +129,308 @@ function CourseTable() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-10 text-center shadow-2xl"
-          >
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-500/10">
-              <FiBook className="h-7 w-7 text-rose-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Unable to load courses</h3>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
-              {error.message || 'An unexpected error occurred. Please refresh and try again.'}
-            </p>
-            <motion.button
-              onClick={() => refetch()}
-              className="mt-6 inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Retry
-            </motion.button>
-          </motion.div>
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-red-50 dark:bg-rose-900/10 p-4 rounded-full mb-4">
+          <FiXCircle className="w-8 h-8 text-rose-500" />
         </div>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Error Loading Courses</h3>
+        <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
+          {error.message || 'We encountered an issue while fetching your course catalog.'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-medium"
+        >
+          Try Again
+        </button>
       </div>
-    );
-  }
-
-  if (!stats.totalCourses) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <motion.div
-            className="flex flex-col gap-4 rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white/90 dark:bg-slate-900/60 backdrop-blur-xl p-8 shadow-2xl"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div>
-              <p className="text-sm uppercase tracking-wide text-slate-400">Courses</p>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white">No courses yet</h2>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
-                Create your first course to populate the catalog and start enrolling learners.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/admin/courses/create"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg"
-              >
-                <FiPlus className="h-4 w-4" />
-                Create course
-              </Link>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
-            className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/50 backdrop-blur-xl p-10 text-center"
-          >
-            <AccentSVG className="mx-auto mb-6" />
-            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Publish your first learning path</h3>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">Upload content, set pricing, and monitor performance from this workspace.</p>
-          </motion.div>
-        </div>
-      </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-6 pt-20">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <motion.header
-          className="flex flex-col gap-5 rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-6 shadow-2xl"
-          initial={{ opacity: 0, y: -12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Courses</p>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-white">Course control center</h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Monitor publishing status, learners, and revenue in one workspace.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800 px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-300">
-                {stats.publishedCourses} published · {stats.draftCourses} drafts
-              </div>
-              <Link
-                to="/admin/courses/create"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-lg"
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 p-4 md:p-8 pt-24 pb-20 font-sans text-slate-900 dark:text-white">
+      <div className="max-w-[1600px] mx-auto space-y-8">
+
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight font-display text-slate-900 dark:text-white">Courses</h1>
+            <p className="mt-2 text-slate-500 dark:text-slate-400">
+              Manage your learning content, track performance, and update course details.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 flex items-center">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
               >
-                <FiPlus className="h-4 w-4" />
-                New course
-              </Link>
+                <FiList className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              >
+                <FiGrid className="w-5 h-5" />
+              </button>
             </div>
-          </div>
-        </motion.header>
-
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              label: 'Total courses',
-              value: stats.totalCourses,
-              meta: `${stats.publishedCourses} live now`,
-              icon: <FiBook className="h-5 w-5" />,
-              accent: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
-            },
-            {
-              label: 'Learners',
-              value: stats.totalStudents,
-              meta: 'Across all cohorts',
-              icon: <FiUsers className="h-5 w-5" />,
-              accent: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
-            },
-            {
-              label: 'Lifetime revenue',
-              value: formatCurrency(stats.totalRevenue),
-              meta: `${formatCurrency(stats.totalCourses ? stats.totalRevenue / stats.totalCourses : 0)} avg / course`,
-              icon: <FiDollarSign className="h-5 w-5" />,
-              accent: 'bg-amber-500/10 text-amber-600 dark:text-amber-300',
-            },
-            {
-              label: 'Average rating',
-              value: `${stats.averageRating.toFixed(1)} / 5`,
-              meta: 'Learner satisfaction',
-              icon: <FiStar className="h-5 w-5" />,
-              accent: 'bg-rose-500/10 text-rose-600 dark:text-rose-300',
-            },
-          ].map((card) => (
-            <motion.article
-              key={card.label}
-              className="rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-5 shadow-lg"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
+            <Link
+              to="/admin/courses/create"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all active:scale-95"
             >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-400">{card.label}</p>
-                  <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{card.value}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-300">{card.meta}</p>
-                </div>
-                <span className={`inline-flex rounded-2xl p-3 ${card.accent}`}>{card.icon}</span>
-              </div>
-            </motion.article>
-          ))}
-        </section>
+              <FiPlus className="w-5 h-5" />
+              <span>Create Course</span>
+            </Link>
+          </div>
+        </div>
 
-        <section className="rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-5 shadow-xl space-y-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex-1">
-              <label className="sr-only" htmlFor="course-search">
-                Search courses
-              </label>
-              <div className="relative">
-                <FiSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="course-search"
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search by title, subtitle, or category"
-                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-transparent py-2.5 pl-10 pr-4 text-sm text-slate-700 dark:text-white placeholder:text-slate-400"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
-              <FiFilter className="h-4 w-4" />
-              Status filter
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {statusFilters.map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setStatusFilter(filter.key)}
-                  className={`inline-flex items-center gap-2 rounded-2xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    statusFilter === filter.key
-                      ? 'border-indigo-200 bg-indigo-600/10 text-indigo-600 dark:border-indigo-500/40 dark:text-indigo-300'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-500'
+        {/* Filter Bar */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm">
+          <div className="flex items-center w-full md:w-auto gap-4 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+            {statusFilters.map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setStatusFilter(filter.key)}
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-colors ${statusFilter === filter.key
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
-                >
-                  <FiLayers className="h-3.5 w-3.5" />
-                  {filter.label}
-                  <span className="rounded-xl bg-white/40 px-2 py-0.5 text-[10px] text-slate-500 dark:bg-white/10 dark:text-slate-300">
-                    {filter.count}
-                  </span>
-                </button>
-              ))}
+              >
+                {filter.label} <span className="ml-1 opacity-60">({filter.count})</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="relative w-full md:w-80">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Content Area */}
+        {filteredCourses.length === 0 ? (
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiSearch className="w-6 h-6 text-slate-400" />
             </div>
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            Showing {filteredCourses.length} of {stats.totalCourses} courses
-          </div>
-        </section>
-
-        <section className="space-y-4">
-          {filteredCourses.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 backdrop-blur-xl p-10 text-center"
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">No courses found</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your search or filters.</p>
+            <button
+              onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
+              className="text-indigo-600 hover:underline font-medium"
             >
-              <p className="text-sm text-slate-500 dark:text-slate-300">No courses match your filters. Try changing the search or status filter.</p>
-            </motion.div>
-          ) : (
-            filteredCourses.map((course, index) => {
-              const students = getEnrolledStudentsCount(course);
-              const lectures = getLectureCount(course);
-              const rating = getRatingValue(course);
-              const updatedLabel = formatDate(course.updatedAt);
-              return (
-                <motion.article
-                  key={course._id}
-                  className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200/70 dark:border-slate-800 bg-white/95 dark:bg-slate-900/60 px-4 py-3 shadow"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0, transition: { delay: 0.04 * index } }}
-                  whileHover={{ translateY: -2 }}
-                >
-                  <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70">
-                    {course.courseThumbnail ? (
-                      <img src={course.courseThumbnail} alt={course.courseTitle} className="h-full w-full object-cover" />
-                    ) : (
-                      <FiBook className="h-6 w-6 text-slate-400" />
-                    )}
-                  </div>
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          <>
+            {viewMode === 'table' ? (
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold">
+                      <tr>
+                        <th className="px-6 py-4">Course</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Price</th>
+                        <th className="px-6 py-4 text-center">Enrolled</th>
+                        <th className="px-6 py-4 text-center">Rating</th>
+                        <th className="px-6 py-4 text-center">Last Updated</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {filteredCourses.map((course) => (
+                        <tr key={course._id} className="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <img
+                                src={course.courseThumbnail || "https://placehold.co/100x100?text=No+Img"}
+                                alt=""
+                                className="h-12 w-12 rounded-lg object-cover bg-slate-200"
+                              />
+                              <div>
+                                <h4 className="font-semibold text-slate-900 dark:text-white line-clamp-1 max-w-[200px] group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                  {course.courseTitle}
+                                </h4>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+                                  {course.category}
+                                  <span className="mx-1">•</span>
+                                  {getLectureCount(course)} lectures
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${course.ispublished ? 'bg-green-50 border-green-200 text-green-700 dark:bg-green-500/10 dark:border-green-500/20 dark:text-green-400' : 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400'}`}>
+                              {course.ispublished ? <FiCheckCircle className="w-3 h-3" /> : <FiClock className="w-3 h-3" />}
+                              {course.ispublished ? 'Published' : 'Draft'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
+                            {formatPrice(course.coursePrice)}
+                          </td>
+                          <td className="px-6 py-4 text-center text-slate-600 dark:text-slate-300">
+                            {getEnrolledStudentsCount(course)}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-500/10 rounded-lg text-amber-600 dark:text-amber-400 font-medium text-sm">
+                              <FiStar className="w-3.5 h-3.5 fill-current" />
+                              {getRatingValue(course)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center text-sm text-slate-500 dark:text-slate-400">
+                            {formatDate(course.updatedAt)}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => navigate(`/admin/courses/edit/${course._id}`)}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-all"
+                                title="Edit"
+                              >
+                                <FiEdit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => { setSelectedCourseId(course._id); setShowDeletePopup(true); }}
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all"
+                                title="Delete"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredCourses.map((course) => (
+                  <motion.div
+                    key={course._id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all duration-300 flex flex-col"
+                  >
+                    <div className="relative h-48 bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <img
+                        src={course.courseThumbnail || "https://placehold.co/400x300?text=No+Thumbnail"}
+                        alt={course.courseTitle}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute top-3 right-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-slate-900 dark:text-white shadow-sm">
+                        {formatPrice(course.coursePrice)}
+                      </div>
+                      <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-bold backdrop-blur-sm shadow-sm ${course.ispublished ? 'bg-green-500/90 text-white' : 'bg-amber-500/90 text-white'}`}>
+                        {course.ispublished ? 'Published' : 'Draft'}
+                      </div>
+                    </div>
 
-                  <div className="min-w-[220px] flex-1 space-y-1">
-                    <div className="flex w-full flex-wrap items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">{course.courseTitle}</h3>
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          course.ispublished
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'
-                            : 'bg-amber-500/10 text-amber-600 dark:text-amber-300'
-                        }`}>
-                          {course.ispublished ? (
-                            <>
-                              <FiCheckCircle className="h-3 w-3" /> Live
-                            </>
-                          ) : (
-                            <>
-                              <FiXCircle className="h-3 w-3" /> Draft
-                            </>
-                          )}
+                    <div className="p-5 flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                          {course.category || 'General'}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] font-medium text-amber-500 ml-auto">
+                          <FiStar className="fill-current w-3 h-3" />
+                          {getRatingValue(course)}
                         </span>
                       </div>
-                      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1 text-xs font-semibold text-white shadow">
-                       {formatPrice(course.coursePrice)}
-                      </span>
+
+                      <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-2 line-clamp-2 leading-tight">
+                        {course.courseTitle}
+                      </h3>
+
+                      {course.subTitle && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 flex-1">
+                          {course.subTitle}
+                        </p>
+                      )}
+
+                      <div className="border-t border-slate-100 dark:border-slate-800 pt-4 mt-auto flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <FiUsers className="w-3.5 h-3.5" /> {getEnrolledStudentsCount(course)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FiLayers className="w-3.5 h-3.5" /> {getLectureCount(course)}
+                          </span>
+                        </div>
+                        <div>
+                          {formatDate(course.updatedAt)}
+                        </div>
+                      </div>
                     </div>
-                    {course.subTitle && <p className="text-xs text-slate-500 dark:text-slate-300">{course.subTitle}</p>}
-                    <div className="flex flex-wrap gap-2 text-[12px] text-slate-500">
-                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 dark:border-slate-700">
-                        <FiTag className="h-3 w-3" /> {course.category || 'General'}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-0.5 dark:border-slate-700">
-                        <FiLayers className="h-3 w-3" /> {lectures} lessons
-                      </span>
+
+                    <div className="p-4 pt-0 flex gap-2">
+                      <button
+                        onClick={() => navigate(`/admin/courses/edit/${course._id}`)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white text-slate-600 dark:text-slate-300 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                      >
+                        <FiEdit2 className="w-4 h-4" /> Edit
+                      </button>
+                      <button
+                        onClick={() => { setSelectedCourseId(course._id); setShowDeletePopup(true); }}
+                        className="w-12 flex items-center justify-center bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white rounded-xl transition-colors"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                  </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
-                  <div className="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-300">
-                    <span className="inline-flex items-center gap-1">
-                      <FiUsers className="h-3.5 w-3.5" /> {students}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <FiStar className="h-3.5 w-3.5 text-amber-400" /> {rating}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <FiClock className="h-3.5 w-3.5" /> {updatedLabel}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs">
-                    <Link
-                      to={`/admin/courses/edit/${course._id}`}
-                      className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600 dark:border-slate-800 dark:text-slate-200"
-                    >
-                      <FiEdit2 className="h-4 w-4" /> Edit
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedCourseId(course._id);
-                        setShowDeletePopup(true);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-rose-500 to-pink-500 px-3 py-1.5 text-xs font-semibold text-white shadow"
-                    >
-                      <FiTrash2 className="h-4 w-4" /> Delete
-                    </button>
-                  </div>
-                </motion.article>
-              );
-            })
-          )}
-        </section>
-
+        {/* Delete Modal */}
         <AnimatePresence>
           {showDeletePopup && (
             <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="delete-course-title"
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
             >
-              <div className="fixed inset-0 bg-slate-900/60" onClick={() => setShowDeletePopup(false)} />
-
               <motion.div
-                className="relative w-full max-w-md rounded-3xl border border-slate-200/60 dark:border-slate-800 bg-white/90 dark:bg-slate-900/70 p-6 shadow-2xl"
-                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800"
               >
-                <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-500/20">
-                    <FiTrash2 className="h-6 w-6 text-rose-500" />
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/20 rounded-full flex items-center justify-center mb-4">
+                    <FiTrash2 className="w-8 h-8 text-rose-600 dark:text-rose-500" />
                   </div>
-                  <h3 id="delete-course-title" className="text-lg font-semibold text-slate-900 dark:text-white">
-                    Delete course
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
-                    This action cannot be undone and will permanently remove the course from the catalog.
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Delete Course?</h3>
+                  <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-xs">
+                    This will permanently remove the course and all associated data. This action cannot be undone.
                   </p>
-
-                  <div className="mt-6 flex gap-3">
-                    <motion.button
-                      type="button"
+                  <div className="flex gap-3 w-full">
+                    <button
                       onClick={() => setShowDeletePopup(false)}
-                      className="flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-200"
-                      whileHover={{ scale: 1.01 }}
+                      className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       Cancel
-                    </motion.button>
-                    <motion.button
-                      type="button"
+                    </button>
+                    <button
                       onClick={handleRemoveCourse}
                       disabled={removeCourseLoading}
-                      className="flex-1 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
-                      whileHover={{ scale: removeCourseLoading ? 1 : 1.01 }}
+                      className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-lg shadow-rose-500/20 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                       {removeCourseLoading ? 'Deleting...' : 'Delete'}
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </motion.div>
