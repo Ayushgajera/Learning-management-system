@@ -76,9 +76,9 @@ const EditLecture = () => {
       return;
     }
 
-    const MAX_SIZE = 2 * 1024 * 1024 * 1024;
+    const MAX_SIZE = 100 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      toast.error("File size should be less than 2GB");
+      toast.error("File size should be less than 100MB");
       return;
     }
 

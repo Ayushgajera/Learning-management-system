@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent, getWishlistCourses, addToWishlist, removeFromWishlist, getInstructorReputation, getInstructors } from '../controllers/user.controller.js';
+import { register, login, getUserProfile, logout, updateUserProfile, revertToStudent, switchToInstructor, getWishlistCourses, addToWishlist, removeFromWishlist, getInstructorReputation, getInstructors } from '../controllers/user.controller.js';
 import isAuthenticated from '../middleware/isAuthenticated.js';
 import upload from '../utils/multer.js';
 import { authorizeRoles } from '../middleware/authorizeRoles.js'
@@ -19,6 +19,7 @@ router.get('/instructors', getInstructors);
 router.post('/instructor-onboard', isAuthenticated, setInstructorOnboarded);
 router.get('/instructor-onboard', isAuthenticated, getInstructorOnboarded);
 router.patch('/become-student', isAuthenticated, revertToStudent);
+router.patch('/switch-to-instructor', isAuthenticated, switchToInstructor);
 
 router.get("/me", isAuthenticated, async (req, res) => {
   try {

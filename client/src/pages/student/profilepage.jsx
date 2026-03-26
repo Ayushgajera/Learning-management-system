@@ -98,6 +98,7 @@ const ProfilePage = () => {
   const [removingCourseId, setRemovingCourseId] = useState(null);
   const [savingNotifications, setSavingNotifications] = useState(false);
   const [courseNotifications, setCourseNotifications] = useState({});
+  const [switchingToInstructor, setSwitchingToInstructor] = useState(false);
 
   const { data, isLoading, error, refetch } = useLoaduserQuery();
   const user = data?.user;
@@ -1003,15 +1004,45 @@ const ProfilePage = () => {
 
                     {!isInstructor && (
                       <div className="p-6 rounded-3xl border border-slate-200/70 dark:border-slate-800/70 bg-slate-50 dark:bg-slate-950/40">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-white">Become an Instructor</div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                          {user?.roles?.includes('instructor') && user?.instructorApplicationStatus === 'approved'
+                            ? 'Switch to Instructor'
+                            : 'Become an Instructor'}
+                        </div>
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                          Unlock teaching tools, revenue tracking, and instructor reputation.
+                          {user?.roles?.includes('instructor') && user?.instructorApplicationStatus === 'approved'
+                            ? 'You are an approved instructor. Switch back to access your teaching tools.'
+                            : 'Unlock teaching tools, revenue tracking, and instructor reputation.'}
                         </div>
                         <button
-                          onClick={() => navigate('/become-instructor')}
-                          className="mt-4 w-full px-4 py-2.5 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                          onClick={async () => {
+                            if (user?.roles?.includes('instructor') && user?.instructorApplicationStatus === 'approved') {
+                              try {
+                                setSwitchingToInstructor(true);
+                                await axios.patch(
+                                  `${config.API_BASE_URL}/api/v1/user/switch-to-instructor`,
+                                  {},
+                                  { withCredentials: true }
+                                );
+                                window.location.href = '/admin/dashboard';
+                              } catch (err) {
+                                console.error(err);
+                                toast.error('Failed to switch role. Please try again.');
+                              } finally {
+                                setSwitchingToInstructor(false);
+                              }
+                            } else {
+                              navigate('/become-instructor');
+                            }
+                          }}
+                          disabled={switchingToInstructor}
+                          className="mt-4 w-full px-4 py-2.5 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
                         >
-                          Start onboarding
+                          {switchingToInstructor
+                            ? 'Switching...'
+                            : user?.roles?.includes('instructor') && user?.instructorApplicationStatus === 'approved'
+                              ? 'Switch to Instructor'
+                              : 'Start onboarding'}
                         </button>
                       </div>
                     )}

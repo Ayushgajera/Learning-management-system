@@ -15,6 +15,7 @@ import liveSessionRouter from "./routes/liveSession.routes.js";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
+import multer from 'multer';
 import http from 'http';
 import { Server } from 'socket.io';
 
@@ -682,6 +683,18 @@ app.get("/health", (req, res) => {
   });
 });
 
+
+// Global error handler (catches Multer errors, etc.)
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ message: 'File too large. Maximum size is 100MB.' });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: err.message || 'Internal server error' });
+});
 
 // Start server
 const PORT = process.env.PORT || 8000;

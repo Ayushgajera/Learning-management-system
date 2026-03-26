@@ -504,6 +504,44 @@ export const getInstructors = async (req, res) => {
     }
 };
 
+export const switchToInstructor = async (req, res) => {
+    try {
+        const userId = req.id;
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        normalizeRoleModel(user);
+
+        // Only allow direct switch if already approved as instructor
+        const isApproved = user.instructorApplicationStatus === 'approved' && user.roles?.includes('instructor');
+        if (!isApproved) {
+            return res.status(403).json({
+                success: false,
+                message: "You need to apply and get approved as an instructor first.",
+                needsApplication: true,
+            });
+        }
+
+        user.activeRole = 'instructor';
+        user.role = 'instructor';
+        await user.save();
+
+        const sanitizedUser = user.toObject();
+        delete sanitizedUser.password;
+
+        res.json({
+            success: true,
+            role: user.role,
+            activeRole: user.activeRole,
+            roles: user.roles,
+            user: sanitizedUser,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to switch to instructor role" });
+    }
+};
+
 export const getInstructorReputation = async (req, res) => {
     try {
         const userId = req.id;

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useNavigate, useLocation, NavLink as RouterNavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiBookOpen, FiBell, FiLogOut, FiSettings, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome, FiVideo } from 'react-icons/fi';
+import { FiBookOpen, FiBell, FiLogOut, FiSettings, FiMoon, FiSun, FiBook, FiAward, FiHeart, FiMessageSquare, FiHome, FiVideo, FiUsers } from 'react-icons/fi';
 import { useLogoutUserMutation } from '@/features/api/authApi';
 import { useSelector, useDispatch } from 'react-redux';
-import { userLoggedOut } from "@/features/authslice";
+import { fetchUser, userLoggedOut } from "@/features/authslice";
 import { ThemeContext } from '@/extensions/ThemeProvider';
+import axios from 'axios';
+import config from '@/config/index';
 
 // Utility function to throttle event handling
 function throttle(func, limit) {
@@ -44,6 +46,7 @@ function StudentNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [logoutUser] = useLogoutUserMutation();
@@ -52,6 +55,32 @@ function StudentNavbar() {
   const dispatch = useDispatch();
   const dropdownRef = useRef(null);
   const { theme, toggleTheme } = useContext(ThemeContext);
+
+  // Check if user is an approved instructor who can directly switch
+  const isApprovedInstructor = userData?.roles?.includes('instructor') && userData?.instructorApplicationStatus === 'approved';
+
+  const handleSwitchToInstructor = async () => {
+    try {
+      setSwitchingRole(true);
+      await axios.patch(
+        `${config.API_BASE_URL}/api/v1/user/switch-to-instructor`,
+        {},
+        { withCredentials: true }
+      );
+      await dispatch(fetchUser());
+      navigate('/admin/dashboard');
+    } catch (err) {
+      console.error(err.response?.data || err.message);
+      // If not approved, redirect to application page
+      if (err.response?.data?.needsApplication) {
+        navigate('/become-instructor');
+      } else {
+        alert('Failed to switch role. Please try again.');
+      }
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
 
   // Handle outside clicks for profile dropdown
   useEffect(() => {
@@ -97,6 +126,18 @@ function StudentNavbar() {
     if (userData && isAuthenticated) {
       return (
         <div className="hidden md:flex items-center space-x-4">
+          {/* Switch to Instructor Button (for approved instructors) */}
+          {isApprovedInstructor && (
+            <button
+              onClick={handleSwitchToInstructor}
+              disabled={switchingRole}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold border-2 border-indigo-500 transition-all duration-200 ${onDarkHero ? 'text-white border-white/50 hover:bg-white/10' : 'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'}`}
+            >
+              <FiUsers className="w-4 h-4" />
+              <span>{switchingRole ? 'Switching...' : 'Switch to Instructor'}</span>
+            </button>
+          )}
+
           {/* Notification Bell */}
           <button className={`relative p-2 transition-colors duration-200 ${onDarkHero ? 'text-white/80 hover:text-white' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-500 dark:hover:text-indigo-400'}`}>
             <FiBell className="h-6 w-6" />
@@ -160,6 +201,16 @@ function StudentNavbar() {
                   </div>
 
                   <div className="border-t border-gray-100 dark:border-slate-700 mt-4 pt-4 space-y-1">
+                    {isApprovedInstructor && (
+                      <button
+                        onClick={handleSwitchToInstructor}
+                        disabled={switchingRole}
+                        className="group flex items-center space-x-3 px-6 py-3 text-sm text-slate-600 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/60 hover:text-indigo-600 dark:hover:text-indigo-200 transition-all duration-200 w-full text-left"
+                      >
+                        <FiUsers className="w-4 h-4 text-slate-500 dark:text-slate-300 group-hover:text-indigo-500" />
+                        <span className="font-medium">{switchingRole ? 'Switching...' : 'Switch to Instructor'}</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={handleLogout}
@@ -317,6 +368,16 @@ function StudentNavbar() {
                 ))}
                 {userData ? (
                   <>
+                    {isApprovedInstructor && (
+                      <button
+                        onClick={handleSwitchToInstructor}
+                        disabled={switchingRole}
+                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <FiUsers className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                        <span className="flex-1 font-medium">{switchingRole ? 'Switching...' : 'Switch to Instructor'}</span>
+                      </button>
+                    )}
                     <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
                       <FiSettings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                       <span className="flex-1 font-medium">Settings</span>
