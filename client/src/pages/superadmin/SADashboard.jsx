@@ -62,7 +62,7 @@ function SADashboard() {
   }
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans">
+    <div className="pt-16 p-4 sm:p-8 space-y-8 min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold font-display">Super Admin Dashboard</h1>
