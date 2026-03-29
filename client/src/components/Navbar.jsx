@@ -2,6 +2,7 @@
 import { useSelector } from 'react-redux';
 import StudentNavbar from './StudentNavbar';
 import AdminNavbar from './AdminNavbar';
+import SuperAdminNavbar from './SuperAdminNavbar';
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
@@ -18,6 +19,14 @@ const Navbar = () => {
   if (user.role === 'student') {
     return <StudentNavbar />;
   }
+
+  // Agar user superadmin hai
+  if (user.role === 'admin') {
+    return <SuperAdminNavbar />;
+  }
+
+
+
 
   // Agar user instructor hai
   if (user.role === 'instructor') {

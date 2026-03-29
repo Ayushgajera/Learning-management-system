@@ -79,7 +79,7 @@ function SuperAdminSidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 z-30 h-screen w-72 flex-col border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-8 text-slate-900 shadow-xl dark:border-slate-800/80 dark:bg-slate-900/80 dark:text-white">
+      <aside className="hidden lg:flex fixed left-0 top-16 bottom-0 z-30 h-[calc(100vh-4rem)] w-72 flex-col border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-8 text-slate-900 shadow-xl dark:border-slate-800/80 dark:bg-slate-900/80 dark:text-white">
         <div className="rounded-3xl border border-gray-200/60 bg-white p-4 dark:border-slate-800/70 dark:bg-slate-900">
           <Link to="/superadmin/dashboard" className="flex items-center gap-3 overflow-hidden">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 via-red-500 to-orange-400 text-white shadow-lg">
@@ -92,13 +92,13 @@ function SuperAdminSidebar() {
           </Link>
         </div>
 
-        <nav className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
+        <nav className="mt-6 flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-1">
           {renderMenuItems(undefined)}
         </nav>
       </aside>
 
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-20 left-4 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="p-2 rounded-xl bg-white border border-gray-200 shadow-lg text-gray-600 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
@@ -121,7 +121,7 @@ function SuperAdminSidebar() {
               initial="closed" animate="open" exit="closed"
               variants={sidebarVariants}
               transition={{ type: "spring", damping: 24, stiffness: 240 }}
-              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 overflow-y-auto border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-6 text-slate-900 shadow-2xl dark:border-slate-800/80 dark:bg-slate-900/90 dark:text-white"
+              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 overflow-y-auto custom-scrollbar border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-6 text-slate-900 shadow-2xl dark:border-slate-800/80 dark:bg-slate-900/90 dark:text-white"
             >
               <div className="rounded-3xl border border-gray-200/60 bg-white p-4 dark:border-slate-800/70 dark:bg-slate-900">
                 <Link to="/superadmin/dashboard" className="flex items-center gap-3 overflow-hidden" onClick={() => setIsMobileMenuOpen(false)}>

@@ -118,7 +118,7 @@ function Sidebar() {
           </Link>
         </div>
 
-        <nav className="mt-6 flex-1 space-y-3 overflow-y-auto pr-1">
+        <nav className="mt-6 flex-1 space-y-3 overflow-y-auto custom-scrollbar pr-1">
           {menuItems.map((item) => {
             const active = isActivePath(item.path);
             return (
@@ -183,7 +183,7 @@ function Sidebar() {
               exit="closed"
               variants={sidebarVariants}
               transition={{ type: "spring", damping: 24, stiffness: 240 }}
-              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 overflow-y-auto border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-6 text-slate-900 shadow-2xl dark:border-slate-800/80 dark:bg-slate-900/90 dark:text-white"
+              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 overflow-y-auto custom-scrollbar border-r border-gray-200/60 bg-white/95 px-5 pb-6 pt-6 text-slate-900 shadow-2xl dark:border-slate-800/80 dark:bg-slate-900/90 dark:text-white"
             >
               <div className="rounded-3xl border border-gray-200/60 bg-white p-4 dark:border-slate-800/70 dark:bg-slate-900">
                 <Link
