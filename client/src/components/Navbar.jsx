@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import StudentNavbar from './StudentNavbar';
 import AdminNavbar from './AdminNavbar';
-import SuperAdminNavbar from './SuperAdminNavbar';
+import SuperAdminNavbar from './SuperadminNavbar';
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
