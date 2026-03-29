@@ -1,11 +1,18 @@
 // components/Navbar.jsx
 import { useSelector } from 'react-redux';
+
 import StudentNavbar from './StudentNavbar';
 import AdminNavbar from './AdminNavbar';
 import SuperAdminNavbar from './SuperAdminNavbar';
 
 const Navbar = () => {
   const { user, loading } = useSelector((state) => state.auth);
+
+  // DEBUG: Log user and role to help diagnose navbar rendering
+  console.log('Navbar user:', user);
+  if (user) {
+    console.log('Navbar user.role:', user.role);
+  }
 
   // Jab tak loading ho, kuch mat dikhana
   if (loading) return null;
@@ -15,10 +22,6 @@ const Navbar = () => {
     return <StudentNavbar />;
   }
 
-  // Agar user student hai
-  if (user.role === 'student') {
-    return <StudentNavbar />;
-  }
 
   // Agar user superadmin hai
   if (user.role === 'admin') {

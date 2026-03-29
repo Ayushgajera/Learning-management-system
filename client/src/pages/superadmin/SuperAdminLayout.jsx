@@ -6,7 +6,7 @@ function SuperAdminLayout() {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 pt-16">
       <SuperAdminSidebar />
-      <main className="flex-1 lg:ml-72 min-h-screen">
+      <main className="flex-1 lg:ml-72 min-h-screen pt-16">
         <Outlet />
       </main>
     </div>

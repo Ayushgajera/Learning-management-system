@@ -19,12 +19,12 @@ const userSchema = new mongoose.Schema({
     // - activeRole: current UI/permission context
     roles: {
         type: [String],
-        enum: ["instructor", "student", "admin"],
+        enum: ["instructor", "student", "admin", "superadmin"],
         default: ["student"],
     },
     activeRole: {
         type: String,
-        enum: ["instructor", "student", "admin"],
+        enum: ["instructor", "student", "admin", "superadmin"],
         default: "student",
     },
 
@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
 
     role: {
         type: String,
-        enum: ["instructor", "student", "admin"],
+        enum: ["instructor", "student", "admin", "superadmin"],
         default: 'student'
     },
     enrolledCourses: [
