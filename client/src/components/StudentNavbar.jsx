@@ -67,7 +67,7 @@ function StudentNavbar() {
   // Detect homepage for hero overlay text treatment
   const isHomepage = location.pathname === '/';
   // When on homepage hero (not scrolled), text needs to be light on the dark cinematic bg
-  const onDarkHero = isHomepage && !isScrolled && !isMenuOpen;
+  const onDarkHero = isHomepage && theme === 'dark' && !isScrolled && !isMenuOpen;
 
   // Handle navbar background on scroll
   useEffect(() => {

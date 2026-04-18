@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { motion, useScroll, useTransform, useReducedMotion } from 'framer-motion';
 import { FiSearch, FiArrowRight, FiPlay, FiStar, FiUsers, FiCheckCircle, FiChevronDown } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { ThemeContext } from '@/extensions/ThemeProvider';
 
 const trendingTags = ['Full Stack Dev', 'AI & ML', 'Product Design', 'Data Science', 'DevOps'];
 
@@ -55,6 +56,8 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
         !!user?.onboardedAsInstructor;
     const showInstructorCta = !isAuthenticated || effectiveRole === 'student';
     const shouldReduceMotion = useReducedMotion();
+    const { theme } = useContext(ThemeContext);
+    const isDarkTheme = theme === 'dark';
 
     // Parallax + scroll-based effects
     const { scrollY } = useScroll();
@@ -135,37 +138,37 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
             {/* ── Cinematic Background ── */}
             <div className="absolute inset-0 -z-10">
                 {/* Base gradient mesh */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-violet-900/40 via-transparent to-indigo-900/30" />
+                <div className={`absolute inset-0 ${isDarkTheme ? 'bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950' : 'bg-gradient-to-br from-slate-100 via-indigo-50 to-violet-100'}`} />
+                <div className={`absolute inset-0 ${isDarkTheme ? 'bg-gradient-to-tr from-violet-900/40 via-transparent to-indigo-900/30' : 'bg-gradient-to-tr from-violet-300/20 via-transparent to-indigo-300/20'}`} />
 
                 {/* Animated floating orbs */}
                 <motion.div
                     style={{ y: shouldReduceMotion ? 0 : orbY1 }}
                     animate={shouldReduceMotion ? {} : { x: [0, 30, 0], y: [0, -20, 0] }}
                     transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-[10%] left-[15%] w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px]"
+                    className={`absolute top-[10%] left-[15%] w-[500px] h-[500px] rounded-full blur-[120px] ${isDarkTheme ? 'bg-indigo-500/20' : 'bg-indigo-400/25'}`}
                 />
                 <motion.div
                     style={{ y: shouldReduceMotion ? 0 : orbY2 }}
                     animate={shouldReduceMotion ? {} : { x: [0, -25, 0], y: [0, 15, 0] }}
                     transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-[30%] right-[10%] w-[600px] h-[400px] bg-violet-500/15 rounded-full blur-[140px]"
+                    className={`absolute top-[30%] right-[10%] w-[600px] h-[400px] rounded-full blur-[140px] ${isDarkTheme ? 'bg-violet-500/15' : 'bg-violet-400/20'}`}
                 />
                 <motion.div
                     style={{ y: shouldReduceMotion ? 0 : orbY3 }}
                     animate={shouldReduceMotion ? {} : { x: [0, 20, 0], y: [0, -30, 0] }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute bottom-[20%] left-[40%] w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-[100px]"
+                    className={`absolute bottom-[20%] left-[40%] w-[400px] h-[400px] rounded-full blur-[100px] ${isDarkTheme ? 'bg-purple-500/15' : 'bg-purple-400/20'}`}
                 />
                 <motion.div
                     animate={shouldReduceMotion ? {} : { x: [0, -15, 0], y: [0, 20, 0] }}
                     transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-[60%] left-[5%] w-[300px] h-[300px] bg-sky-500/10 rounded-full blur-[100px]"
+                    className={`absolute top-[60%] left-[5%] w-[300px] h-[300px] rounded-full blur-[100px] ${isDarkTheme ? 'bg-sky-500/10' : 'bg-sky-400/15'}`}
                 />
                 <motion.div
                     animate={shouldReduceMotion ? {} : { x: [0, 10, 0], y: [0, -15, 0] }}
                     transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-[5%] right-[30%] w-[250px] h-[250px] bg-pink-500/10 rounded-full blur-[80px]"
+                    className={`absolute top-[5%] right-[30%] w-[250px] h-[250px] rounded-full blur-[80px] ${isDarkTheme ? 'bg-pink-500/10' : 'bg-pink-400/15'}`}
                 />
 
                 {/* Noise texture overlay */}
@@ -198,10 +201,10 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.2, ease: premiumEase }}
-                        className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xl"
+                        className={`inline-flex items-center gap-2 px-5 py-2 rounded-full backdrop-blur-xl ${isDarkTheme ? 'bg-white/10 border border-white/20' : 'bg-white/80 border border-slate-200/80 shadow-sm'}`}
                     >
                         <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
-                        <span className="text-sm font-medium text-slate-200">
+                        <span className={`text-sm font-medium ${isDarkTheme ? 'text-slate-200' : 'text-slate-700'}`}>
                             New: AI-Powered Learning Paths
                         </span>
                     </motion.div>
@@ -211,7 +214,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1] tracking-[-0.03em] text-white font-display"
+                        className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1] tracking-[-0.03em] font-display ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}
                     >
                         {headlineWords.map((word, i) => (
                             <motion.span key={i} variants={wordVariants} className="inline-block mr-[0.3em]">
@@ -221,7 +224,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                         <br className="hidden lg:block" />
                         <motion.span
                             variants={wordVariants}
-                            className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-[length:200%_auto] animate-gradient"
+                            className={`inline-block text-transparent bg-clip-text bg-[length:200%_auto] animate-gradient ${isDarkTheme ? 'bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400' : 'bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600'}`}
                         >
                             {headlineGradient}
                         </motion.span>
@@ -232,7 +235,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.9, ease: premiumEase }}
-                        className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed"
+                        className={`text-base sm:text-lg max-w-2xl mx-auto leading-relaxed ${isDarkTheme ? 'text-slate-300' : 'text-slate-600'}`}
                     >
                         Join a global community of learners and instructors. Access premium courses,
                         get certified, and advance your career with industry-recognized skills.
@@ -255,7 +258,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                         {showInstructorCta && (
                             <button
                                 onClick={() => navigate(isAuthenticated ? '/become-instructor' : '/login?redirect=/become-instructor')}
-                                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-transparent text-white font-semibold border border-white/30 hover:bg-white/10 transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2"
+                                className={`w-full sm:w-auto px-8 py-3.5 rounded-full font-semibold border transition-all duration-300 backdrop-blur-sm flex items-center justify-center gap-2 ${isDarkTheme ? 'bg-transparent text-white border-white/30 hover:bg-white/10' : 'bg-white/70 text-slate-800 border-slate-300/80 hover:bg-white'}`}
                             >
                                 <FiPlay className="w-5 h-5" />
                                 {isAuthenticated && hasInstructorCapability ? 'Switch to Instructor' : 'Become Instructor'}
@@ -272,8 +275,8 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                     >
                         <div className="relative group">
                             <div className={`absolute inset-0 rounded-2xl blur-lg transition-opacity duration-500 ${isFocused ? 'opacity-50 bg-gradient-to-r from-indigo-500 to-violet-500' : 'opacity-20 bg-gradient-to-r from-indigo-500 to-violet-500 group-hover:opacity-30'}`} />
-                            <div className="relative flex items-center bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl p-2">
-                                <FiSearch className={`w-6 h-6 ml-3 transition-colors duration-300 ${isFocused ? 'text-indigo-400' : 'text-white/50'}`} />
+                            <div className={`relative flex items-center backdrop-blur-2xl rounded-2xl p-2 ${isDarkTheme ? 'bg-white/10 border border-white/20' : 'bg-white/90 border border-slate-200/90 shadow-sm'}`}>
+                                <FiSearch className={`w-6 h-6 ml-3 transition-colors duration-300 ${isFocused ? 'text-indigo-500' : isDarkTheme ? 'text-white/50' : 'text-slate-500'}`} />
                                 <input
                                     ref={inputRef}
                                     type="text"
@@ -286,10 +289,10 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                     onBlur={handleBlur}
                                     onKeyDown={handleKeyDown}
                                     placeholder="What do you want to learn today?"
-                                    className="flex-1 bg-transparent border-none outline-none px-4 py-2 text-white placeholder-white/40"
+                                    className={`flex-1 bg-transparent border-none outline-none px-4 py-2 ${isDarkTheme ? 'text-white placeholder-white/40' : 'text-slate-900 placeholder-slate-500'}`}
                                 />
                                 <div className="hidden sm:flex items-center gap-2 px-2">
-                                    <kbd className="hidden sm:inline-flex h-6 items-center gap-1 rounded border border-white/20 bg-white/10 px-2 font-mono text-[10px] font-medium text-white/50">
+                                    <kbd className={`hidden sm:inline-flex h-6 items-center gap-1 rounded px-2 font-mono text-[10px] font-medium ${isDarkTheme ? 'border border-white/20 bg-white/10 text-white/50' : 'border border-slate-200 bg-slate-50 text-slate-500'}`}>
                                         <span className="text-xs">&#8984;</span>K
                                     </kbd>
                                 </div>
@@ -298,7 +301,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
 
                         {/* Search Suggestions Dropdown */}
                         {isFocused && search.trim() && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto">
+                            <div className={`absolute top-full left-0 right-0 mt-2 backdrop-blur-xl rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto ${isDarkTheme ? 'bg-slate-900/95 border border-white/10' : 'bg-white/95 border border-slate-200'}`}>
                                 {filteredCourseSuggestions.length > 0 ? (
                                     <div className="py-2 space-y-0.5">
                                         {filteredCourseSuggestions.map((course, idx) => (
@@ -307,8 +310,8 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                                 onMouseDown={() => handleCourseSuggestionClick(course)}
                                                 onMouseEnter={() => setActiveIdx(idx)}
                                                 className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors ${activeIdx === idx
-                                                    ? 'bg-white/10'
-                                                    : 'hover:bg-white/5'
+                                                    ? isDarkTheme ? 'bg-white/10' : 'bg-slate-100'
+                                                    : isDarkTheme ? 'hover:bg-white/5' : 'hover:bg-slate-50'
                                                     }`}
                                             >
                                                 <img
@@ -317,10 +320,10 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                                     className="w-10 h-10 rounded-lg object-cover"
                                                 />
                                                 <div>
-                                                    <p className="font-medium text-white text-sm line-clamp-1">
+                                                    <p className={`font-medium text-sm line-clamp-1 ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>
                                                         {course.courseTitle}
                                                     </p>
-                                                    <p className="text-xs text-slate-400">
+                                                    <p className={`text-xs ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                                                         {course.category}
                                                     </p>
                                                 </div>
@@ -328,7 +331,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="p-4 text-center text-sm text-slate-400">
+                                    <div className={`p-4 text-center text-sm ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                                         No courses found matching &ldquo;{search}&rdquo;
                                     </div>
                                 )}
@@ -342,7 +345,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                             transition={{ delay: 1.2, duration: 0.5 }}
                             className="mt-4 flex flex-wrap items-center gap-2 justify-center"
                         >
-                            <span className="text-xs font-semibold text-white/40 uppercase tracking-[0.2em]">Trending:</span>
+                            <span className={`text-xs font-semibold uppercase tracking-[0.2em] ${isDarkTheme ? 'text-white/40' : 'text-slate-500'}`}>Trending:</span>
                             {trendingTags.map((tag, i) => (
                                 <motion.button
                                     key={tag}
@@ -353,7 +356,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                         setSearch(tag);
                                         inputRef.current?.focus();
                                     }}
-                                    className="text-xs px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/15 text-white/70 hover:bg-white/20 hover:text-white transition-colors duration-300"
+                                    className={`text-xs px-3.5 py-1.5 rounded-full backdrop-blur border transition-colors duration-300 ${isDarkTheme ? 'bg-white/10 border-white/15 text-white/70 hover:bg-white/20 hover:text-white' : 'bg-white/80 border-slate-200 text-slate-600 hover:bg-white hover:text-slate-900'}`}
                                 >
                                     {tag}
                                 </motion.button>
@@ -393,7 +396,7 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                 style={{ left: config.x, top: config.y }}
                                 onClick={() => course._id && courses.length > 0 ? navigate(`/course/${course._id}`) : null}
                             >
-                                <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl overflow-hidden shadow-2xl shadow-black/20 hover:bg-white/15 hover:border-white/30 transition-all duration-500">
+                                <div className={`backdrop-blur-lg rounded-2xl overflow-hidden transition-all duration-500 ${isDarkTheme ? 'bg-white/10 border border-white/20 shadow-2xl shadow-black/20 hover:bg-white/15 hover:border-white/30' : 'bg-white/85 border border-slate-200 shadow-xl shadow-slate-900/10 hover:bg-white hover:border-slate-300'}`}>
                                     {/* Thumbnail */}
                                     <div className="aspect-[16/10] bg-gradient-to-br from-indigo-500/30 to-violet-500/30 relative overflow-hidden">
                                         {course.courseThumbnail ? (
@@ -405,20 +408,20 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <span className="text-2xl font-bold text-white/20">{course.category?.charAt(0) || 'C'}</span>
+                                                <span className={`text-2xl font-bold ${isDarkTheme ? 'text-white/20' : 'text-slate-500/60'}`}>{course.category?.charAt(0) || 'C'}</span>
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                        <div className={`absolute inset-0 ${isDarkTheme ? 'bg-gradient-to-t from-black/40 to-transparent' : 'bg-gradient-to-t from-slate-900/20 to-transparent'}`} />
                                     </div>
                                     {/* Info */}
                                     <div className="p-3">
-                                        <p className="text-xs font-semibold text-white line-clamp-1">{course.courseTitle}</p>
+                                        <p className={`text-xs font-semibold line-clamp-1 ${isDarkTheme ? 'text-white' : 'text-slate-900'}`}>{course.courseTitle}</p>
                                         <div className="flex items-center justify-between mt-1.5">
-                                            <span className="text-[10px] text-white/50">{course.creator?.name || 'Instructor'}</span>
+                                            <span className={`text-[10px] ${isDarkTheme ? 'text-white/50' : 'text-slate-500'}`}>{course.creator?.name || 'Instructor'}</span>
                                             {course.averageRating && (
                                                 <div className="flex items-center gap-0.5">
                                                     <FiStar className="w-2.5 h-2.5 text-amber-400 fill-amber-400" />
-                                                    <span className="text-[10px] text-white/70 font-medium">{Number(course.averageRating).toFixed(1)}</span>
+                                                    <span className={`text-[10px] font-medium ${isDarkTheme ? 'text-white/70' : 'text-slate-700'}`}>{Number(course.averageRating).toFixed(1)}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -443,11 +446,11 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                                 scale: { duration: 0.4, delay: badge.delay },
                                 y: { duration: badge.duration, repeat: Infinity, ease: 'easeInOut', delay: badge.delay + 0.5 },
                             }}
-                            className="absolute hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 shadow-lg"
+                            className={`absolute hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full backdrop-blur-md shadow-lg ${isDarkTheme ? 'bg-white/10 border border-white/15' : 'bg-white/85 border border-slate-200'}`}
                             style={{ left: badge.x, top: badge.y }}
                         >
                             <badge.icon className="w-3 h-3 text-indigo-400" />
-                            <span className="text-[10px] font-semibold text-white/80">{badge.label}</span>
+                            <span className={`text-[10px] font-semibold ${isDarkTheme ? 'text-white/80' : 'text-slate-700'}`}>{badge.label}</span>
                         </motion.div>
                     ))}
                 </div>
@@ -461,12 +464,12 @@ const HeroSection = ({ search, setSearch, courses = [] }) => {
                 transition={{ delay: 2, duration: 0.5 }}
                 className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
             >
-                <span className="text-[10px] font-medium text-white/30 uppercase tracking-[0.2em]">Scroll</span>
+                <span className={`text-[10px] font-medium uppercase tracking-[0.2em] ${isDarkTheme ? 'text-white/30' : 'text-slate-500'}`}>Scroll</span>
                 <motion.div
                     animate={{ y: [0, 8, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
                 >
-                    <FiChevronDown className="w-5 h-5 text-white/30" />
+                    <FiChevronDown className={`w-5 h-5 ${isDarkTheme ? 'text-white/30' : 'text-slate-500'}`} />
                 </motion.div>
             </motion.div>
         </section>

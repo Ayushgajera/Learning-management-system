@@ -91,7 +91,7 @@ const userSchema = new mongoose.Schema({
     // Admin approval workflow for instructor applications
     instructorApplicationStatus: {
         type: String,
-        enum: ['none', 'pending', 'approved', 'rejected'],
+        enum: ['none', 'pdending', 'approved', 'rejected'],
         default: 'none',
     },
     instructorApplicationDate: {
